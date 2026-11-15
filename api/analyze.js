@@ -162,16 +162,31 @@ function checkTokenRate(ip, n, now) {
 function hostOf(u) {
   try { return new URL(u).host.toLowerCase(); } catch (e) { return null; }
 }
+// Trang được phép gọi API: chính máy chủ này, trang GitHub Pages của dự án, và danh sách ALLOWED_ORIGINS (nếu đặt).
+const NGUON_MAC_DINH = ['anhdth101.github.io'];
+function dsChoPhep() {
+  return NGUON_MAC_DINH.concat((process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean)
+    .map(s => (s.includes('://') ? hostOf(s) : s.toLowerCase())).filter(Boolean));
+}
 function originAllowed(req) {
   const src = req.headers.origin || req.headers.referer;
   if (!src) return null;
   const h = hostOf(src);
   if (!h) return false;
-  const allowed = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean)
-    .map(s => (s.includes('://') ? hostOf(s) : s.toLowerCase())).filter(Boolean);
-  if (allowed.length) return allowed.includes(h);
   const reqHost = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim().toLowerCase();
-  return !!reqHost && h === reqHost;
+  return (!!reqHost && h === reqHost) || dsChoPhep().includes(h);
+}
+// CORS: chỉ trả header cho trang khác máy chủ nhưng nằm trong danh sách cho phép.
+function datCors(req, res) {
+  const o = req.headers.origin;
+  const h = o ? hostOf(o) : null;
+  res.setHeader('Vary', 'Origin');
+  if (h && dsChoPhep().includes(h)) {
+    res.setHeader('Access-Control-Allow-Origin', o);
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Max-Age', '600');
+  }
 }
 
 function send(res, status, obj, extraHeaders) {
@@ -1114,6 +1129,8 @@ module.exports = async (req, res) => {
   sweep(start);
   const ip = clientIp(req);
   let cheDo = 'trich_xuat';
+  datCors(req, res);
+  if (req.method === 'OPTIONS') { res.statusCode = 204; return res.end(); }
   try {
     if (req.method === 'GET') {
       if (originAllowed(req) === false) return fail(res, 403, 'Nguồn truy cập không được phép.');
@@ -1124,7 +1141,7 @@ module.exports = async (req, res) => {
       return send(res, 200, { ok: true, token: tokens[0], tokens });
     }
     if (req.method !== 'POST') {
-      res.setHeader('Allow', 'GET, POST');
+      res.setHeader('Allow', 'GET, POST, OPTIONS');
       return fail(res, 405, 'Phương thức không được hỗ trợ.');
     }
     if (originAllowed(req) !== true) return fail(res, 403, 'Nguồn truy cập không được phép.');

@@ -1835,7 +1835,9 @@ footer p{margin:0 0 6px}
   const $ = s => document.querySelector(s);
   const $$ = s => Array.from(document.querySelectorAll(s));
   const GIOI_HAN_FILE = 40 * 1024 * 1024, GIOI_HAN_PAYLOAD = 3.8 * 1024 * 1024, MAX_TRANG = 45, COOLDOWN = 30000, MAX_TEXT = 600000;
-  const API = '/api/analyze';
+  // Chạy trên Vercel (hoặc máy cục bộ) thì gọi cùng máy chủ; chạy ở nơi khác (GitHub Pages) thì gọi máy chủ Vercel.
+  const CUNG_MAY = /\.vercel\.app$|^localhost$|^127\.0\.0\.1$/.test(location.hostname);
+  const API = CUNG_MAY ? '/api/analyze' : 'https://bctc-eta.vercel.app/api/analyze';
   const st = { goc: null, duLieu: null, kq: null, file: null, dangChay: false, lanCuoi: 0, demo: false, thongBao: [], nguon: null, oLech: [], vanBan: '' };
 
   const esc = s => String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
@@ -1851,7 +1853,7 @@ footer p{margin:0 0 6px}
   const khoToken = [];
   let dangLayToken = null;
   async function layToken(n) {
-    const r = await fetch(API + '?so=' + (n || 6), { method: 'GET', cache: 'no-store', credentials: 'same-origin' });
+    const r = await fetch(API + '?so=' + (n || 6), { method: 'GET', cache: 'no-store', credentials: CUNG_MAY ? 'same-origin' : 'omit' });
     const j = await r.json().catch(() => null);
     if (r.status === 404) throw new LoiThan('Không tìm thấy máy chủ phân tích. Trang cần được chạy trên Vercel để dùng tính năng này; bạn vẫn có thể bấm “Xem demo”.');
     if (!r.ok || !j || !j.ok) throw new LoiThan((j && j.loi) || 'Không kết nối được máy chủ phân tích.');
@@ -1880,7 +1882,7 @@ footer p{margin:0 0 6px}
     const hen = setTimeout(() => ctrl.abort(), 300000);
     let r;
     try {
-      r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, signal: ctrl.signal, credentials: 'same-origin' });
+      r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, signal: ctrl.signal, credentials: CUNG_MAY ? 'same-origin' : 'omit' });
     } catch (e) {
       if (e.name === 'AbortError') throw new LoiThan('Hết thời gian chờ phản hồi. Hãy thử lại, hoặc dùng file chỉ gồm phần BCTC.');
       throw new LoiThan('Không kết nối được máy chủ. Hãy kiểm tra mạng rồi thử lại.');
