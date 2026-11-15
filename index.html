@@ -2553,6 +2553,7 @@ footer p{margin:0 0 6px}
       quy_mo: { doanh_thu: E.fmtTien(qm.dt), von_gop: E.fmtTien(qm.vg), von_chu_so_huu: E.fmtTien(qm.vcsh), loi_nhuan_chua_phan_phoi: E.fmtTien(qm.lnpp), san: ls ? ls.san : undefined },
       lich_su_giao_dich: ls ? (ls.su_kien || []).map(x => `${x.ngay}: ${x.ten}${x.ly_do ? ' – ' + x.ly_do : ''}`) : 'chỉ có khi tra theo mã',
       rui_ro_cau_truc: ruiRoCauTruc(kq, d, ls),
+      tieu_chi_ky_quy: (() => { const k = tieuChiKyQuy(); return k ? { ket_luan: k.ket_luan, tieu_chi: k.tieu_chi.map(x => `${x.ten}: ${x.gia_tri} → ${x.dat === true ? 'đạt' : x.dat === false ? 'KHÔNG ĐẠT' : 'chưa kết luận'}`), dau_hieu: k.canh_bao } : undefined; })(),
       rui_ro_gia: st.thiTruong && st.thiTruong.rui_ro_gia ? { muc: st.thiTruong.rui_ro_gia.muc, chi_so: st.thiTruong.rui_ro_gia.chi_so.map(x => ({ ten: x.ten, gia_tri: x.gia_tri, muc: CHU[x.muc] })) } : 'chỉ có khi tra theo mã',
       nghi_quyet_dhdcd: st.nghiQuyet && st.nghiQuyet.nq ? Object.assign({}, st.nghiQuyet.nq, { nguon: undefined, thieu_file: undefined,
         tien_do_ke_hoach: tienDoKeHoach(st.nghiQuyet.nq).map(x => `${x.ten}: thực hiện ${E.fmtTien(x.thuc_hien)} sau ${x.thang} tháng = ${E.fmtPct(x.ty_le, 0)} kế hoạch năm ${E.fmtTien(x.ke_hoach)}${x.cham ? ' (chậm so với tiến độ)' : ''}`),
@@ -2589,6 +2590,80 @@ footer p{margin:0 0 6px}
     const rg = st.thiTruong && st.thiTruong.rui_ro_gia;
     if (rg && rg.muc === 'Cao') out.push({ muc: 'VANG', ly_do: 'Rủi ro giá cao: ' + rg.chi_so.filter(x => x.muc === 'DO').map(x => `${x.ten} ${x.gia_tri}`).join('; ') });
     return out;
+  }
+  // ===== Tiêu chí danh mục ký quỹ & dấu hiệu theo checklist thẩm định margin của phòng QLRR (tham khảo) =====
+  // Tiêu chí định lượng nội bộ thường dùng: (Phải thu + Đầu tư tài chính)/TTS < 65%; vốn hoá ≥ 30 tỷ; tăng vốn bình quân 4 năm < 65%;
+  // cộng các điều kiện chung: lãi, kiểm toán chấp nhận toàn phần, không bị cảnh báo/kiểm soát/hạn chế, niêm yết ≥ 6 tháng.
+  function tieuChiKyQuy() {
+    const d = st.duLieu || {}, tt = st.thiTruong || {}, sl = d.suy_luan || {}, cd = d.cdkt || {}, kd = d.kqkd || {};
+    const hs = E.isNum(sl.he_so_nhan) && sl.he_so_nhan > 0 ? sl.he_so_nhan : 1;
+    const g = (o, k, p) => (o[k] && E.isNum(o[k][p || 'ky_nay']) ? o[k][p || 'ky_nay'] * hs : null);
+    const tong = (...a) => (a.some(E.isNum) ? a.reduce((s, x) => s + (E.isNum(x) ? x : 0), 0) : null);
+    const pct = v => (E.isNum(v) ? E.fmtPct(v, 1) : '–');
+    const nganhTC = sl.chuan_ke_toan && sl.chuan_ke_toan !== 'TT200';
+    const tc = [];
+    const them = (ten, gia_tri, dat, ghi_chu) => tc.push({ ten, gia_tri, dat, ghi_chu: ghi_chu || '' });
+    const TTS = g(cd, 'tong_tai_san');
+    if (!nganhTC && E.isNum(TTS) && TTS > 0) {
+      const ptNH = g(cd, 'phai_thu_ngan_han'), ptDH = g(cd, 'phai_thu_dai_han'), dtNH = g(cd, 'dau_tu_tai_chinh_ngan_han'), dtDH = g(cd, 'dau_tu_tai_chinh_dai_han');
+      const tyDu = tong(ptNH, ptDH, dtNH, dtDH) / TTS, tyNH = tong(ptNH, dtNH) / TTS;
+      them('(Phải thu + Đầu tư tài chính) / Tổng tài sản < 65%', `${pct(tyDu)} (chỉ ngắn hạn: ${pct(tyNH)})`, tyDu < 0.65, 'Tỷ lệ cao: tài sản chủ yếu là khoản phải thu/cho vay/góp vốn – rủi ro vốn ảo, rút vốn qua bên liên quan.');
+    }
+    if (E.isNum(tt.von_hoa)) them('Vốn hoá ≥ 30 tỷ đồng', E.fmtTien(tt.von_hoa), tt.von_hoa >= 30e9);
+    const vg = (tt.von_gop_nam || []).slice().sort((a, b) => b.nam - a.nam).slice(0, 5);
+    if (vg.length >= 3) {
+      const tang = []; for (let i = 0; i < vg.length - 1 && tang.length < 4; i++) tang.push({ nam: vg[i].nam, t: vg[i].v / vg[i + 1].v - 1 });
+      const bq = tang.reduce((s, x) => s + x.t, 0) / tang.length;
+      them(`Tốc độ tăng vốn bình quân ${tang.length} năm < 65%`, `${pct(bq)} (${tang.slice().reverse().map(x => `${x.nam}: ${pct(x.t)}`).join(', ')})`, bq < 0.65,
+        tang.some(x => x.t > 0.65) ? 'Có năm tăng vốn >65%: kiểm tra tăng vốn bằng tiền hay cổ phiếu thưởng, mục đích sử dụng vốn.' : '');
+    }
+    const lnKy = g(kd, 'loi_nhuan_sau_thue'), lnNam = ((tt.lnst_nam || []).slice().sort((a, b) => b.nam - a.nam)[0] || {});
+    if (E.isNum(lnKy) || E.isNum(lnNam.v)) them('Lợi nhuận sau thuế dương', [E.isNum(lnKy) ? `kỳ này ${E.fmtTien(lnKy)}` : '', E.isNum(lnNam.v) ? `năm ${lnNam.nam} ${E.fmtTien(lnNam.v)}` : ''].filter(Boolean).join('; '), (!E.isNum(lnKy) || lnKy > 0) && (!E.isNum(lnNam.v) || lnNam.v > 0));
+    const kt = d.kiem_toan || {}, ttkt = sl.tinh_trang_kiem_toan;
+    them('BCTC kiểm toán/soát xét, ý kiến chấp nhận toàn phần', `${({ da_kiem_toan: 'đã kiểm toán', soat_xet: 'đã soát xét', tu_lap_chua_kiem_toan: 'tự lập, chưa kiểm toán' })[ttkt] || 'không rõ'}${kt.y_kien && kt.y_kien !== 'khong_ro' ? ', ý kiến: ' + ({ chap_nhan_toan_phan: 'chấp nhận toàn phần', ngoai_tru: 'ngoại trừ', trai_nguoc: 'trái ngược', tu_choi: 'từ chối' })[kt.y_kien] : ''}`,
+      ttkt === 'tu_lap_chua_kiem_toan' ? null : ['ngoai_tru', 'trai_nguoc', 'tu_choi'].includes(kt.y_kien) || kt.nhan_manh_hoat_dong_lien_tuc === true ? false : kt.y_kien === 'chap_nhan_toan_phan' ? true : null,
+      ttkt === 'tu_lap_chua_kiem_toan' ? 'Báo cáo tự lập: đánh giá dựa trên BCTC soát xét/kiểm toán gần nhất trước khi kết luận.' : '');
+    const ls = tt.lich_su_gd;
+    if (ls) {
+      const mot = new Date(); mot.setFullYear(mot.getFullYear() - 1); const moc = mot.toISOString().slice(0, 10);
+      const gan = (ls.su_kien || []).filter(x => x.ngay >= moc && ['alert', 'control', 'halt', 'suspend', 'nomargin'].includes(x.loai));
+      them('Không bị cảnh báo/kiểm soát/hạn chế/tạm ngừng/cắt margin trong 12 tháng', gan.length ? gan.slice(0, 3).map(x => `${x.ngay}: ${x.ten}`).join('; ') : 'không có', !gan.length);
+      if (ls.ngay_niem_yet) { const thang = (Date.now() - new Date(ls.ngay_niem_yet).getTime()) / (30.44 * 864e5); them('Niêm yết/đăng ký giao dịch ≥ 6 tháng', `từ ${String(ls.ngay_niem_yet).split('-').reverse().join('/')} (${Math.floor(thang)} tháng)`, thang >= 6); }
+    }
+    const rg = tt.rui_ro_gia;
+    if (rg && E.isNum(rg.gt20)) them('Thanh khoản: giá trị khớp bình quân 20 phiên ≥ 1 tỷ', E.fmtTien(rg.gt20), rg.gt20 >= 1e9, 'Thanh khoản thấp: khó bán giải chấp khi cần.');
+    const ocf = (tt.fcf_nam || []).slice().sort((a, b) => b.nam - a.nam).slice(0, 4).filter(x => E.isNum(x.ocf));
+    if (ocf.length >= 3) { const am = ocf.filter(x => x.ocf < 0).length; them(`Dòng tiền kinh doanh không âm kéo dài (${ocf.length} năm)`, ocf.slice().reverse().map(x => `${x.nam}: ${E.fmtTien(x.ocf)}`).join('; '), am < 2, am >= 2 ? `Âm ${am}/${ocf.length} năm: lãi trên sổ sách nhưng không thu được tiền.` : ''); }
+    // Dấu hiệu thêm theo checklist thẩm định: áp lực đáo hạn nợ vay, dự phòng đi ngược biến động tài sản.
+    const canh = [];
+    const vNH = g(cd, 'vay_ngan_han'), vDH = g(cd, 'vay_dai_han'), vNHt = g(cd, 'vay_ngan_han', 'ky_truoc'), vDHt = g(cd, 'vay_dai_han', 'ky_truoc');
+    const VCSH = g(cd, 'von_chu_so_huu');
+    if (E.isNum(vNH) && vNH > 0) {
+      const tyNH = vNH / tong(vNH, vDH);
+      if (E.isNum(vNHt) && vNHt > 0 && vNH / vNHt - 1 > 0.5 && E.isNum(VCSH) && vNH > 0.1 * VCSH) canh.push(`Vay ngắn hạn tăng ${pct(vNH / vNHt - 1)} so với kỳ trước (${E.fmtTien(vNHt)} → ${E.fmtTien(vNH)}).`);
+      if (tyNH > 0.85 && E.isNum(VCSH) && vNH > 0.2 * VCSH) canh.push(`${pct(tyNH)} nợ vay là ngắn hạn – áp lực đáo hạn/tái tục trong 12 tháng.`);
+      if (E.isNum(vDHt) && vDHt > 0 && (!E.isNum(vDH) || vDH < 0.2 * vDHt)) canh.push(`Nợ vay dài hạn gần như về 0 (${E.fmtTien(vDHt)} → ${E.fmtTien(vDH || 0)}): đã chuyển sang ngắn hạn.`);
+    }
+    const htk = g(cd, 'hang_ton_kho'), htkT = g(cd, 'hang_ton_kho', 'ky_truoc'), dpH = g(cd, 'du_phong_giam_gia_hang_ton_kho'), dpHT = g(cd, 'du_phong_giam_gia_hang_ton_kho', 'ky_truoc');
+    if (E.isNum(htk) && E.isNum(htkT) && htkT > 0 && htk / htkT - 1 > 0.3 && E.isNum(dpH) && E.isNum(dpHT) && Math.abs(dpHT) > 0 && Math.abs(dpH) < 0.7 * Math.abs(dpHT))
+      canh.push(`Tồn kho tăng ${pct(htk / htkT - 1)} nhưng dự phòng giảm giá tồn kho lại giảm ${pct(1 - Math.abs(dpH) / Math.abs(dpHT))} – ngược chiều.`);
+    const pt = g(cd, 'phai_thu_ngan_han'), ptT = g(cd, 'phai_thu_ngan_han', 'ky_truoc'), dpP = g(cd, 'du_phong_phai_thu_ngan_han'), dpPT = g(cd, 'du_phong_phai_thu_ngan_han', 'ky_truoc');
+    if (E.isNum(pt) && E.isNum(ptT) && ptT > 0 && pt / ptT - 1 > 0.4 && E.isNum(dpP) && E.isNum(dpPT) && Math.abs(dpPT) > 0 && Math.abs(dpP) / Math.abs(dpPT) - 1 < 0.1)
+      canh.push(`Phải thu ngắn hạn tăng ${pct(pt / ptT - 1)} nhưng dự phòng phải thu gần như không đổi.`);
+    const khongDat = tc.filter(x => x.dat === false).length, chuaRo = tc.filter(x => x.dat === null).length;
+    const ket = khongDat ? `Không đạt ${khongDat}/${tc.length} tiêu chí` : chuaRo ? `Đạt các tiêu chí đo được; ${chuaRo} tiêu chí chưa kết luận` : `Đạt ${tc.length}/${tc.length} tiêu chí`;
+    return tc.length ? { tieu_chi: tc, canh_bao: canh, ket_luan: ket, khong_dat: khongDat } : null;
+  }
+  function khoiKyQuy() {
+    const k = tieuChiKyQuy();
+    if (!k) return '';
+    const mau = k.khong_dat >= 2 ? 'DO' : k.khong_dat || k.canh_bao.length ? 'VANG' : 'XANH';
+    const NH = v => (v === true ? '<span class="nhan XANH">Đạt</span>' : v === false ? '<span class="nhan DO">Không đạt</span>' : '<span class="nhan KHONG_DU_DU_LIEU">Chưa kết luận</span>');
+    return `<div class="the the-cs ${mau}" style="margin-top:12px"><div class="ten"><b>Tiêu chí danh mục ký quỹ (tham khảo)</b> <span class="nhan ${mau}">${esc(k.ket_luan)}</span></div>
+      <div class="bang-cuon"><table><thead><tr><th>Tiêu chí</th><th>Số liệu</th><th>Kết quả</th></tr></thead><tbody>${k.tieu_chi.map(x =>
+        `<tr><td>${esc(x.ten)}${x.ghi_chu ? `<div class="phu">${esc(x.ghi_chu)}</div>` : ''}</td><td>${esc(x.gia_tri)}</td><td>${NH(x.dat)}</td></tr>`).join('')}</tbody></table></div>
+      ${k.canh_bao.length ? `<div class="hop-tb" style="margin-top:8px"><b>Dấu hiệu cần soi thêm</b><ul>${k.canh_bao.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>` : ''}
+      <p class="phu">Theo tiêu chí định lượng thường dùng khi thẩm định đưa cổ phiếu vào danh mục ký quỹ (Quy chế giao dịch ký quỹ của UBCKNN và quy định nội bộ CTCK). Ngưỡng nội bộ từng công ty có thể khác.</p></div>`;
   }
   function bangDinhGia(dg) {
     if (!dg) return '<h3>Định giá nhanh</h3><p class="ghi-chu">Chưa có giá thị trường (chỉ có khi tra theo mã cổ phiếu).</p>';
@@ -2646,7 +2721,8 @@ footer p{margin:0 0 6px}
         ${khoiMucRuiRo(ai.muc_rui_ro_co_phieu)}
         ${bangDinhGia(r.dinh_gia)}
         ${ai.dinh_gia ? `<p>${esc(ai.dinh_gia)}</p>` : ''}
-        <h3>Kết luận</h3><p>${esc(ai.ket_luan)}</p>`;
+        <h3>Kết luận</h3><p>${esc(ai.ket_luan)}</p>
+        ${ai.dieu_kien_thay_doi && (ai.dieu_kien_thay_doi.tich_cuc.length || ai.dieu_kien_thay_doi.tieu_cuc.length) ? `<div class="hai-cot"><div>${ds('Điều kiện làm kết luận tốt lên', ai.dieu_kien_thay_doi.tich_cuc)}</div><div>${ds('Điều kiện làm kết luận xấu đi', ai.dieu_kien_thay_doi.tieu_cuc)}</div></div>` : ''}`;
     } else {
       than = `<p>${r.tom_tat.map(esc).join(' ')}</p>
         <div class="hai-cot"><div>${ds('Điểm mạnh', r.manh)}</div><div>${ds('Rủi ro & điểm yếu', r.yeu)}</div></div>
@@ -2711,6 +2787,7 @@ footer p{margin:0 0 6px}
     h += hopLech(kq);
     h += khoiLichSuGd(true);
     h += khoiRuiRoGia();
+    h += khoiKyQuy();
     h += khoiNghiQuyet();
     h += '<div class="luoi c2" style="margin-top:12px">';
     h += `<div class="the the-cs ${f.muc_do}">

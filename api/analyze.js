@@ -647,6 +647,9 @@ QUY TẮC BẮT BUỘC:
 - "rui_ro_gia": số liệu giá 1 năm đã tính sẵn (biến động, sụt giảm lớn nhất, phiên giảm sàn, thanh khoản, beta, diễn biến so với VN-Index) và mức theo quy tắc ("muc"). Kết hợp với rui_ro_cau_truc, kich_ban_von_chu, lich_su_giao_dich để kết luận KHÁCH QUAN cổ phiếu này có phải cổ phiếu rủi ro không, trong "muc_rui_ro_co_phieu". Không được hạ thấp hơn mức theo quy tắc; giá giảm mạnh KHÔNG tự động là "rẻ" – phải đối chiếu với giá trị sổ sách sau điều chỉnh và lý do giảm. Số liệu giá đã điều chỉnh cổ tức tiền/cổ phiếu và chia tách: KHÔNG nói giá "giảm 50%" chỉ vì chia cổ tức cổ phiếu 1:1; "Độ dao động giá" là mức biến động, không phải mức giảm; con số %/năm KHÔNG được gọi là "hàng phiên" (mức mỗi phiên đã ghi sẵn trong gia_tri).
 - "dinh_gia" đã điều chỉnh theo nghị quyết khi có lỗ kế hoạch: dùng đúng các con số đó, không nhắc lại mức "thấp hơn X%" của giá trị chưa điều chỉnh.
 - Viết câu gọn, không lặp từ (ví dụ "pha loãng pha loãng").
+- "tieu_chi_ky_quy": các tiêu chí định lượng khi thẩm định cổ phiếu cho vay ký quỹ (đã tính sẵn) và "dau_hieu" cần soi thêm. Tiêu chí KHÔNG ĐẠT phải nêu trong rui_ro; dùng chúng khi kết luận mức rủi ro.
+- Phân tích theo cách của phòng quản lý rủi ro: xét lần lượt rủi ro thị trường của cổ phiếu, thanh khoản của doanh nghiệp (tiền + đầu tư ngắn hạn so với nợ ngắn hạn, đáo hạn nợ vay) và của cổ phiếu, pha loãng, rủi ro nội tại (dòng tiền, chất lượng tài sản, bên liên quan, kế toán), rủi ro ngành, quản trị/cổ đông. Ưu tiên nêu: lãi mà dòng tiền kinh doanh âm nhiều năm; phải thu/tồn kho tăng ngược chiều doanh thu; dự phòng không tăng theo; vay ngắn hạn tăng đột biến hoặc nợ dài hạn chuyển hết sang ngắn hạn; tài sản chủ yếu là phải thu/cho vay bên liên quan.
+- "dieu_kien_thay_doi": điều gì xảy ra sẽ làm kết luận tốt lên / xấu đi (cụ thể, đo được).
 - Cổ phiếu thưởng / cổ tức bằng cổ phiếu KHÔNG phải pha loãng và KHÔNG phải rủi ro: không thu tiền, tổng giá trị và tỷ lệ sở hữu giữ nguyên, giá tự điều chỉnh. Chỉ phát hành THU TIỀN (chào bán, riêng lẻ, ESOP, chuyển đổi) mới là pha loãng. Không nêu chia thưởng trong rui_ro.
 
 Trả về đúng một JSON:
@@ -658,6 +661,7 @@ Trả về đúng một JSON:
  "thu_tuc_can_lam": ["tối đa 4 việc cụ thể nhà đầu tư/kiểm toán viên nên kiểm tra thêm"],
  "dinh_gia": "1–2 câu về định giá nếu dữ liệu có giá thị trường, ngược lại để chuỗi rỗng",
  "muc_rui_ro_co_phieu": {"muc": "Cao|Trung bình|Thấp", "ly_do": ["tối đa 4 ý có số liệu: rủi ro cơ bản (lỗ, vốn chủ, pha loãng, kiểm toán) và rủi ro giá (biến động, sụt giảm, thanh khoản)"]},
+ "dieu_kien_thay_doi": {"tich_cuc": ["tối đa 3 điều kiện làm kết luận tốt lên"], "tieu_cuc": ["tối đa 3 điều kiện làm kết luận xấu đi"]},
  "ket_luan": "2–3 câu kết luận thẳng thắn"}`;
 
 async function cheDoDanhGia(body, deadline) {
@@ -671,7 +675,8 @@ async function cheDoDanhGia(body, deadline) {
     xep_hang: XH.includes(j.xep_hang) ? j.xep_hang : 'Trung tính',
     tom_tat: toStr(j.tom_tat, 900), diem_manh: ds(j.diem_manh, 4), rui_ro: ds(j.rui_ro, 5),
     goc_nhin_kiem_toan: ds(j.goc_nhin_kiem_toan, 4), thu_tuc_can_lam: ds(j.thu_tuc_can_lam, 4),
-    dinh_gia: toStr(j.dinh_gia, 600), ket_luan: toStr(j.ket_luan, 900)
+    dinh_gia: toStr(j.dinh_gia, 600), ket_luan: toStr(j.ket_luan, 900),
+    dieu_kien_thay_doi: j.dieu_kien_thay_doi && typeof j.dieu_kien_thay_doi === 'object' ? { tich_cuc: ds(j.dieu_kien_thay_doi.tich_cuc, 3), tieu_cuc: ds(j.dieu_kien_thay_doi.tieu_cuc, 3) } : null
   };
   if (!out.tom_tat && !out.rui_ro.length) throw loiCo(502, 'bad_json');
   // Chặn cứng: rủi ro cấu trúc không cho xếp hạng đẹp dù AI viết gì.
@@ -963,7 +968,10 @@ function vciTuMa(d, yeuCau) {
     lnst_nam: namIS.map(r => ({ nam: r.yearReport, v: so(r.isa22) })).filter(x => x.v !== null),
     vcsh_nam: (ds('BALANCE_SHEET').years || []).slice().sort((a, b) => b.yearReport - a.yearReport).slice(0, 6)
       .map(r => ({ nam: r.yearReport, v: so(r.bsa78) === null ? null : so(r.bsa78) - (so(r.bsa210) || so(r.bsa95) || 0) })).filter(x => x.v !== null),
-    fcf_nam: namCF.map(r => ({ nam: r.yearReport, ocf: so(r.cfa18), capex: so(r.cfa19) })).filter(x => x.ocf !== null)
+    fcf_nam: namCF.map(r => ({ nam: r.yearReport, ocf: so(r.cfa18), capex: so(r.cfa19) })).filter(x => x.ocf !== null),
+    // Vốn góp (vốn điều lệ) từng năm: tính tốc độ tăng vốn bình quân (tiêu chí danh mục ký quỹ).
+    von_gop_nam: (ds('BALANCE_SHEET').years || []).slice().sort((a, b) => b.yearReport - a.yearReport).slice(0, 6)
+      .map(r => ({ nam: r.yearReport, v: so(r.bsa80) })).filter(x => x.v !== null && x.v > 0)
   };
   return {
     du_lieu,
@@ -1548,7 +1556,7 @@ async function cheDoMaCk(body) {
     const MUC_GD = { delistedHose: 'DO', delistedHnx: 'DO', delistedUpcom: 'DO', suspend: 'DO', halt: 'DO', control: 'VANG', alert: 'VANG', nomargin: 'VANG', noticed: 'THONG_TIN', eligibleMargin: 'THONG_TIN' };
     const s0 = sk && sk.data && sk.data[0];
     kq.thi_truong.lich_su_gd = {
-      san: s0 && s0.floor || '', trang_thai: s0 && s0.status || '',
+      san: s0 && s0.floor || '', trang_thai: s0 && s0.status || '', ngay_niem_yet: s0 && s0.listedDate || '',
       su_kien: (ev && ev.data || []).filter(x => MUC_GD[x.type])
         .map(x => ({ ngay: String(x.effectiveDate || x.disclosureDate || '').slice(0, 10), loai: x.type, ten: x.typeDesc || x.type, ly_do: String(x.note || '').slice(0, 300), muc: MUC_GD[x.type] }))
     };
@@ -1566,6 +1574,18 @@ async function cheDoMaCk(body) {
           .concat(['Tình trạng kiểm toán và loại báo cáo lấy từ dữ liệu công bố theo kỳ; ý kiến kiểm toán, công ty kiểm toán và thuyết minh chỉ có trong file BCTC gốc.']);
       }
       if (k && k.loai) sl.loai_bao_cao = k.loai;
+      // Quý 2 (luỹ kế 6 tháng) / quý 4 (cả năm): nguồn theo kỳ chỉ có báo cáo quý tự lập, nhưng doanh nghiệp niêm yết phải công bố
+      // BCTC bán niên soát xét / năm kiểm toán cho cùng kỳ. Tìm tin công bố đó để không đánh giá nhầm là "chưa kiểm toán".
+      if (!laNam && (Q === 2 || Q === 4) && sl.tinh_trang_kiem_toan !== 'da_kiem_toan') {
+        const ns = Q === 2 ? Y : Y + 1;
+        const jt = await layJson(`${VND_BASE}/news?q=tagCodes:${body.ma}~newsType:financialstatement~newsDate:gte:${ns}-01-01&sort=newsDate:desc&size=40`, VND_H, 6000).catch(() => null);
+        const re = Q === 2 ? new RegExp(`(soát xét|bán niên|6 tháng).*${Y}|${Y}.*(soát xét|bán niên)`, 'i') : new RegExp(`(kiểm toán|BCTC năm|báo cáo tài chính năm).*${Y}|${Y}.*kiểm toán`, 'i');
+        const tin = ((jt && jt.data) || []).find(x => re.test(x.newsTitle || '') && !/giải trình|chậm|gia hạn/i.test(x.newsTitle || ''));
+        if (tin) {
+          sl.tinh_trang_kiem_toan = Q === 2 ? 'soat_xet' : 'da_kiem_toan';
+          sl.diem_nghi_ngo = sl.diem_nghi_ngo.concat([`Đã có ${Q === 2 ? 'BCTC bán niên soát xét' : 'BCTC năm kiểm toán'} ${Y} (công bố ${String(tin.newsDate).slice(0, 10)}); số liệu đang dùng lấy từ báo cáo theo kỳ, có thể lệch nhẹ so với bản ${Q === 2 ? 'soát xét' : 'kiểm toán'}.`]);
+        }
+      }
     }
   } catch (e) { /* bỏ qua: chỉ là thông tin bổ sung */ }
   if (timThay) kq.tim_thay = timThay;
