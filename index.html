@@ -1796,7 +1796,10 @@ footer p{margin:0 0 6px}
     coGT.forEach(x => cau.push(`${x.ten}: khoảng ${fmtSo(Math.round(x.gia_tri / 100) * 100)} đồng/cổ phiếu.`));
     if (isNum(chenh)) cau.push(`Giá hiện tại ${chenh < 0 ? 'thấp hơn' : 'cao hơn'} giá trị theo bội số lịch sử (${fmtSo(Math.round(tbGT / 100) * 100)} đồng) khoảng ${fmtPct(Math.abs(chenh), 0)}.`);
     if (ghiLn) cau.push(ghiLn);
-    return { pe, pb, pb_bao_cao: pbBaoCao, bv_bao_cao: bvBaoCao, dieu_chinh: coDc ? dc : null, ke_hoach_lo: keHoachLo, eps, eps4q, bvps, pe_ls: peLs, pb_ls: pbLs, lich_su: lichSu, phuong_phap: pp, gia_tri_tb: tbGT, chenh, cau, gia: tt.gia, ghi_ln: ghiLn, dung_bq: dungBq };
+    // Chia cổ phiếu thưởng/cổ tức cổ phiếu sắp tới: mọi giá trị/cổ phiếu chia cho hệ số, P/E, P/B và mức rẻ/đắt không đổi.
+    const hs = dc && isNum(dc.he_so_chia) && dc.he_so_chia > 1 ? dc.he_so_chia : null;
+    if (hs) cau.push(`Sắp chia cổ phiếu thưởng/cổ tức cổ phiếu ${fmtPct(hs - 1, 0)} (số cổ phiếu ×${nf(2).format(hs)}): sau ngày giao dịch không hưởng quyền, giá tham chiếu ≈ ${fmtSo(Math.round(tt.gia / hs / 10) * 10)} đồng${isNum(tbGT) ? `, giá trị theo bội số lịch sử tương ứng ≈ ${fmtSo(Math.round(tbGT / hs / 100) * 100)} đồng` : ''}. Không thu tiền nên tổng giá trị, P/E, P/B và mức rẻ/đắt không đổi; không phải pha loãng.`);
+    return { he_so_chia: hs, gia_tri_tb_sau_chia: hs && isNum(tbGT) ? tbGT / hs : null, gia_sau_chia: hs ? tt.gia / hs : null, pe, pb, pb_bao_cao: pbBaoCao, bv_bao_cao: bvBaoCao, dieu_chinh: coDc ? dc : null, ke_hoach_lo: keHoachLo, eps, eps4q, bvps, pe_ls: peLs, pb_ls: pbLs, lich_su: lichSu, phuong_phap: pp, gia_tri_tb: tbGT, chenh, cau, gia: tt.gia, ghi_ln: ghiLn, dung_bq: dungBq };
   }
 
   function danhGia(kq, d, tt, dc) {
@@ -2593,7 +2596,8 @@ footer p{margin:0 0 6px}
     const so2 = v => (E.isNum(v) ? new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(v) : '–');
     const ls = (dg.lich_su || []).slice().sort((a, b) => a.nam - b.nam);
     return `<h3>Định giá nhanh</h3>
-      ${dg.dieu_chinh ? `<div class="banner do" style="margin:0 0 8px">Định giá đã điều chỉnh theo nghị quyết ĐHĐCĐ: giá trị sổ sách tính sau khi trừ lỗ kế hoạch còn lại ${esc(E.fmtTien(-dg.dieu_chinh.lo_con_lai))} (${esc(E.fmtSo(Math.round(dg.bv_bao_cao)))} → <b>${esc(E.fmtSo(Math.round(dg.bvps)))}</b> đồng/cổ phiếu)${dg.ke_hoach_lo ? '; bỏ P/E vì kế hoạch năm lỗ' : ''}. Chưa tính cổ phiếu phát hành thêm.</div>` : ''}
+      ${dg.dieu_chinh && E.isNum(dg.dieu_chinh.bv) ? `<div class="banner do" style="margin:0 0 8px;display:block">Định giá đã điều chỉnh theo nghị quyết ĐHĐCĐ: giá trị sổ sách tính sau khi trừ lỗ kế hoạch còn lại ${esc(E.fmtTien(-dg.dieu_chinh.lo_con_lai))} (${esc(E.fmtSo(Math.round(dg.bv_bao_cao)))} → <b>${esc(E.fmtSo(Math.round(dg.bvps)))}</b> đồng/cổ phiếu)${dg.ke_hoach_lo ? '; bỏ P/E vì kế hoạch năm lỗ' : ''}. Chưa tính cổ phiếu phát hành thêm.</div>` : ''}
+      ${dg.he_so_chia ? `<div class="hop-tb" style="margin:0 0 8px">Sắp chia cổ phiếu thưởng/cổ tức cổ phiếu ${esc(E.fmtPct(dg.he_so_chia - 1, 0))}: sau ngày giao dịch không hưởng quyền, giá tham chiếu ≈ <b>${esc(E.fmtSo(Math.round(dg.gia_sau_chia / 10) * 10))}</b> đồng${E.isNum(dg.gia_tri_tb_sau_chia) ? `, giá trị theo bội số lịch sử ≈ <b>${esc(E.fmtSo(Math.round(dg.gia_tri_tb_sau_chia / 100) * 100))}</b> đồng` : ''}. Bảng dưới tính theo số cổ phiếu hiện tại; chia thưởng không thu tiền nên P/E, P/B và mức rẻ/đắt không đổi.</div>` : ''}
       <p class="ghi-chu" style="margin:0 0 6px">Chỉ số hiện tại: <b>P/E ${dg.ke_hoach_lo ? 'không áp dụng' : esc(so1(dg.pe))}</b>${dg.ke_hoach_lo ? '' : ' (theo lợi nhuận 4 quý gần nhất)'}, <b>P/B ${esc(so2(dg.pb))}</b>${dg.dieu_chinh ? ` (sau điều chỉnh; trên báo cáo ${esc(so2(dg.pb_bao_cao))})` : ''}. Các trang khác có thể ra P/E hơi khác do cách tính EPS. Định giá dùng <b>P/E và P/B trung vị nhiều năm của chính cổ phiếu</b>, tính từ giá cuối năm và số liệu thực tế, không dùng giả định.</p>
       ${ls.length ? `<div class="bang-cuon" style="margin-bottom:6px"><table><thead><tr><th>Năm</th>${ls.map(x => `<th class="so">${x.nam}</th>`).join('')}<th class="so">Trung vị</th></tr></thead><tbody>
         <tr><td>P/E cuối năm</td>${ls.map(x => `<td class="so">${esc(so1(x.pe))}</td>`).join('')}<td class="so"><b>${esc(so1(dg.pe_ls))}</b></td></tr>
@@ -2775,7 +2779,9 @@ footer p{margin:0 0 6px}
     if (!nq || !tt || !E.isNum(tt.vcsh_me) || !E.isNum(tt.so_cp) || tt.so_cp <= 0) return null;
     const kh = nq.ke_hoach_kinh_doanh || {}, lk = tt.lnst_luy_ke, N0 = tt.so_cp, E0 = tt.vcsh_me, P = E.isNum(tt.gia) ? tt.gia : null;
     let conLai = null, cachTinh = '';
-    if (E.isNum(kh.loi_nhuan_sau_thue) && kh.nam) {
+    // Chỉ coi là "lỗ sắp ghi nhận" khi KẾ HOẠCH NĂM LÀ LỖ. Kế hoạch lãi mà luỹ kế đã vượt (ví dụ kế hoạch 69 tỷ, 9 tháng đã lãi 107 tỷ)
+    // thì phần chênh âm chỉ là "đã vượt kế hoạch", không phải lỗ.
+    if (E.isNum(kh.loi_nhuan_sau_thue) && kh.loi_nhuan_sau_thue < 0 && kh.nam) {
       if (lk && lk.nam === kh.nam && lk.quy < 4) { conLai = kh.loi_nhuan_sau_thue - lk.v; cachTinh = `LNST kế hoạch ${kh.nam} ${E.fmtTien(kh.loi_nhuan_sau_thue)} − đã ghi nhận ${lk.quy} quý ${E.fmtTien(lk.v)}`; }
       else if (lk && lk.nam < kh.nam) { conLai = kh.loi_nhuan_sau_thue; cachTinh = `LNST kế hoạch cả năm ${kh.nam} ${E.fmtTien(kh.loi_nhuan_sau_thue)}`; }
     }
@@ -2783,10 +2789,17 @@ footer p{margin:0 0 6px}
       const tdv = (nq.tac_dong_von_chu || []).filter(x => E.isNum(x.so_tien) && x.so_tien !== 0);
       if (tdv.length) { conLai = -tdv.reduce((s, x) => s + Math.abs(x.so_tien), 0); cachTinh = 'Tổng lỗ/dự phòng dự kiến: ' + tdv.map(x => `${x.noi_dung} ${E.fmtTien(Math.abs(x.so_tien))}`).join('; '); }
     }
-    // Chỉ dựng kịch bản khi có khoản lỗ sắp ghi nhận hoặc có phát hành thu tiền.
+    // Chỉ dựng kịch bản khi có khoản lỗ sắp ghi nhận, phát hành thu tiền, hoặc chia cổ phiếu thưởng/cổ tức bằng cổ phiếu.
     const ph = (nq.phat_hanh_tang_von || []).filter(x => PH_THU_TIEN.includes(x.hinh_thuc) && E.isNum(x.so_luong_cp) && x.so_luong_cp > 0);
     const coLo = E.isNum(conLai) && conLai < -0.02 * Math.abs(E0);
-    if (!coLo && !ph.length) return null;
+    // Cổ phiếu thưởng / cổ tức cổ phiếu: không thu tiền, không đổi tổng giá trị; chỉ chia nhỏ mỗi cổ phiếu (giá và giá trị/cp chia cho hệ số).
+    const soThuong = (nq.phat_hanh_tang_von || []).filter(x => ['co_tuc_co_phieu', 'co_phieu_thuong'].includes(x.hinh_thuc)).reduce((s, x) => {
+      if (E.isNum(x.so_luong_cp) && x.so_luong_cp > 0) return s + x.so_luong_cp;
+      const m = /(\d+(?:[.,]\d+)?)\s*%/.exec(`${x.ty_le_so_voi_luu_hanh || ''} ${x.muc_dich || ''}`);
+      return s + (m ? N0 * parseFloat(m[1].replace(',', '.')) / 100 : 0);
+    }, 0);
+    const heSoChia = soThuong > 0 ? (N0 + soThuong) / N0 : 1;
+    if (!coLo && !ph.length && heSoChia === 1) return null;
     const E1 = E0 + (coLo ? conLai : 0), BV0 = E0 / N0, BV1 = E1 / N0;
     let tien = 0, nMoi = 0; const ghiGia = [];
     ph.forEach(x => {
@@ -2802,8 +2815,12 @@ footer p{margin:0 0 6px}
     if (coLo) dong.push({ ten: 'Sau khi ghi nhận lỗ kế hoạch còn lại', vc: E1, cp: N0, bv: BV1, pb: pb(BV1) });
     if (nMoi) dong.push({ ten: 'Sau phát hành thêm', vc: E2, cp: N2, bv: BV2, pb: pb(BV2) });
     const phaLoang = nMoi ? nMoi / N2 : 0;
+    const giaSauChia = E.isNum(P) && heSoChia > 1 ? P / heSoChia : null;
+    if (heSoChia > 1) dong.push({ ten: `Sau chia cổ phiếu thưởng/cổ tức cổ phiếu ${E.fmtPct(heSoChia - 1, 0)} (giá tham chiếu ≈ ${E.isNum(giaSauChia) ? E.fmtSo(Math.round(giaSauChia / 10) * 10) : '–'} đ)`, vc: E2, cp: N2 * heSoChia, bv: E2 / (N2 * heSoChia), pb: E.isNum(giaSauChia) ? giaSauChia / (E2 / (N2 * heSoChia)) : null });
     // Tín hiệu tốt/xấu theo quy tắc.
     const xau = [], tot = [];
+    const trungTinh = [];
+    if (heSoChia > 1) trungTinh.push(`Chia cổ phiếu thưởng/cổ tức cổ phiếu ${E.fmtPct(heSoChia - 1, 0)}: số cổ phiếu ×${heSoChia.toFixed(2).replace('.', ',')}, giá và giá trị mỗi cổ phiếu chia tương ứng (≈ ${E.isNum(giaSauChia) ? E.fmtSo(Math.round(giaSauChia / 10) * 10) : '–'} đ). Không thu tiền, không làm đổi tổng giá trị và tỷ lệ sở hữu – KHÔNG phải pha loãng; P/E, P/B giữ nguyên.`);
     if (coLo) { const g = 1 - BV1 / BV0; xau.push(`Lỗ còn phải ghi nhận ${E.fmtTien(-conLai)} làm giá trị sổ sách giảm ${E.fmtPct(g, 0)} (${E.fmtSo(Math.round(BV0))} → ${E.fmtSo(Math.round(BV1))} đồng/cổ phiếu); báo cáo tài chính hiện tại chưa phản ánh.`); }
     if (E.isNum(pb(BV1)) && coLo) xau.push(`P/B thực tế ${pb(BV1).toFixed(2).replace('.', ',')} lần thay vì ${pb(BV0).toFixed(2).replace('.', ',')} lần như trên báo cáo.`);
     if (phaLoang > 0.2) xau.push(`Pha loãng ${E.fmtPct(phaLoang, 0)} cổ phần; lợi nhuận mỗi cổ phiếu tương lai chia cho ${E.fmtSo(N2)} cổ phiếu.`);
@@ -2814,16 +2831,19 @@ footer p{margin:0 0 6px}
     if (dc && E.isNum(dc.loi_nhuan_sau_thue) && E.isNum(kh.loi_nhuan_sau_thue) && kh.loi_nhuan_sau_thue < dc.loi_nhuan_sau_thue) xau.push(`Kế hoạch LNST bị hạ từ ${E.fmtTien(dc.loi_nhuan_sau_thue)} xuống ${E.fmtTien(kh.loi_nhuan_sau_thue)}.`);
     if ((nq.co_tuc || []).some(x => x.hinh_thuc === 'khong_chia' || /giảm|huỷ|hủy|không chia/i.test(x.ghi_chu + ' ' + x.ty_le))) xau.push('Cổ tức bị giảm hoặc không chia.');
     const huong = xau.length > tot.length ? 'xau' : tot.length > xau.length ? 'tot' : 'trung_tinh';
-    const cau = [`${cachTinh ? cachTinh + ' = ' + E.fmtTien(conLai) + '. ' : ''}${dong.map(d => `${d.ten}: vốn chủ ${E.fmtTien(d.vc)}, ${E.fmtSo(d.cp)} cổ phiếu, giá trị sổ sách ${E.fmtSo(Math.round(d.bv))} đồng/cổ phiếu${E.isNum(d.pb) ? `, P/B ${d.pb.toFixed(2)}` : ''}`).join('; ')}.`, ...xau, ...tot];
-    return { dong, cachTinh, conLai: coLo ? conLai : null, ghiGia, phaLoang, xau, tot, huong, gia: P, cau };
+    const cau = [`${coLo && cachTinh ? cachTinh + ' = ' + E.fmtTien(conLai) + '. ' : ''}${dong.map(d => `${d.ten}: vốn chủ ${E.fmtTien(d.vc)}, ${E.fmtSo(Math.round(d.cp))} cổ phiếu, giá trị sổ sách ${E.fmtSo(Math.round(d.bv))} đồng/cổ phiếu${E.isNum(d.pb) ? `, P/B ${d.pb.toFixed(2)}` : ''}`).join('; ')}.`, ...xau, ...tot, ...trungTinh];
+    return { dong, cachTinh: coLo ? cachTinh : '', conLai: coLo ? conLai : null, ghiGia, phaLoang, xau, tot, trungTinh, heSoChia, giaSauChia, huong, gia: P, cau };
   }
   // Điều chỉnh định giá theo nghị quyết: giá trị sổ sách sau khi ghi nhận lỗ kế hoạch còn lại (chưa tính phát hành thêm vì chưa chắc chắn).
   function dieuChinhDinhGia() {
     const nq = st.nghiQuyet && st.nghiQuyet.nq;
     const kb = nq && !st.baoCaoCu ? kichBanVonChu(nq) : null;
-    if (!kb || kb.conLai === null || kb.dong.length < 2) return null;
+    if (!kb) return null;
     const kh = nq.ke_hoach_kinh_doanh || {};
-    return { bv: kb.dong[1].bv, lo_con_lai: kb.conLai, lnst_kh: kh.loi_nhuan_sau_thue, nam: kh.nam };
+    const out = { he_so_chia: kb.heSoChia > 1 ? kb.heSoChia : null };
+    // Có lỗ kế hoạch: dong[1] là dòng "sau khi ghi nhận lỗ".
+    if (kb.conLai !== null && kb.dong.length > 1) Object.assign(out, { bv: kb.dong[1].bv, lo_con_lai: kb.conLai, lnst_kh: kh.loi_nhuan_sau_thue, nam: kh.nam });
+    return out.bv || out.he_so_chia ? out : null;
   }
   function khoiKichBan(nq) {
     const kb = kichBanVonChu(nq);
@@ -2836,7 +2856,7 @@ footer p{margin:0 0 6px}
         `<tr><td>${esc(d.ten)}</td><td class="so">${esc(E.fmtTien(d.vc))}</td><td class="so">${esc(E.fmtSo(d.cp))}</td><td class="so"><b>${esc(E.fmtSo(Math.round(d.bv)))}</b></td><td class="so">${E.isNum(d.pb) ? esc(d.pb.toFixed(2).replace('.', ',')) : '–'}</td></tr>`).join('')}</tbody></table></div>`;
       const gc = [kb.cachTinh ? `Lỗ còn lại = ${kb.cachTinh} = ${E.fmtTien(kb.conLai)}.` : '', kb.ghiGia.length ? 'Phát hành: ' + kb.ghiGia.join('; ') + '.' : '', 'Giả định phát hành hết số cổ phiếu dự kiến; chuyển quỹ nội bộ trong vốn chủ không làm đổi giá trị sổ sách.'].filter(Boolean);
       h += `<p class="phu">${gc.map(esc).join(' ')}</p>`;
-      h += `<p style="margin:6px 0 2px">Theo quy tắc: <span class="nhan ${NH[kb.huong][0]}">${NH[kb.huong][1]}</span></p><ul class="ghi-chu" style="margin:0;padding-left:18px">${[...kb.xau.map(x => '▼ ' + x), ...kb.tot.map(x => '▲ ' + x)].map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
+      h += `<p style="margin:6px 0 2px">Theo quy tắc: <span class="nhan ${NH[kb.huong][0]}">${NH[kb.huong][1]}</span></p><ul class="ghi-chu" style="margin:0;padding-left:18px">${[...kb.xau.map(x => '▼ ' + x), ...kb.tot.map(x => '▲ ' + x), ...(kb.trungTinh || []).map(x => '• ' + x)].map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
     }
     if (ai) h += `<p style="margin:6px 0 2px">AI đọc văn bản: <span class="nhan ${(NH[ai.huong] || NH.trung_tinh)[0]}">${(NH[ai.huong] || NH.trung_tinh)[1]}</span></p>${ai.ly_do.length ? `<ul class="ghi-chu" style="margin:0;padding-left:18px">${ai.ly_do.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}`;
     return h;

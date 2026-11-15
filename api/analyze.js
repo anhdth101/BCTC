@@ -647,6 +647,7 @@ QUY TẮC BẮT BUỘC:
 - "rui_ro_gia": số liệu giá 1 năm đã tính sẵn (biến động, sụt giảm lớn nhất, phiên giảm sàn, thanh khoản, beta, diễn biến so với VN-Index) và mức theo quy tắc ("muc"). Kết hợp với rui_ro_cau_truc, kich_ban_von_chu, lich_su_giao_dich để kết luận KHÁCH QUAN cổ phiếu này có phải cổ phiếu rủi ro không, trong "muc_rui_ro_co_phieu". Không được hạ thấp hơn mức theo quy tắc; giá giảm mạnh KHÔNG tự động là "rẻ" – phải đối chiếu với giá trị sổ sách sau điều chỉnh và lý do giảm. Số liệu giá đã điều chỉnh cổ tức tiền/cổ phiếu và chia tách: KHÔNG nói giá "giảm 50%" chỉ vì chia cổ tức cổ phiếu 1:1; "Độ dao động giá" là mức biến động, không phải mức giảm; con số %/năm KHÔNG được gọi là "hàng phiên" (mức mỗi phiên đã ghi sẵn trong gia_tri).
 - "dinh_gia" đã điều chỉnh theo nghị quyết khi có lỗ kế hoạch: dùng đúng các con số đó, không nhắc lại mức "thấp hơn X%" của giá trị chưa điều chỉnh.
 - Viết câu gọn, không lặp từ (ví dụ "pha loãng pha loãng").
+- Cổ phiếu thưởng / cổ tức bằng cổ phiếu KHÔNG phải pha loãng và KHÔNG phải rủi ro: không thu tiền, tổng giá trị và tỷ lệ sở hữu giữ nguyên, giá tự điều chỉnh. Chỉ phát hành THU TIỀN (chào bán, riêng lẻ, ESOP, chuyển đổi) mới là pha loãng. Không nêu chia thưởng trong rui_ro.
 
 Trả về đúng một JSON:
 {"xep_hang": "Tích cực|Trung tính|Thận trọng|Rủi ro cao",
@@ -1156,7 +1157,7 @@ Trả về đúng một JSON:
  "giao_dich_ben_lien_quan":["tối đa 4 ý"],
  "nhan_su_quan_tri":["tối đa 4 ý: bầu/miễn nhiệm HĐQT, BKS, thù lao"],
  "khac":["tối đa 4 ý quan trọng khác: chuyển sàn, đổi ngành nghề, sửa điều lệ, mua cổ phiếu quỹ, thoái vốn"],
- "diem_can_luu_y":["tối đa 5 điểm nhà đầu tư cần lưu ý (lỗ/dự phòng sắp ghi nhận, pha loãng, kế hoạch bị hạ, cắt cổ tức, giao dịch bên liên quan lớn, vay nợ lớn, cổ đông lớn bán ra...)"],
+ "diem_can_luu_y":["tối đa 5 điểm nhà đầu tư cần lưu ý (lỗ/dự phòng sắp ghi nhận, pha loãng do phát hành THU TIỀN – cổ phiếu thưởng/cổ tức cổ phiếu không phải pha loãng, kế hoạch bị hạ, cắt cổ tức, giao dịch bên liên quan lớn, vay nợ lớn, cổ đông lớn bán ra...)"],
  "danh_gia_xu_huong":{"huong":"tot|xau|trung_tinh","ly_do":["tối đa 4 ý"]},
  "nguon":[{"tieu_de":"","ngay":"dd/mm/yyyy"}]}`;
 const RE_DHDCD = /đại hội|đhđcđ|đhcđ|dhdcd|cổ đông|lấy ý kiến/i;
