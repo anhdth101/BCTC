@@ -1154,7 +1154,7 @@ async function fileTuSo(x) {
   try {
     let m = /hsx\.vn\/.*\/(\d+)\/?$/i.exec(u);
     if (m) {
-      const j = await layJson(`https://api.hsx.vn/m/api/v1/1/mediafiles/1/${m[1]}?pageIndex=1&pageSize=20&year=0`, { Accept: 'application/json' }, 10000);
+      const j = await layJson(`https://api.hsx.vn/m/api/v1/1/mediafiles/1/${m[1]}?pageIndex=1&pageSize=20&year=0`, { Accept: 'application/json' }, 6000);
       return ((j && j.data && j.data.list) || []).filter(f => f && /^~?\/Uploads\//i.test(f.filePath || ''))
         .map(f => ({ name: f.fileName, url: 'https://staticfile.hsx.vn' + String(f.filePath).replace(/^~/, '').split('/').map(encodeURIComponent).join('/') }));
     }
@@ -1174,11 +1174,14 @@ const nqCache = new Map();
 async function taiPdf(a, giay) {
   for (const u of [a.url, a.sourceUrl].filter(Boolean)) {
     try {
+      // Hạn giờ áp cho CẢ phần tải nội dung (trước đây chỉ áp tới lúc nhận header: tải chậm từ máy chủ nước ngoài có thể treo tới hết 300 giây).
       const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), giay);
-      const r = await fetch(u, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: ctrl.signal }).finally(() => clearTimeout(t));
-      if (!r.ok || !/pdf|octet/i.test(r.headers.get('content-type') || '')) continue;
-      const b = Buffer.from(await r.arrayBuffer());
-      if (b.slice(0, 4).toString() === '%PDF') return b;
+      try {
+        const r = await fetch(u, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: ctrl.signal });
+        if (!r.ok || !/pdf|octet/i.test(r.headers.get('content-type') || '')) continue;
+        const b = Buffer.from(await r.arrayBuffer());
+        if (b.slice(0, 4).toString() === '%PDF') return b;
+      } finally { clearTimeout(t); }
     } catch (e) { /* thử link kế */ }
   }
   return null;
@@ -1186,19 +1189,19 @@ async function taiPdf(a, giay) {
 // File lớn (> 8 MB) tải lên Gemini Files API rồi tham chiếu, tránh giới hạn kích thước một yêu cầu. File tự xoá sau 48 giờ.
 async function taiLenGemini(buf, ten, key) {
   if (!key) return null;
-  const r = await fetch('https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=media', {
+  const coHan = async (u, o, ms) => { const c = new AbortController(); const t = setTimeout(() => c.abort(), ms); try { const r = await fetch(u, Object.assign({}, o, { signal: c.signal })); return { ok: r.ok, j: r.ok ? await r.json() : null }; } finally { clearTimeout(t); } };
+  const r = await coHan('https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=media', {
     method: 'POST', headers: { 'Content-Type': 'application/pdf', 'x-goog-api-key': key }, body: buf
-  });
-  if (!r.ok) return null;
-  const f = (await r.json()).file;
+  }, 60000);
+  const f = r.ok && r.j && r.j.file;
   if (!f || !f.uri) return null;
-  // Chờ xử lý xong (thường vài giây).
+  // Chờ xử lý xong (thường vài giây), tối đa ~40 giây.
   for (let i = 0; i < 20 && f.state === 'PROCESSING'; i++) {
     await new Promise(x => setTimeout(x, 2000));
-    const g = await fetch(`https://generativelanguage.googleapis.com/v1beta/${f.name}`, { headers: { 'x-goog-api-key': key } });
-    if (g.ok) Object.assign(f, await g.json());
+    const g = await coHan(`https://generativelanguage.googleapis.com/v1beta/${f.name}`, { headers: { 'x-goog-api-key': key } }, 8000).catch(() => ({ ok: false }));
+    if (g.ok) Object.assign(f, g.j);
   }
-  return f.state === 'FAILED' ? null : { fileData: { mimeType: 'application/pdf', fileUri: f.uri }, ten };
+  return f.state === 'ACTIVE' || !f.state ? { fileData: { mimeType: 'application/pdf', fileUri: f.uri }, ten } : null;
 }
 async function cheDoNghiQuyet(body, deadline) {
   const ma = body.ma;

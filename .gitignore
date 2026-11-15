@@ -4,6 +4,7 @@
 !.vercelignore
 !index.html
 !package.json
+!vercel.json
 !api/
 api/*
 !api/analyze.js
