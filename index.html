@@ -218,7 +218,7 @@ footer p{margin:0 0 6px}
       <label for="o-ma-ck" class="o-ma-nhan">Mã cổ phiếu niêm yết</label>
       <div class="hang-ma">
         <input id="o-ma-ck" class="o-chu" maxlength="10" placeholder="VD: HPG, SSB, VIC" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text">
-        <select id="o-ky" class="o-chu" aria-label="Kỳ báo cáo"><option value="nam">Năm gần nhất</option><option value="quy">Quý gần nhất (luỹ kế)</option></select>
+        <input type="hidden" id="o-ky" value="quy">
         <button class="btn chinh" id="nut-lay-ma" type="button">Lấy số liệu</button>
       </div>
       <p class="ghi-chu">Gõ mã để lấy số liệu ngay, không cần file. Có thể tải kèm PDF bên dưới: hệ thống đọc PDF (cả bản scan), so sánh với số liệu theo mã, và vẫn cho kết quả theo mã nếu PDF không đọc được. Chỉ tải PDF mà không gõ mã: hệ thống tự nhận diện mã (theo mã số doanh nghiệp hoặc tên công ty) để lấy giá, định giá và lịch sử xử lý giao dịch.</p>
