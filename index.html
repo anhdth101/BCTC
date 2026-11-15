@@ -2706,7 +2706,7 @@ footer p{margin:0 0 6px}
         `<tr><td title="${esc(x.y_nghia || '')}">${esc(x.ten)}</td><td>${esc(x.gia_tri)}</td><td><span class="nhan ${x.muc}">${x.muc === 'DO' ? 'Cao' : x.muc === 'VANG' ? 'Chú ý' : 'Ổn'}</span></td></tr>`).join('')}</tbody></table></div>
       <p class="phu">${esc(rg.so_phien)} phiên từ ${esc(rg.tu_ngay)} đến ${esc(rg.den_ngay)}, giá đã điều chỉnh cổ tức tiền/cổ phiếu và chia tách (ngày chia cổ phiếu không tính là giảm giá)${(rg.dieu_chinh || []).length ? '. Sự kiện đã điều chỉnh: ' + rg.dieu_chinh.map(esc).join('; ') : ''}. Mức chung: "Cao" khi có từ 2 chỉ tiêu mức cao; "Trung bình" khi có 1 chỉ tiêu cao hoặc từ 2 chỉ tiêu cần chú ý.</p></div>`;
   }
-  // ===== Báo cáo đánh giá nhanh =====
+  // ===== Đánh giá nhanh =====
   const tyDong = v => (E.isNum(v) ? new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v / 1e9) : '–');
   function bangNhieuKyHtml(nk, nhom) {
     if (!nk || !nk.dong) return '<p class="phu">Chưa có bảng nhiều kỳ (chỉ có khi tra theo mã).</p>';
@@ -2743,7 +2743,7 @@ footer p{margin:0 0 6px}
     const PH = { phu_hop: ['XANH', 'Rủi ro chấp nhận được – phù hợp làm tài sản ký quỹ'], than_trong: ['VANG', 'Rủi ro cao hơn mức thông thường – chỉ phù hợp với tỷ lệ ký quỹ thận trọng'], chua_phu_hop: ['DO', 'Rủi ro cao – chưa phù hợp làm tài sản ký quỹ tại thời điểm đánh giá'] };
     const ph = PH[td.muc_phu_hop] || PH.than_trong;
     let h = `<div class="td-dau" style="text-align:center;margin-bottom:10px">
-      <h2 style="margin:6px 0">BÁO CÁO ĐÁNH GIÁ NHANH</h2>
+      <h2 style="margin:6px 0">ĐÁNH GIÁ NHANH</h2>
       <h3 style="margin:0">${esc(mt.ten || hs.ten || '')}${mt.ma ? ` (${esc(ls.san || '')}${ls.san ? ': ' : ''}${esc(mt.ma)})` : ''}</h3>
       <div class="phu">Dữ liệu: ${esc(mt.ten_ky || '')}${mt.ngay ? ' kết thúc ' + esc(mt.ngay) : ''} · ${esc(TT_KT[sl.tinh_trang_kiem_toan] || 'Chưa rõ tình trạng kiểm toán')} · Lập ngày ${esc(new Date().toLocaleDateString('vi-VN'))}</div></div>`;
     h += `<div class="the the-cs ${ph[0]}" style="margin:8px 0;padding:10px 14px">Mức độ phù hợp làm tài sản ký quỹ: <span class="nhan ${ph[0]}">${esc(ph[1])}</span>${td.muc_ghi_chu ? ` <span class="phu">(${esc(td.muc_ghi_chu)})</span>` : ''}</div>`;
@@ -2809,7 +2809,7 @@ footer p{margin:0 0 6px}
     const el = document.getElementById('bao-cao-td');
     if (!el) return;
     const css = 'body{font-family:"Times New Roman";font-size:12pt}table{border-collapse:collapse;width:100%}td,th{border:1px solid #999;padding:3px 5px;font-size:10.5pt;vertical-align:top}th{background:#eee}.so{text-align:right}h2,h3{color:#1f3864}.phu{color:#555;font-size:10pt}.nhan{font-weight:bold}.DO{color:#c00}.VANG{color:#b26b00}.XANH{color:#2e7d32}';
-    const doc = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>Bao cao danh gia nhanh</title><style>${css}</style></head><body>${el.innerHTML.replace(/contenteditable="true"/g, '')}</body></html>`;
+    const doc = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>Danh gia nhanh</title><style>${css}</style></head><body>${el.innerHTML.replace(/contenteditable="true"/g, '')}</body></html>`;
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob(['﻿' + doc], { type: 'application/msword' }));
     a.download = `danh-gia-nhanh-${(st.kq.meta.ma || 'cp').toLowerCase()}-${new Date().toISOString().slice(0, 10)}.doc`;
@@ -2844,7 +2844,7 @@ footer p{margin:0 0 6px}
     $('#pane-danh-gia').innerHTML = `<div class="cong-cu khong-in" style="justify-content:flex-end;margin-bottom:10px">
         <button type="button" class="btn nho" data-viet-danh-gia>${ai ? 'Viết lại' : 'Nhờ AI viết đánh giá'}</button>
         <button type="button" class="btn nho" data-in-danh-gia>In / Lưu PDF khổ A4</button>
-        ${st.thiTruong && !st.demo ? `<button type="button" class="btn nho chinh" data-tham-dinh ${st.dangThamDinh ? 'disabled' : ''}>${st.thamDinh ? 'Lập lại báo cáo đánh giá nhanh' : 'Lập báo cáo đánh giá nhanh'}</button>` : ''}</div>
+        ${st.thiTruong && !st.demo ? `<button type="button" class="btn nho chinh" data-tham-dinh ${st.dangThamDinh ? 'disabled' : ''}>${st.thamDinh ? 'Lập lại đánh giá nhanh' : 'Lập đánh giá nhanh'}</button>` : ''}</div>
       ${trangThai}
       <article class="a4">
         <header><div><h2>${esc(r.tieu_de)}</h2><div class="meta">${esc([mt.ten_ky, mt.ngay ? 'kết thúc ' + mt.ngay : '', mt.ten_chuan, 'Nguồn: ' + nguon].filter(Boolean).join(' · '))}</div></div>
@@ -2852,9 +2852,9 @@ footer p{margin:0 0 6px}
         ${than}
         <div class="chan">${ai ? 'Bản đánh giá do AI viết dựa trên số liệu và kết quả kiểm tra ở các tab khác; hãy đối chiếu con số trước khi dùng.' : 'Bản đánh giá dựng tự động từ số liệu và quy tắc kiểm tra cố định.'} Đây không phải khuyến nghị đầu tư; các cảnh báo là “dấu hiệu đáng ngờ, cần kiểm tra thêm”, không khẳng định gian lận. Lập ngày ${esc(new Date().toLocaleDateString('vi-VN'))}.</div>
       </article>
-      ${st.dangThamDinh ? '<p class="dang-viet khong-in" style="margin-top:14px">Đang lập báo cáo đánh giá nhanh (bảng số liệu + nhận xét từng phần, khoảng 40–90 giây)…</p>' : ''}
-      ${st.loiThamDinh ? `<p class="ghi-chu khong-in" style="margin-top:14px">Chưa lập được báo cáo đánh giá nhanh (${esc(st.loiThamDinh)}). <button type="button" class="btn nho" data-tham-dinh>Thử lại</button></p>` : ''}
-      ${st.thamDinh ? (() => { try { return `<div class="cong-cu khong-in" style="justify-content:flex-end;margin:16px 0 8px"><button type="button" class="btn nho" data-word-tham-dinh>Tải Word (.doc)</button><button type="button" class="btn nho" data-in-tham-dinh>In / Lưu PDF báo cáo</button></div><article class="a4" id="bao-cao-td">${baoCaoThamDinhHtml(st.thamDinh)}</article>`; } catch (e) { return `<p class="ghi-chu">Không dựng được báo cáo: ${esc(e.message)}</p>`; } })() : ''}`;
+      ${st.dangThamDinh ? '<p class="dang-viet khong-in" style="margin-top:14px">Đang lập đánh giá nhanh (bảng số liệu + nhận xét từng phần, khoảng 40–90 giây)…</p>' : ''}
+      ${st.loiThamDinh ? `<p class="ghi-chu khong-in" style="margin-top:14px">Chưa lập được đánh giá nhanh (${esc(st.loiThamDinh)}). <button type="button" class="btn nho" data-tham-dinh>Thử lại</button></p>` : ''}
+      ${st.thamDinh ? (() => { try { return `<div class="cong-cu khong-in" style="justify-content:flex-end;margin:16px 0 8px"><button type="button" class="btn nho" data-word-tham-dinh>Tải Word (.doc)</button><button type="button" class="btn nho" data-in-tham-dinh>In / Lưu PDF đánh giá nhanh</button></div><article class="a4" id="bao-cao-td">${baoCaoThamDinhHtml(st.thamDinh)}</article>`; } catch (e) { return `<p class="ghi-chu">Không dựng được báo cáo: ${esc(e.message)}</p>`; } })() : ''}`;
   }
   // Mỗi lần số liệu đổi (nạp mới, Tính lại, Hoàn nguyên) tăng số phiên; kết quả AI của phiên cũ bị bỏ để không gắn nhầm công ty.
   async function vietDanhGiaAI() {
@@ -3366,12 +3366,12 @@ footer p{margin:0 0 6px}
     if (e.target.closest('[data-tham-dinh]')) lapThamDinh();
     if (e.target.closest('[data-word-tham-dinh]')) taiWordThamDinh();
     if (e.target.closest('[data-in-tham-dinh]')) {
-      // In riêng báo cáo đánh giá nhanh: mở cửa sổ mới chỉ chứa báo cáo.
+      // In riêng đánh giá nhanh: mở cửa sổ mới chỉ chứa báo cáo.
       const el = document.getElementById('bao-cao-td');
       const w = el && window.open('', '_blank');
       if (w) {
         const css = [...document.querySelectorAll('style')].map(s => s.outerHTML).join('');
-        w.document.write(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Báo cáo đánh giá nhanh ${esc(st.kq.meta.ma || '')}</title>${css}<style>body{background:#fff;padding:16px}.khong-in{display:none}</style></head><body><article class="a4">${el.innerHTML.replace(/contenteditable="true"/g, '')}</article></body></html>`);
+        w.document.write(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Đánh giá nhanh ${esc(st.kq.meta.ma || '')}</title>${css}<style>body{background:#fff;padding:16px}.khong-in{display:none}</style></head><body><article class="a4">${el.innerHTML.replace(/contenteditable="true"/g, '')}</article></body></html>`);
         w.document.close(); setTimeout(() => w.print(), 400);
       }
     }

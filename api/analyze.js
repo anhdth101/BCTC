@@ -693,9 +693,9 @@ async function cheDoDanhGia(body, deadline) {
   return { danh_gia: out };
 }
 
-// ===== Báo cáo đánh giá nhanh =====
+// ===== Đánh giá nhanh =====
 // Bảng số liệu do máy tính sẵn và hiển thị nguyên văn; AI chỉ viết phần nhận xét cho từng mục.
-const PROMPT_THAM_DINH = `Bạn là chuyên viên phân tích độc lập, viết BÁO CÁO ĐÁNH GIÁ NHANH về cổ phiếu: đánh giá chất lượng tài chính, rủi ro giá và mức độ phù hợp của cổ phiếu khi dùng làm tài sản ký quỹ.
+const PROMPT_THAM_DINH = `Bạn là chuyên viên phân tích độc lập, viết bản ĐÁNH GIÁ NHANH về cổ phiếu: đánh giá chất lượng tài chính, rủi ro giá và mức độ phù hợp của cổ phiếu khi dùng làm tài sản ký quỹ.
 Văn phong: chuyên nghiệp, thẳng thắn, có phản biện; câu ngắn, có số liệu; đánh dấu dấu hiệu trọng yếu bằng "RED FLAG:" ở đầu ý.
 Không viết như quyết định nội bộ của một công ty chứng khoán: không dùng các cụm "đưa vào danh mục", "tạm dừng cho vay", "phương án cho vay", "đề xuất hội đồng", "yêu cầu doanh nghiệp giải trình".
 QUY TẮC:
@@ -1063,7 +1063,7 @@ function vciTuMa(d, yeuCau) {
     von_gop_nam: (ds('BALANCE_SHEET').years || []).slice().sort((a, b) => b.yearReport - a.yearReport).slice(0, 6)
       .map(r => ({ nam: r.yearReport, v: so(r.bsa80) })).filter(x => x.v !== null && x.v > 0)
   };
-  // Bảng nhiều kỳ cho báo cáo đánh giá nhanh: 3 năm gần nhất + luỹ kế từ đầu năm của quý mới nhất và cùng kỳ năm trước.
+  // Bảng nhiều kỳ cho đánh giá nhanh: 3 năm gần nhất + luỹ kế từ đầu năm của quý mới nhất và cùng kỳ năm trước.
   try { thi_truong.bang_nhieu_ky = bangNhieuKy(ds, timNam, timQuy, namCo, quyCo); } catch (e) { thi_truong.bang_nhieu_ky = null; }
   return {
     du_lieu,
@@ -1639,7 +1639,7 @@ async function cheDoMaCk(body) {
       .map(y => ({ nam: y, gia: typeof cuoiNam[y].adClose === 'number' ? Math.round(cuoiNam[y].adClose * 1000) : null })).filter(x => x.gia);
   } catch (e) { kq.thi_truong.gia_cuoi_nam = []; }
   try { kq.thi_truong.rui_ro_gia = await ruiRoGia(body.ma, kq.thi_truong); } catch (e) { kq.thi_truong.rui_ro_gia = null; }
-  // Hồ sơ doanh nghiệp và cổ đông lớn (VNDirect) cho báo cáo đánh giá nhanh.
+  // Hồ sơ doanh nghiệp và cổ đông lớn (VNDirect) cho đánh giá nhanh.
   try {
     const [jp, jc] = await Promise.all([
       layJson(`${VND_BASE}/company_profiles?q=code:${body.ma}`, VND_H, 6000).catch(() => null),
