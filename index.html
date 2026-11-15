@@ -823,7 +823,7 @@ footer p{margin:0 0 6px}
   const maxMuc = (...m) => m.filter(Boolean).reduce((a, b) => (THU_HANG[b] > THU_HANG[a] ? b : a), 'KHONG_DU_DU_LIEU');
   const boDau = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
 
-  function tinhToan(duLieuTho) {
+  function tinhToan(duLieuTho, thiTruong) {
     const d = duLieuTho && typeof duLieuTho === 'object' ? duLieuTho : {};
     const sl = d.suy_luan || {};
     const hs = isNum(sl.he_so_nhan) && sl.he_so_nhan > 0 ? sl.he_so_nhan : (HE_SO[sl.don_vi_goc] || 1);
@@ -1065,15 +1065,27 @@ footer p{margin:0 0 6px}
     ];
     const soDuLieu = tieuChi.filter(x => x.dat !== null).length;
     const diemF = tieuChi.filter(x => x.dat === true).length;
+    // Nền tài chính yếu (bối cảnh Việt Nam): lỗ luỹ kế lớn so với vốn góp, vốn chủ âm, hoặc kỳ trước lỗ.
+    // F-Score chỉ đo mức cải thiện so với kỳ trước, nên doanh nghiệp đi lên từ đáy rất thấp dễ đạt điểm cao.
+    const vgN = c.von_gop_chu_so_huu.n, lnppN = c.loi_nhuan_sau_thue_chua_phan_phoi.n;
+    const lyLoLuyKe = isNum(lnppN) && lnppN < 0 && isNum(vgN) && vgN > 0 ? -lnppN / vgN : 0;
+    const vcshAm = isNum(VCSH.n) && VCSH.n <= 0;
+    const kyTruocLo = isNum(LNST.t) && LNST.t < 0;
+    const nenYeu = vcshAm || lyLoLuyKe >= 0.5 || kyTruocLo;
     let xepLoai, mucF;
     if (nganhTC) { xepLoai = KAD; mucF = 'KHONG_DU_DU_LIEU'; }
     else if (soDuLieu < 9) { xepLoai = soDuLieu === 0 ? KDL : 'Chưa đủ 9 tiêu chí'; mucF = 'KHONG_DU_DU_LIEU'; }
     else if (diemF >= NGUONG.f_manh) { xepLoai = 'Mạnh'; mucF = 'XANH'; }
     else if (diemF >= NGUONG.f_tb) { xepLoai = 'Trung bình'; mucF = 'VANG'; }
     else { xepLoai = 'Yếu'; mucF = 'DO'; }
+    const ghiF = ['Giản lược: do chỉ có 2 kỳ, ROA và vòng quay tài sản dùng tổng tài sản cuối kỳ cho cả hai kỳ.'];
+    if (!nganhTC && nenYeu && mucF === 'XANH') {
+      xepLoai = 'Cải thiện từ nền yếu'; mucF = 'VANG';
+      ghiF.unshift('Điểm cao chủ yếu do so với kỳ trước rất yếu (' + [vcshAm ? 'vốn chủ sở hữu âm' : '', lyLoLuyKe >= 0.5 ? `lỗ luỹ kế bằng ${fmtPct(lyLoLuyKe, 0)} vốn góp` : '', kyTruocLo ? 'kỳ trước lỗ' : ''].filter(Boolean).join(', ') + '); không xếp loại "Mạnh".');
+    }
     const fScore = {
-      ap_dung: !nganhTC, tieu_chi: tieuChi, diem: diemF, so_du_lieu: soDuLieu, xep_loai: xepLoai, muc_do: mucF,
-      ghi_chu: ['Giản lược: do chỉ có 2 kỳ, ROA và vòng quay tài sản dùng tổng tài sản cuối kỳ cho cả hai kỳ.']
+      ap_dung: !nganhTC, tieu_chi: tieuChi, diem: diemF, so_du_lieu: soDuLieu, xep_loai: xepLoai, muc_do: mucF, nen_yeu: nenYeu,
+      ghi_chu: ghiF
     };
     fScore.giai_thich = soDuLieu ? giaiThich('fscore', fScore) : null;
 
@@ -1493,6 +1505,35 @@ footer p{margin:0 0 6px}
     const blq = tmRaw.giao_dich_ben_lien_quan_dang_ke || {};
     if (blq.co === true) dinhTinh.push({ id: 'ben_lien_quan', ten: 'Giao dịch bên liên quan đáng kể', muc_do: 'THONG_TIN', mo_ta: blq.mo_ta || 'Thuyết minh có giao dịch bên liên quan đáng kể.', trang: isNum(blq.trang) ? blq.trang : null });
     if (boPhan.muc_do === 'DO') dinhTinh.push({ id: 'bo_phan', ten: 'Mảng chính lỗ, lãi nhờ tài chính', muc_do: 'DO', mo_ta: boPhan.mo_ta });
+    // Lỗ luỹ kế / vốn chủ âm. Theo Nghị định 155/2020, lỗ luỹ kế vượt vốn góp chủ sở hữu là trường hợp huỷ niêm yết bắt buộc.
+    if (!nganhTC && (vcshAm || lyLoLuyKe >= 0.2)) {
+      const muc = vcshAm || lyLoLuyKe >= 0.5 ? 'DO' : 'VANG';
+      dinhTinh.push({ id: 'lo_luy_ke', ten: vcshAm ? 'Vốn chủ sở hữu âm' : 'Lỗ luỹ kế lớn', muc_do: muc,
+        mo_ta: `Lợi nhuận chưa phân phối ${fmtTien(lnppN)}, bằng ${fmtPct(-lnppN / vgN, 0)} vốn góp ${fmtTien(vgN)}; vốn chủ sở hữu còn ${fmtTien(VCSH.n)}.`
+          + (lyLoLuyKe >= 1 || vcshAm ? ' Lỗ luỹ kế đã vượt vốn góp: thuộc diện huỷ niêm yết bắt buộc theo Nghị định 155/2020.' : lyLoLuyKe >= 0.5 ? ' Doanh nghiệp đã mất hơn một nửa vốn góp; khó chia cổ tức nhiều năm.' : ' Doanh nghiệp chưa thể chia cổ tức cho tới khi bù hết lỗ.') });
+    }
+
+    // Lịch sử xử lý của Sở giao dịch (chỉ có khi tra theo mã): sự kiện trong 3 năm gần nhất tính vào đèn, cũ hơn chỉ để tham khảo.
+    const lsGd = thiTruong && thiTruong.lich_su_gd;
+    if (lsGd && Array.isArray(lsGd.su_kien) && lsGd.su_kien.length) {
+      const moc = new Date(); moc.setFullYear(moc.getFullYear() - 3);
+      const mocS = moc.toISOString().slice(0, 10);
+      const nang = lsGd.su_kien.filter(x => x.muc === 'DO' || x.muc === 'VANG');
+      const gan = nang.filter(x => x.ngay >= mocS);
+      const nhacNho = lsGd.su_kien.filter(x => x.loai === 'noticed');
+      const dinhDang = x => `${x.ngay.split('-').reverse().join('/')}: ${x.ten}${x.ly_do ? ' – ' + x.ly_do : ''}`;
+      if (gan.length) {
+        const muc = gan.some(x => x.muc === 'DO') ? 'DO' : 'VANG';
+        dinhTinh.push({ id: 'lich_su_gd', ten: muc === 'DO' ? 'Từng bị hạn chế/tạm ngừng giao dịch hoặc huỷ niêm yết (3 năm gần nhất)' : 'Từng bị cảnh báo/kiểm soát hoặc cắt ký quỹ (3 năm gần nhất)', muc_do: muc,
+          mo_ta: gan.slice(0, 6).map(dinhDang).join(' • ') + (gan.length > 6 ? ` • … và ${gan.length - 6} sự kiện khác.` : '') });
+      }
+      const cu = nang.filter(x => x.ngay < mocS);
+      // Từng bị huỷ niêm yết / tạm ngừng / hạn chế giao dịch thì dù đã lâu vẫn là cờ vàng.
+      if (cu.length) dinhTinh.push({ id: 'lich_su_gd_cu', ten: 'Xử lý giao dịch trước đây (hơn 3 năm)', muc_do: cu.some(x => x.muc === 'DO') ? 'VANG' : 'THONG_TIN', mo_ta: cu.slice(0, 4).map(dinhDang).join(' • ') + (cu.length > 4 ? ` • … và ${cu.length - 4} sự kiện khác.` : '') });
+      if (nhacNho.length) dinhTinh.push({ id: 'nhac_nho_cbtt', ten: `Bị Sở giao dịch nhắc nhở ${nhacNho.length} lần`, muc_do: nhacNho.filter(x => x.ngay >= mocS).length >= 3 ? 'VANG' : 'THONG_TIN',
+        mo_ta: nhacNho.slice(0, 4).map(dinhDang).join(' • ') + (nhacNho.length > 4 ? ' • …' : '') });
+    }
+    if (lsGd && lsGd.san === 'UPCOM') dinhTinh.push({ id: 'san_upcom', ten: 'Giao dịch trên UPCOM', muc_do: 'THONG_TIN', mo_ta: 'UPCOM có yêu cầu công bố thông tin và điều kiện tài chính thấp hơn HOSE, HNX.' });
 
     // ===== Tổng hợp =====
     const coDem = [...thuThuat.filter(x => !(x.id === 't11' && mThamKhao)), ...dinhTinh.filter(x => x.muc_do === 'DO' || x.muc_do === 'VANG')];
@@ -2303,7 +2344,7 @@ footer p{margin:0 0 6px}
   function tinhVaVe(tab) {
     st.phien = (st.phien || 0) + 1;
     if (st.dangVietDanhGia && st.dangVietDanhGia !== st.phien) st.dangVietDanhGia = 0;
-    st.kq = E.tinhToan(st.duLieu);
+    st.kq = E.tinhToan(st.duLieu, st.thiTruong);
     veTatCa();
     if (tab) chonTab(tab);
   }

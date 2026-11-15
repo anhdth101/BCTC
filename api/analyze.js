@@ -1059,6 +1059,20 @@ async function cheDoMaCk(body) {
     kq.thi_truong.gia_cuoi_nam = Object.keys(cuoiNam).map(Number).filter(y => y < y0 || String(cuoiNam[y].date).slice(5, 7) === '12')
       .map(y => ({ nam: y, gia: typeof cuoiNam[y].adClose === 'number' ? Math.round(cuoiNam[y].adClose * 1000) : null })).filter(x => x.gia);
   } catch (e) { kq.thi_truong.gia_cuoi_nam = []; }
+  // Lịch sử xử lý của Sở giao dịch: cảnh báo, kiểm soát, hạn chế/tạm ngừng giao dịch, huỷ niêm yết, cắt margin, nhắc nhở.
+  try {
+    const [ev, sk] = await Promise.all([
+      layJson(`${VND_BASE}/events?q=code:${body.ma}~group:stockAlert~locale:VN&sort=effectiveDate:desc&size=100`, VND_H, 10000),
+      layJson(`${VND_BASE}/stocks?q=code:${body.ma}`, VND_H, 8000).catch(() => null)
+    ]);
+    const MUC_GD = { delistedHose: 'DO', delistedHnx: 'DO', delistedUpcom: 'DO', suspend: 'DO', halt: 'DO', control: 'VANG', alert: 'VANG', nomargin: 'VANG', noticed: 'THONG_TIN', eligibleMargin: 'THONG_TIN' };
+    const s0 = sk && sk.data && sk.data[0];
+    kq.thi_truong.lich_su_gd = {
+      san: s0 && s0.floor || '', trang_thai: s0 && s0.status || '',
+      su_kien: (ev && ev.data || []).filter(x => MUC_GD[x.type])
+        .map(x => ({ ngay: String(x.effectiveDate || x.disclosureDate || '').slice(0, 10), loai: x.type, ten: x.typeDesc || x.type, ly_do: String(x.note || '').slice(0, 300), muc: MUC_GD[x.type] }))
+    };
+  } catch (e) { kq.thi_truong.lich_su_gd = null; }
   // Bổ sung tình trạng kiểm toán & hợp nhất/riêng lẻ từ KBS (không bắt buộc).
   try {
     const sl = kq.du_lieu.suy_luan;
