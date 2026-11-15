@@ -1681,7 +1681,7 @@ footer p{margin:0 0 6px}
   };
 
   // ===== Định giá nhanh =====
-  // Giả định mặc định (người dùng sửa được): chi phí vốn chủ 13%, WACC 11%, tăng trưởng dài hạn 3%, P/E tham chiếu theo ngành.
+  // Giả định mặc định (người dùng sửa được): chi phí vốn chủ 13%, WACC 11%, tăng trưởng dài hạn 3%, P/E ngành (giả định) theo ngành.
   function peNganhMacDinh(mt) {
     if (mt.chuan === 'TT49') return 8;
     if (mt.chuan === 'TT210_334') return 12;
@@ -1717,7 +1717,7 @@ footer p{margin:0 0 6px}
     const pp = [];
     const ghiLn = lechNhieu ? `Lợi nhuận 4 quý gần nhất (${fmtTien(tt.lnst_ttm)}) lệch xa bình quân ${ln3.length} năm (${fmtTien(lnBq)}); ${dungBq ? 'đã dùng bình quân để tránh định giá theo đỉnh/đáy chu kỳ' : 'đang dùng 4 quý theo lựa chọn'}.` : '';
     // 1. P/E so sánh
-    if (isNum(eps) && eps > 0) pp.push({ id: 'pe', ten: 'P/E so sánh', gia_tri: eps * gs.pe, cong_thuc: `EPS theo ${tenLn} ${fmtSo(eps)} đồng × P/E tham chiếu ${nf(1).format(gs.pe)}` });
+    if (isNum(eps) && eps > 0) pp.push({ id: 'pe', ten: 'P/E so sánh', gia_tri: eps * gs.pe, cong_thuc: `EPS theo ${tenLn} ${fmtSo(eps)} đồng × P/E ngành (giả định) ${nf(1).format(gs.pe)}` });
     else pp.push({ id: 'pe', ten: 'P/E so sánh', gia_tri: null, ghi_chu: 'Không áp dụng: lợi nhuận 4 quý gần nhất âm hoặc thiếu dữ liệu.' });
     // 2. P/B hợp lý theo ROE: P/B = (ROE − g) / (r − g)
     if (isNum(bvps) && bvps > 0 && isNum(roe) && roe > gs.g && gs.r > gs.g) {
@@ -2451,7 +2451,7 @@ footer p{margin:0 0 6px}
       <tr><td><b>Giá trị tham khảo (bình quân)</b></td><td class="so"><b>${E.isNum(dg.gia_tri_tb) ? esc(E.fmtSo(Math.round(dg.gia_tri_tb / 100) * 100)) : '–'}</b></td>
         <td class="ghi-chu">Giá hiện tại ${esc(E.fmtSo(dg.gia))} đồng${E.isNum(dg.chenh) ? ` – ${dg.chenh < 0 ? 'thấp hơn' : 'cao hơn'} ${esc(E.fmtPct(Math.abs(dg.chenh), 0))}` : ''}</td></tr>
       </tbody></table></div>
-      <p class="ghi-chu" style="margin:4px 0 0">Giả định cố định: lợi suất kỳ vọng ${esc(pct(gs.r))}%/năm, tăng trưởng dài hạn ${esc(pct(gs.g))}%, tăng trưởng 5 năm tới ${esc(pct(gs.g5))}% (theo lịch sử lợi nhuận), P/E tham chiếu ngành ${esc(new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(gs.pe))}. Định giá nhanh tự tính từ số liệu, chỉ để tham khảo; không phải khuyến nghị mua bán.</p>`;
+      <p class="ghi-chu" style="margin:4px 0 0">Giả định cố định: lợi suất kỳ vọng ${esc(pct(gs.r))}%/năm, tăng trưởng dài hạn ${esc(pct(gs.g))}%, tăng trưởng 5 năm tới ${esc(pct(gs.g5))}% (theo lịch sử lợi nhuận), P/E ngành (giả định) ${esc(new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(gs.pe))}. Định giá nhanh tự tính từ số liệu, chỉ để tham khảo; không phải khuyến nghị mua bán.</p>`;
   }
   const MAU_XEP = { 'Tích cực': 'XANH', 'Trung tính': 'VANG', 'Trung tính, cần thận trọng': 'VANG', 'Thận trọng': 'VANG', 'Rủi ro cao': 'DO' };
   function veDanhGia() {
