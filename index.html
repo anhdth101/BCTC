@@ -2631,7 +2631,7 @@ footer p{margin:0 0 6px}
       if (ls.ngay_niem_yet) { const thang = (Date.now() - new Date(ls.ngay_niem_yet).getTime()) / (30.44 * 864e5); them('Niêm yết/đăng ký giao dịch ≥ 6 tháng', `từ ${String(ls.ngay_niem_yet).split('-').reverse().join('/')} (${Math.floor(thang)} tháng)`, thang >= 6); }
     }
     const rg = tt.rui_ro_gia;
-    if (rg && E.isNum(rg.gt20)) them('Thanh khoản: giá trị khớp bình quân 20 phiên ≥ 1 tỷ', E.fmtTien(rg.gt20), rg.gt20 >= 1e9, 'Thanh khoản thấp: khó bán giải chấp khi cần.');
+    if (rg && E.isNum(rg.kl20)) them('Thanh khoản: khối lượng khớp lệnh trung bình 20 phiên ≥ 100.000 CP', `${E.fmtSo(Math.round(rg.kl20))} CP/phiên`, rg.kl20 >= 100000, 'Khối lượng thấp: khó bán giải chấp khi cần.');
     const ocf = (tt.fcf_nam || []).slice().sort((a, b) => b.nam - a.nam).slice(0, 4).filter(x => E.isNum(x.ocf));
     if (ocf.length >= 3) { const am = ocf.filter(x => x.ocf < 0).length; them(`Dòng tiền kinh doanh không âm kéo dài (${ocf.length} năm)`, ocf.slice().reverse().map(x => `${x.nam}: ${E.fmtTien(x.ocf)}`).join('; '), am < 2, am >= 2 ? `Âm ${am}/${ocf.length} năm: lãi trên sổ sách nhưng không thu được tiền.` : ''); }
     // Dấu hiệu thêm: áp lực đáo hạn nợ vay, dự phòng đi ngược biến động tài sản.

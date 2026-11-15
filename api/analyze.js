@@ -716,7 +716,8 @@ Trả về đúng một JSON:
  "su_kien": ["tối đa 6 sự kiện doanh nghiệp đáng chú ý từ nghị quyết/kế hoạch/phát hành/cổ tức"],
  "nhan_xet_dinh_gia": "2–3 câu về P/E, P/B (dùng số sau điều chỉnh nếu có)",
  "rui_ro": {"thi_truong": ["..."], "thanh_khoan": ["thanh khoản doanh nghiệp và cổ phiếu"], "pha_loang": ["..."], "noi_tai": ["đánh số ①②③... các rủi ro nội tại trọng yếu"], "nganh": ["..."], "quan_tri_co_dong": ["cấu trúc sở hữu, bên liên quan, người nội bộ"]},
- "bang_tong_hop": [{"tieu_chi": "Sức khỏe tài chính|Chất lượng tài sản|Chất lượng nguồn vốn|Dòng tiền|Thanh khoản DN|Quản trị DN|Thanh khoản CP", "danh_gia": "1 câu có số", "muc": "THẤP|TRUNG BÌNH|TRUNG BÌNH CAO|CAO"}],
+ "bang_tong_hop": [{"tieu_chi": "Sức khỏe tài chính|Chất lượng tài sản|Chất lượng nguồn vốn|Dòng tiền|Thanh khoản DN|Quản trị DN|Thanh khoản CP", "danh_gia": "1 câu có số", "muc_rui_ro": "THẤP|TRUNG BÌNH|TRUNG BÌNH CAO|CAO"}],
+ (muc_rui_ro là MỨC RỦI RO, KHÔNG phải mức chất lượng: tình trạng XẤU → rủi ro CAO; tình trạng TỐT → rủi ro THẤP. Ví dụ: CFO âm nhiều năm → Dòng tiền: CAO; tiền mặt dồi dào, nợ thấp → Thanh khoản DN: THẤP.)
  "uu_diem": ["3–6 ý"], "nhuoc_diem": ["3–6 ý"],
  "ket_luan": "3–5 câu",
  "muc_phu_hop": "phu_hop | than_trong | chua_phu_hop  (mức độ phù hợp làm tài sản ký quỹ tại thời điểm đánh giá)"}`;
@@ -735,11 +736,19 @@ async function cheDoThamDinh(body, deadline) {
     nhan_xet_dinh_gia: toStr(j.nhan_xet_dinh_gia, 900),
     rui_ro: Object.fromEntries(['thi_truong', 'thanh_khoan', 'pha_loang', 'noi_tai', 'nganh', 'quan_tri_co_dong'].map(k => [k, ds(r[k], k === 'noi_tai' ? 12 : 6)])),
     bang_tong_hop: (Array.isArray(j.bang_tong_hop) ? j.bang_tong_hop : []).slice(0, 10).filter(x => x && typeof x === 'object')
-      .map(x => ({ tieu_chi: toStr(x.tieu_chi, 60), danh_gia: toStr(x.danh_gia, 300), muc: MUC.includes(String(x.muc).toUpperCase()) ? String(x.muc).toUpperCase() : 'TRUNG BÌNH' })),
+      .map(x => { const m = String(x.muc_rui_ro || x.muc || '').normalize('NFC').trim().toUpperCase(); return { tieu_chi: toStr(x.tieu_chi, 60), danh_gia: toStr(x.danh_gia, 300), muc: MUC.includes(m) ? m : 'TRUNG BÌNH' }; }),
     uu_diem: ds(j.uu_diem, 8), nhuoc_diem: ds(j.nhuoc_diem, 8), ket_luan: toStr(j.ket_luan, 1500),
     muc_phu_hop: toEnum(String(j.muc_phu_hop || '').trim(), ['phu_hop', 'than_trong', 'chua_phu_hop'], 'than_trong')
   };
   if (!out.ket_luan && !out.nhan_xet_kqkd.length) throw loiCo(502, 'bad_json');
+  // Mức rủi ro tối thiểu theo tiêu chí đã tính (tránh AI ghi "THẤP" cho chỉ tiêu đang xấu).
+  const tcs = ((body.tom_tat || {}).tieu_chi_ky_quy || {}).tieu_chi;
+  const khongDatTc = re => Array.isArray(tcs) && tcs.some(s => typeof s === 'string' && re.test(s) && /KHÔNG ĐẠT/.test(s));
+  const SAN = [[/dòng tiền/i, /Dòng tiền kinh doanh/i, 'TRUNG BÌNH CAO'], [/thanh khoản cp|thanh khoản cổ phiếu/i, /Thanh khoản: khối lượng khớp/i, 'CAO'],
+    [/quản trị/i, /cảnh báo\/kiểm soát/i, 'TRUNG BÌNH CAO'], [/chất lượng tài sản/i, /Phải thu \+ Đầu tư tài chính/i, 'TRUNG BÌNH CAO'], [/sức khỏe|sức khoẻ/i, /Lợi nhuận sau thuế dương/i, 'TRUNG BÌNH CAO']];
+  out.bang_tong_hop.forEach(x => SAN.forEach(([reTen, reTc, toiThieu]) => {
+    if (reTen.test(x.tieu_chi) && khongDatTc(reTc) && MUC.indexOf(x.muc) < MUC.indexOf(toiThieu)) x.muc = toiThieu;
+  }));
   // Chặn cứng: không đạt ≥2 tiêu chí ký quỹ, rủi ro giá "Cao" hoặc rủi ro cấu trúc mức đỏ thì không được khuyến nghị tỷ lệ tiêu chuẩn.
   const tt = body.tom_tat || {};
   const khongDat = tt.tieu_chi_ky_quy && Number(tt.tieu_chi_ky_quy.so_khong_dat) || 0;
@@ -1183,7 +1192,7 @@ async function layKbsKy(ma, laNam, Y, Q) {
 async function ruiRoGia(ma, tt) {
   const tu = new Date(); tu.setFullYear(tu.getFullYear() - 1); const tuS = tu.toISOString().slice(0, 10);
   const [js, ji, jev] = await Promise.all([
-    layJson(`${VND_BASE}/stock_prices?sort=date&q=code:${ma}~date:gte:${tuS}&size=400&fields=date,adClose,close,floorPrice,ceilingPrice,nmValue`, VND_H, 10000),
+    layJson(`${VND_BASE}/stock_prices?sort=date&q=code:${ma}~date:gte:${tuS}&size=400&fields=date,adClose,close,floorPrice,ceilingPrice,nmValue,nmVolume`, VND_H, 10000),
     layJson(`${VND_BASE}/vnmarket_prices?sort=date&q=code:VNINDEX~date:gte:${tuS}&size=400&fields=date,close`, VND_H, 10000).catch(() => null),
     layJson(`${VND_BASE}/events?q=code:${ma}~type:DIVIDEND,STOCKDIV,KINDDIV,RIGHT~effectiveDate:gte:${tuS}&sort=effectiveDate:desc&size=20`, VND_H, 8000).catch(() => null)
   ]);
@@ -1208,7 +1217,9 @@ async function ruiRoGia(ma, tt) {
   const san60 = g60.filter(x => so(x.floorPrice) && so(x.close) && x.close <= x.floorPrice + 1e-6).length;
   const tran60 = g60.filter(x => so(x.ceilingPrice) && so(x.close) && x.close >= x.ceilingPrice - 1e-6).length;
   const tb = a => (a.length ? a.reduce((s, x) => s + x, 0) / a.length : null);
-  const gt20 = tb(d.slice(-20).map(x => so(x.nmValue) || 0)), gt1y = tb(d.map(x => so(x.nmValue) || 0));
+  const gt20 = tb(d.slice(-20).map(x => so(x.nmValue) || 0));
+  // Thanh khoản tính theo KHỐI LƯỢNG khớp lệnh bình quân (cổ phiếu/phiên).
+  const kl20 = tb(d.slice(-20).map(x => so(x.nmVolume) || 0)), kl1y = tb(d.map(x => so(x.nmVolume) || 0));
   // Beta: hồi quy lợi suất ngày của cổ phiếu theo VN-Index trên các ngày trùng nhau.
   const cap = []; for (let i = 1; i < n; i++) { const a = idx[d[i].date], b = idx[d[i - 1].date]; if (a && b) cap.push([ret[i - 1], a / b - 1]); }
   let beta = null;
@@ -1218,7 +1229,6 @@ async function ruiRoGia(ma, tt) {
   const lsI = (k) => (n > k && ids[n - 1] && ids[n - 1 - k] ? ids[n - 1] / ids[n - 1 - k] - 1 : null);
   const ky = [['1 tháng', 20], ['3 tháng', 60], ['6 tháng', 120], ['1 năm', n - 1]].map(([ten, k]) => ({ ten, cp: lsK(k), vnindex: lsI(k) }));
   const pct = v => (v === null ? '–' : (v * 100).toFixed(1).replace('.', ',') + '%');
-  const ty = v => (v / 1e9).toFixed(1).replace('.', ',') + ' tỷ';
   const chi = [];
   const them = (id, ten, gia_tri, muc, y) => chi.push({ id, ten, gia_tri, muc, y_nghia: y });
   // Mọi số dưới đây dùng giá ĐÃ ĐIỀU CHỈNH cổ tức tiền/cổ phiếu, chia tách (adClose): ngày chia cổ tức cổ phiếu không bị tính là giảm giá.
@@ -1226,7 +1236,8 @@ async function ruiRoGia(ma, tt) {
   them('bien_dong', 'Độ dao động giá (không phải mức tăng/giảm)', `${pct(vol1y)}/năm, tức giá thường lên xuống khoảng ±${pct(daoDongNgay)} mỗi phiên (3 tháng gần nhất ${pct(vol3m)}/năm)`, vol1y > 0.55 || vol3m > 0.65 ? 'DO' : vol1y > 0.35 || vol3m > 0.45 ? 'VANG' : 'XANH', 'Độ lệch chuẩn lợi suất ngày × √250. Cổ phiếu lớn ổn định thường 20–35%/năm. Đây là mức dao động, không phải giá đã giảm bao nhiêu.');
   them('sut_giam', 'Mức giảm sâu nhất từ đỉnh (1 năm)', `${pct(-mdd)} (từ ${ngayVN(d[mddTu].date)} đến ${ngayVN(d[mddDen].date)}); hiện thấp hơn đỉnh 1 năm (${ngayVN(d[iMax].date)}) ${pct(-tuDinh)}`, mdd > 0.5 ? 'DO' : mdd > 0.3 ? 'VANG' : 'XANH', 'Mức mất giá từ đỉnh xuống đáy mà người mua ở đỉnh đã chịu (giá đã điều chỉnh cổ tức, chia cổ phiếu).');
   them('giam_san', 'Phiên giảm sàn / tăng trần (60 phiên)', `${san60} sàn / ${tran60} trần`, san60 >= 3 ? 'DO' : san60 >= 1 ? 'VANG' : 'XANH', 'Giảm sàn liên tiếp thường là dấu hiệu bán tháo, khó thoát hàng.');
-  them('thanh_khoan', 'Giá trị khớp lệnh bình quân 20 phiên', `${ty(gt20)} (bình quân 1 năm ${ty(gt1y)})`, gt20 < 1e9 ? 'DO' : gt20 < 5e9 ? 'VANG' : 'XANH', 'Thanh khoản thấp: khó mua/bán khối lượng lớn mà không đẩy giá.');
+  const kl = v => new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(Math.round(v)) + ' CP';
+  them('thanh_khoan', 'Khối lượng khớp lệnh trung bình 20 phiên', `${kl(kl20)}/phiên (trung bình 1 năm ${kl(kl1y)}/phiên)`, kl20 < 100000 ? 'DO' : kl20 < 500000 ? 'VANG' : 'XANH', 'Khối lượng thấp: khó mua/bán số lượng lớn mà không đẩy giá, khó bán giải chấp khi cần. Dưới 100.000 CP/phiên: cao; dưới 500.000 CP/phiên: cần chú ý.');
   if (beta !== null) them('beta', 'Beta so với VN-Index (1 năm)', beta.toFixed(2).replace('.', ','), beta > 1.5 ? 'VANG' : 'XANH', 'Beta > 1: giá dao động mạnh hơn thị trường.');
   const k6 = ky[2], k12 = ky[3];
   const kemTt = k6.cp !== null && k6.vnindex !== null ? k6.cp - k6.vnindex : null;
@@ -1234,7 +1245,7 @@ async function ruiRoGia(ma, tt) {
     (k12.cp !== null && k12.cp < -0.4) || (kemTt !== null && kemTt < -0.4) ? 'DO' : (kemTt !== null && kemTt < -0.2) || (k12.cp !== null && k12.cp < -0.2) ? 'VANG' : 'XANH', 'Kém thị trường kéo dài thường phản ánh tin xấu riêng của doanh nghiệp.');
   const nDo = chi.filter(x => x.muc === 'DO').length, nVang = chi.filter(x => x.muc === 'VANG').length;
   const muc = nDo >= 2 ? 'Cao' : nDo === 1 || nVang >= 2 ? 'Trung bình' : 'Thấp';
-  return { muc, chi_so: chi, dieu_chinh: dieuChinh, so_phien: n, tu_ngay: d[0].date, den_ngay: d[n - 1].date, vol1y, mdd, tu_dinh: tuDinh, san60, gt20, beta, ky };
+  return { muc, chi_so: chi, dieu_chinh: dieuChinh, so_phien: n, tu_ngay: d[0].date, den_ngay: d[n - 1].date, vol1y, mdd, tu_dinh: tuDinh, san60, gt20, kl20, kl1y, beta, ky };
 }
 
 // ===== Nghị quyết Đại hội đồng cổ đông (thường niên, bất thường, lấy ý kiến bằng văn bản) =====
