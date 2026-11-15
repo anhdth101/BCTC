@@ -650,7 +650,6 @@ QUY TẮC BẮT BUỘC:
 - Viết câu gọn, không lặp từ (ví dụ "pha loãng pha loãng").
 - "tieu_chi_ky_quy": các tiêu chí định lượng khi thẩm định cổ phiếu cho vay ký quỹ (đã tính sẵn) và "dau_hieu" cần soi thêm. Tiêu chí KHÔNG ĐẠT phải nêu trong rui_ro; dùng chúng khi kết luận mức rủi ro.
 - Phân tích theo cách của phòng quản lý rủi ro: xét lần lượt rủi ro thị trường của cổ phiếu, thanh khoản của doanh nghiệp (tiền + đầu tư ngắn hạn so với nợ ngắn hạn, đáo hạn nợ vay) và của cổ phiếu, pha loãng, rủi ro nội tại (dòng tiền, chất lượng tài sản, bên liên quan, kế toán), rủi ro ngành, quản trị/cổ đông. Ưu tiên nêu: lãi mà dòng tiền kinh doanh âm nhiều năm; phải thu/tồn kho tăng ngược chiều doanh thu; dự phòng không tăng theo; vay ngắn hạn tăng đột biến hoặc nợ dài hạn chuyển hết sang ngắn hạn; tài sản chủ yếu là phải thu/cho vay bên liên quan.
-- "dieu_kien_thay_doi": điều gì xảy ra sẽ làm kết luận tốt lên / xấu đi (cụ thể, đo được).
 - Cổ phiếu thưởng / cổ tức bằng cổ phiếu KHÔNG phải pha loãng và KHÔNG phải rủi ro: không thu tiền, tổng giá trị và tỷ lệ sở hữu giữ nguyên, giá tự điều chỉnh. Chỉ phát hành THU TIỀN (chào bán, riêng lẻ, ESOP, chuyển đổi) mới là pha loãng. Không nêu chia thưởng trong rui_ro.
 
 Trả về đúng một JSON:
@@ -662,7 +661,6 @@ Trả về đúng một JSON:
  "thu_tuc_can_lam": ["tối đa 4 việc cụ thể nhà đầu tư/kiểm toán viên nên kiểm tra thêm"],
  "dinh_gia": "1–2 câu về định giá nếu dữ liệu có giá thị trường, ngược lại để chuỗi rỗng",
  "muc_rui_ro_co_phieu": {"muc": "Cao|Trung bình|Thấp", "ly_do": ["tối đa 4 ý có số liệu: rủi ro cơ bản (lỗ, vốn chủ, pha loãng, kiểm toán) và rủi ro giá (biến động, sụt giảm, thanh khoản)"]},
- "dieu_kien_thay_doi": {"tich_cuc": ["tối đa 3 điều kiện làm kết luận tốt lên"], "tieu_cuc": ["tối đa 3 điều kiện làm kết luận xấu đi"]},
  "ket_luan": "2–3 câu kết luận thẳng thắn"}`;
 
 async function cheDoDanhGia(body, deadline) {
@@ -676,8 +674,7 @@ async function cheDoDanhGia(body, deadline) {
     xep_hang: XH.includes(j.xep_hang) ? j.xep_hang : 'Trung tính',
     tom_tat: toStr(j.tom_tat, 900), diem_manh: ds(j.diem_manh, 4), rui_ro: ds(j.rui_ro, 5),
     goc_nhin_kiem_toan: ds(j.goc_nhin_kiem_toan, 4), thu_tuc_can_lam: ds(j.thu_tuc_can_lam, 4),
-    dinh_gia: toStr(j.dinh_gia, 600), ket_luan: toStr(j.ket_luan, 900),
-    dieu_kien_thay_doi: j.dieu_kien_thay_doi && typeof j.dieu_kien_thay_doi === 'object' ? { tich_cuc: ds(j.dieu_kien_thay_doi.tich_cuc, 3), tieu_cuc: ds(j.dieu_kien_thay_doi.tieu_cuc, 3) } : null
+    dinh_gia: toStr(j.dinh_gia, 600), ket_luan: toStr(j.ket_luan, 900)
   };
   if (!out.tom_tat && !out.rui_ro.length) throw loiCo(502, 'bad_json');
   // Chặn cứng: rủi ro cấu trúc không cho xếp hạng đẹp dù AI viết gì.
@@ -722,8 +719,7 @@ Trả về đúng một JSON:
  "uu_diem": ["3–6 ý"], "nhuoc_diem": ["3–6 ý"],
  "ket_luan": "3–5 câu",
  "khuyen_nghi": "1 trong: Đưa vào danh mục với tỷ lệ tiêu chuẩn | Đưa vào danh mục với tỷ lệ ký quỹ cao hơn tiêu chuẩn và hạn mức hạn chế | Chưa đưa vào danh mục / tạm dừng cho vay",
- "bien_phap": ["3–5 biện pháp giảm thiểu rủi ro / việc cần yêu cầu doanh nghiệp giải trình"],
- "dieu_kien_thay_doi": {"tich_cuc": ["..."], "tieu_cuc": ["..."]}}`;
+ "bien_phap": ["3–5 biện pháp giảm thiểu rủi ro / việc cần yêu cầu doanh nghiệp giải trình"]}`;
 async function cheDoThamDinh(body, deadline) {
   const parts = [{ text: 'DỮ LIỆU (JSON):\n' + JSON.stringify(body.tom_tat) }];
   const txt = await goiGemini({ parts, system: PROMPT_THAM_DINH, json: true, maxOut: 16384, thinking: 'low' }, deadline);
@@ -741,8 +737,7 @@ async function cheDoThamDinh(body, deadline) {
     bang_tong_hop: (Array.isArray(j.bang_tong_hop) ? j.bang_tong_hop : []).slice(0, 10).filter(x => x && typeof x === 'object')
       .map(x => ({ tieu_chi: toStr(x.tieu_chi, 60), danh_gia: toStr(x.danh_gia, 300), muc: MUC.includes(String(x.muc).toUpperCase()) ? String(x.muc).toUpperCase() : 'TRUNG BÌNH' })),
     uu_diem: ds(j.uu_diem, 8), nhuoc_diem: ds(j.nhuoc_diem, 8), ket_luan: toStr(j.ket_luan, 1500), khuyen_nghi: toStr(j.khuyen_nghi, 200),
-    bien_phap: ds(j.bien_phap, 6),
-    dieu_kien_thay_doi: j.dieu_kien_thay_doi && typeof j.dieu_kien_thay_doi === 'object' ? { tich_cuc: ds(j.dieu_kien_thay_doi.tich_cuc, 4), tieu_cuc: ds(j.dieu_kien_thay_doi.tieu_cuc, 4) } : { tich_cuc: [], tieu_cuc: [] }
+    bien_phap: ds(j.bien_phap, 6)
   };
   if (!out.ket_luan && !out.nhan_xet_kqkd.length) throw loiCo(502, 'bad_json');
   // Chặn cứng: không đạt ≥2 tiêu chí ký quỹ, rủi ro giá "Cao" hoặc rủi ro cấu trúc mức đỏ thì không được khuyến nghị tỷ lệ tiêu chuẩn.

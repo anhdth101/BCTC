@@ -2793,8 +2793,6 @@ footer p{margin:0 0 6px}
     h += `<div class="hai-cot"><div><p><b>Ưu điểm</b></p>${ul(td.uu_diem)}</div><div><p><b>Nhược điểm & rủi ro</b></p>${ul(td.nhuoc_diem)}</div></div>`;
     h += `<p><b>Kết luận:</b> ${esc(td.ket_luan)}</p><p><b>Khuyến nghị:</b> ${esc(td.khuyen_nghi)}</p>`;
     h += `<p><b>Biện pháp phòng ngừa, giảm thiểu rủi ro / yêu cầu giải trình</b></p>${ul(td.bien_phap)}`;
-    const dk = td.dieu_kien_thay_doi || {};
-    h += `<div class="hai-cot"><div><p><b>Điều kiện làm kết luận tích cực hơn</b></p>${ul(dk.tich_cuc)}</div><div><p><b>Điều kiện làm kết luận tiêu cực hơn</b></p>${ul(dk.tieu_cuc)}</div></div>`;
     h += `<div class="chan">Bảng số liệu tính tự động từ dữ liệu công bố theo mã; phần nhận xét do AI viết dựa trên các số liệu đó. Thông tin chỉ có trong thuyết minh BCTC (cho vay cá nhân, vay ngoài ngân hàng, chi tiết bên liên quan, tài sản đảm bảo) cần bổ sung từ BCTC gốc. Người thẩm định chịu trách nhiệm đối chiếu trước khi trình duyệt.</div>`;
     return h;
   }
@@ -2837,8 +2835,7 @@ footer p{margin:0 0 6px}
         ${khoiMucRuiRo(ai.muc_rui_ro_co_phieu)}
         ${bangDinhGia(r.dinh_gia)}
         ${ai.dinh_gia ? `<p>${esc(ai.dinh_gia)}</p>` : ''}
-        <h3>Kết luận</h3><p>${esc(ai.ket_luan)}</p>
-        ${ai.dieu_kien_thay_doi && (ai.dieu_kien_thay_doi.tich_cuc.length || ai.dieu_kien_thay_doi.tieu_cuc.length) ? `<div class="hai-cot"><div>${ds('Điều kiện làm kết luận tốt lên', ai.dieu_kien_thay_doi.tich_cuc)}</div><div>${ds('Điều kiện làm kết luận xấu đi', ai.dieu_kien_thay_doi.tieu_cuc)}</div></div>` : ''}`;
+        <h3>Kết luận</h3><p>${esc(ai.ket_luan)}</p>`;
     } else {
       than = `<p>${r.tom_tat.map(esc).join(' ')}</p>
         <div class="hai-cot"><div>${ds('Điểm mạnh', r.manh)}</div><div>${ds('Rủi ro & điểm yếu', r.yeu)}</div></div>
