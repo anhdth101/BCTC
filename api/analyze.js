@@ -644,7 +644,7 @@ QUY TẮC BẮT BUỘC:
 - "nghi_quyet_dhdcd": kế hoạch và quyết định đã được cổ đông thông qua. Đánh giá nhanh: tiến độ thực hiện kế hoạch (tien_do_ke_hoach), kế hoạch có hợp lý so với kết quả thực tế không, cổ tức tiền mặt có tương xứng dòng tiền không, phát hành thu tiền (chào bán, riêng lẻ, ESOP) gây pha loãng bao nhiêu, đầu tư/M&A/vay nợ lớn so với quy mô. Nêu trong rui_ro/diem_manh/ket_luan khi đáng kể.
   Nếu có "kich_ban_von_chu" (giá trị sổ sách/cổ phiếu sau khi ghi nhận lỗ/dự phòng kế hoạch còn lại và sau phát hành thêm, đã tính sẵn): báo cáo tài chính hiện tại có thể CHƯA phản ánh khoản lỗ này – phải nêu ĐẦU TIÊN trong rui_ro và tom_tat, dùng P/B theo giá trị sổ sách sau điều chỉnh thay cho P/B hiện tại khi nhận xét định giá. Tham khảo "danh_gia_xu_huong" nhưng tự kiểm tra lại bằng số liệu.
 - Có bất kỳ mục nào trong rui_ro_cau_truc thì KHÔNG được xếp "Tích cực"; có mục mức "DO" thì xếp "Rủi ro cao" hoặc "Thận trọng".
-- "rui_ro_gia": số liệu giá 1 năm đã tính sẵn (biến động, sụt giảm lớn nhất, phiên giảm sàn, thanh khoản, beta, diễn biến so với VN-Index) và mức theo quy tắc ("muc"). Kết hợp với rui_ro_cau_truc, kich_ban_von_chu, lich_su_giao_dich để kết luận KHÁCH QUAN cổ phiếu này có phải cổ phiếu rủi ro không, trong "muc_rui_ro_co_phieu". Không được hạ thấp hơn mức theo quy tắc; giá giảm mạnh KHÔNG tự động là "rẻ" – phải đối chiếu với giá trị sổ sách sau điều chỉnh và lý do giảm.
+- "rui_ro_gia": số liệu giá 1 năm đã tính sẵn (biến động, sụt giảm lớn nhất, phiên giảm sàn, thanh khoản, beta, diễn biến so với VN-Index) và mức theo quy tắc ("muc"). Kết hợp với rui_ro_cau_truc, kich_ban_von_chu, lich_su_giao_dich để kết luận KHÁCH QUAN cổ phiếu này có phải cổ phiếu rủi ro không, trong "muc_rui_ro_co_phieu". Không được hạ thấp hơn mức theo quy tắc; giá giảm mạnh KHÔNG tự động là "rẻ" – phải đối chiếu với giá trị sổ sách sau điều chỉnh và lý do giảm. Số liệu giá đã điều chỉnh cổ tức tiền/cổ phiếu và chia tách: KHÔNG nói giá "giảm 50%" chỉ vì chia cổ tức cổ phiếu 1:1; "Độ dao động giá" là mức biến động, không phải mức giảm.
 
 Trả về đúng một JSON:
 {"xep_hang": "Tích cực|Trung tính|Thận trọng|Rủi ro cao",
@@ -1079,10 +1079,14 @@ async function layKbsKy(ma, laNam, Y, Q) {
 // ===== Rủi ro giá cổ phiếu: biến động, sụt giảm, giảm sàn, thanh khoản, beta so với VN-Index (1 năm giá ngày) =====
 async function ruiRoGia(ma, tt) {
   const tu = new Date(); tu.setFullYear(tu.getFullYear() - 1); const tuS = tu.toISOString().slice(0, 10);
-  const [js, ji] = await Promise.all([
+  const [js, ji, jev] = await Promise.all([
     layJson(`${VND_BASE}/stock_prices?sort=date&q=code:${ma}~date:gte:${tuS}&size=400&fields=date,adClose,close,floorPrice,ceilingPrice,nmValue`, VND_H, 10000),
-    layJson(`${VND_BASE}/vnmarket_prices?sort=date&q=code:VNINDEX~date:gte:${tuS}&size=400&fields=date,close`, VND_H, 10000).catch(() => null)
+    layJson(`${VND_BASE}/vnmarket_prices?sort=date&q=code:VNINDEX~date:gte:${tuS}&size=400&fields=date,close`, VND_H, 10000).catch(() => null),
+    layJson(`${VND_BASE}/events?q=code:${ma}~type:DIVIDEND,STOCKDIV,KINDDIV,RIGHT~effectiveDate:gte:${tuS}&sort=effectiveDate:desc&size=20`, VND_H, 8000).catch(() => null)
   ]);
+  // Sự kiện làm giá tham chiếu điều chỉnh (cổ tức tiền/cổ phiếu, quyền mua): hiển thị để người xem hiểu vì sao giá khớp lệnh "giảm" mà giá điều chỉnh không giảm.
+  const dieuChinh = ((jev && jev.data) || []).filter(e => /[à-ỹđ]/i.test(e.note || '')).slice(0, 5)
+    .map(e => `${String(e.effectiveDate || '').slice(0, 10)}: ${String(e.note || e.type).slice(0, 120)}`);
   const so = v => (typeof v === 'number' && isFinite(v) ? v : null);
   const d = ((js && js.data) || []).filter(x => so(x.adClose) > 0).sort((a, b) => String(a.date).localeCompare(String(b.date)));
   if (d.length < 60) return null;
@@ -1110,8 +1114,10 @@ async function ruiRoGia(ma, tt) {
   const ty = v => (v / 1e9).toFixed(1).replace('.', ',') + ' tỷ';
   const chi = [];
   const them = (id, ten, gia_tri, muc, y) => chi.push({ id, ten, gia_tri, muc, y_nghia: y });
-  them('bien_dong', 'Biến động giá (năm hoá)', `${pct(vol1y)} (3 tháng gần nhất ${pct(vol3m)})`, vol1y > 0.55 || vol3m > 0.65 ? 'DO' : vol1y > 0.35 || vol3m > 0.45 ? 'VANG' : 'XANH', 'Độ lệch chuẩn lợi suất ngày × √250; cổ phiếu lớn ổn định thường 20–35%.');
-  them('sut_giam', 'Sụt giảm lớn nhất trong 1 năm', `${pct(-mdd)}; hiện cách đỉnh 1 năm ${pct(tuDinh)}`, mdd > 0.5 ? 'DO' : mdd > 0.3 ? 'VANG' : 'XANH', 'Mức mất giá từ đỉnh xuống đáy mà người mua ở đỉnh đã chịu.');
+  // Mọi số dưới đây dùng giá ĐÃ ĐIỀU CHỈNH cổ tức tiền/cổ phiếu, chia tách (adClose): ngày chia cổ tức cổ phiếu không bị tính là giảm giá.
+  const daoDongNgay = vol1y / Math.sqrt(250);
+  them('bien_dong', 'Độ dao động giá (không phải mức tăng/giảm)', `${pct(vol1y)}/năm, tức giá thường lên xuống khoảng ±${pct(daoDongNgay)} mỗi phiên (3 tháng gần nhất ${pct(vol3m)}/năm)`, vol1y > 0.55 || vol3m > 0.65 ? 'DO' : vol1y > 0.35 || vol3m > 0.45 ? 'VANG' : 'XANH', 'Độ lệch chuẩn lợi suất ngày × √250. Cổ phiếu lớn ổn định thường 20–35%/năm. Đây là mức dao động, không phải giá đã giảm bao nhiêu.');
+  them('sut_giam', 'Mức giảm sâu nhất từ đỉnh (1 năm)', `${pct(-mdd)}; hiện cách đỉnh 1 năm ${pct(tuDinh)}`, mdd > 0.5 ? 'DO' : mdd > 0.3 ? 'VANG' : 'XANH', 'Mức mất giá từ đỉnh xuống đáy mà người mua ở đỉnh đã chịu (giá đã điều chỉnh cổ tức, chia cổ phiếu).');
   them('giam_san', 'Phiên giảm sàn / tăng trần (60 phiên)', `${san60} sàn / ${tran60} trần`, san60 >= 3 ? 'DO' : san60 >= 1 ? 'VANG' : 'XANH', 'Giảm sàn liên tiếp thường là dấu hiệu bán tháo, khó thoát hàng.');
   them('thanh_khoan', 'Giá trị khớp lệnh bình quân 20 phiên', `${ty(gt20)} (bình quân 1 năm ${ty(gt1y)})`, gt20 < 1e9 ? 'DO' : gt20 < 5e9 ? 'VANG' : 'XANH', 'Thanh khoản thấp: khó mua/bán khối lượng lớn mà không đẩy giá.');
   if (beta !== null) them('beta', 'Beta so với VN-Index (1 năm)', beta.toFixed(2).replace('.', ','), beta > 1.5 ? 'VANG' : 'XANH', 'Beta > 1: giá dao động mạnh hơn thị trường.');
@@ -1121,7 +1127,7 @@ async function ruiRoGia(ma, tt) {
     (k12.cp !== null && k12.cp < -0.4) || (kemTt !== null && kemTt < -0.4) ? 'DO' : (kemTt !== null && kemTt < -0.2) || (k12.cp !== null && k12.cp < -0.2) ? 'VANG' : 'XANH', 'Kém thị trường kéo dài thường phản ánh tin xấu riêng của doanh nghiệp.');
   const nDo = chi.filter(x => x.muc === 'DO').length, nVang = chi.filter(x => x.muc === 'VANG').length;
   const muc = nDo >= 2 ? 'Cao' : nDo === 1 || nVang >= 2 ? 'Trung bình' : 'Thấp';
-  return { muc, chi_so: chi, so_phien: n, tu_ngay: d[0].date, den_ngay: d[n - 1].date, vol1y, mdd, tu_dinh: tuDinh, san60, gt20, beta, ky };
+  return { muc, chi_so: chi, dieu_chinh: dieuChinh, so_phien: n, tu_ngay: d[0].date, den_ngay: d[n - 1].date, vol1y, mdd, tu_dinh: tuDinh, san60, gt20, beta, ky };
 }
 
 // ===== Nghị quyết Đại hội đồng cổ đông (thường niên, bất thường, lấy ý kiến bằng văn bản) =====
@@ -1148,6 +1154,78 @@ Trả về đúng một JSON:
  "danh_gia_xu_huong":{"huong":"tot|xau|trung_tinh","ly_do":["tối đa 4 ý"]},
  "nguon":[{"tieu_de":"","ngay":"dd/mm/yyyy"}]}`;
 const RE_DHDCD = /đại hội|đhđcđ|đhcđ|dhdcd|cổ đông|lấy ý kiến/i;
+// Simplize: trang cổ phiếu công khai nhúng ~10 tin công bố mới nhất kèm link PDF trên CDN (cdn.simplize.vn, tải nhanh từ nước ngoài).
+// Trả về [{tieu_de, ngay, links}]; dùng làm nguồn file ưu tiên cho tin mới mà VNDirect không kèm file.
+async function tinSimplize(ma) {
+  try {
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 8000);
+    const html = await fetch(`https://simplize.vn/co-phieu/${encodeURIComponent(ma)}`, { headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'text/html' }, signal: ctrl.signal })
+      .then(r => (r.ok ? r.text() : '')).finally(() => clearTimeout(t));
+    const out = [];
+    for (const m of html.matchAll(/"title":"((?:[^"\\]|\\.)*)"[^{}]*?"attachedLink":"([^"]*)"[^{}]*?"createdDate":"([^"]*)"(?:[^{}]*?"attachedLinkArr":\[([^\]]*)\])?/g)) {
+      let tieuDe = m[1]; try { tieuDe = JSON.parse(`"${m[1]}"`); } catch (e) { /* giữ nguyên */ }
+      const links = [...new Set([m[2], ...String(m[4] || '').split(',').map(s => s.replace(/"/g, '').trim())])]
+        .filter(u => /^https:\/\/cdn\.simplize\.vn\/[^\s]+\.pdf$/i.test(u));
+      if (links.length) out.push({ tieu_de: tieuDe, ngay: m[3], links });
+    }
+    return out;
+  } catch (e) { return []; }
+}
+const chuanTieuDe = s => String(s || '').normalize('NFC').toLowerCase().replace(/\s+/g, ' ').trim();
+const khongDau = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').toLowerCase();
+// Nhận diện văn bản ĐHĐCĐ từ tên file/tiêu đề: loại đại hội, năm, nghị quyết (1) hay tài liệu/tờ trình (2).
+function nhanVanBanDh(s) {
+  const t = khongDau(s).replace(/[_\-.\/]+/g, ' ');
+  if (!/dai hoi|dhdcd|dhcd|co dong|lay y kien|\begm\b|\bagm\b/.test(t)) return null;
+  if (/hdqt|hoi dong quan tri/.test(t.replace(/dai hoi dong co dong/g, '')) && !/dhdcd|dai hoi/.test(t)) return null;
+  const loai = /nghi quyet|bien ban|\bnq\b|\bbb\b|ket qua (kiem phieu|lay y kien)/.test(t) ? 1 : /tai lieu|to trinh|phieu lay y kien|thu moi|chuong trinh/.test(t) ? 2 : 0;
+  if (!loai) return null;
+  const dh = /bat thuong|\begm\b|extraordinary/.test(t) ? 'bat_thuong' : /lay y kien|bang van ban/.test(t) ? 'lay_y_kien' : /thuong nien|\bagm\b|annual/.test(t) ? 'thuong_nien' : '';
+  const nam = +((t.match(/\b(20[2-3]\d)\b/g) || []).pop() || 0) || null;
+  return { loai, dh, nam };
+}
+
+// Trang "Quan hệ cổ đông" trên website doanh nghiệp: tìm link PDF nghị quyết/tài liệu ĐHĐCĐ.
+// Website lấy từ hồ sơ công ty (VNDirect); thử trang chủ + các đường dẫn thường gặp, đi sâu thêm 1 cấp vào trang "đại hội".
+const IR_PATHS = ['/quan-he-co-dong/', '/quan-he-nha-dau-tu/', '/co-dong/', '/nha-dau-tu/', '/investor-relations/', '/vi/quan-he-co-dong/', '/vi/quan-he-nha-dau-tu/', '/vi/co-dong/'];
+async function taiLieuIR(ma) {
+  const layTrang = async (u, ms) => {
+    const c = new AbortController(); const t = setTimeout(() => c.abort(), ms || 7000);
+    try {
+      const r = await fetch(u, { headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'text/html' }, signal: c.signal, redirect: 'follow' });
+      if (!r.ok || !/html/i.test(r.headers.get('content-type') || '')) return null;
+      return { url: r.url, html: (await r.text()).slice(0, 3e6) };
+    } catch (e) { return null; } finally { clearTimeout(t); }
+  };
+  try {
+    const p = await layJson(`${VND_BASE}/company_profiles?q=code:${ma}&fields=code,website`, VND_H, 6000).catch(() => null);
+    let web = String((p && p.data && p.data[0] && p.data[0].website) || '').trim();
+    if (!web) return [];
+    if (!/^https?:\/\//i.test(web)) web = 'https://' + web;
+    const goc = new URL(web).origin;
+    const lienKet = (trang) => [...trang.html.matchAll(/<a\b[^>]*href=["']([^"'#]+)["'][^>]*>([\s\S]{0,300}?)<\/a>/gi)]
+      .map(m => { try { return { url: new URL(m[1].replace(/&amp;/g, '&'), trang.url).href, chu: m[2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() }; } catch (e) { return null; } }).filter(Boolean);
+    // Cấp 1: trang chủ + đường dẫn thường gặp.
+    const cap1 = (await Promise.all([goc + '/', ...IR_PATHS.map(x => goc + x)].map(u => layTrang(u)))).filter(Boolean);
+    const daXem = new Set(cap1.map(t => t.url));
+    // Cấp 2: link nội bộ trỏ tới trang quan hệ cổ đông / đại hội cổ đông.
+    const cap2Url = [...new Set(cap1.flatMap(lienKet).filter(l => l.url.startsWith(goc) && !/\.pdf($|\?)/i.test(l.url)
+      && /quan-he-co-dong|quan-he-nha-dau-tu|investor|co-dong|nha-dau-tu|dai-hoi|dhdcd|shareholder/i.test(khongDau(l.url + ' ' + l.chu).replace(/\s+/g, '-')))
+      .map(l => l.url))].filter(u => !daXem.has(u))
+      .sort((a, b) => (/dai-hoi|dhdcd|shareholder-meeting/i.test(b) - /dai-hoi|dhdcd|shareholder-meeting/i.test(a))).slice(0, 6);
+    const cap2 = (await Promise.all(cap2Url.map(u => layTrang(u)))).filter(Boolean);
+    const out = new Map();
+    [...cap1, ...cap2].flatMap(lienKet).forEach(l => {
+      if (!/\.pdf($|\?)/i.test(l.url) || out.has(l.url)) return;
+      const ten = decodeURIComponent(l.url.split('/').pop().split('?')[0]) + ' ' + l.chu;
+      if (/resolution|minutes|meeting of shareholders|\ben\b|english/i.test(ten) && !/nghi|bien|dai|hoi/i.test(khongDau(ten))) return;
+      const n = nhanVanBanDh(ten);
+      if (n) out.set(l.url, Object.assign({ url: l.url, ten: l.chu || decodeURIComponent(l.url.split('/').pop()) }, n));
+    });
+    return [...out.values()];
+  } catch (e) { return []; }
+}
+
 // Tin trên VNDirect đôi khi không kèm file: lấy danh sách file trực tiếp từ trang công bố của HOSE (API công khai của hsx.vn) hoặc HNX (trang tin có link tải).
 async function fileTuSo(x) {
   const u = String(x.newsUrl || '');
@@ -1171,19 +1249,24 @@ async function fileTuSo(x) {
   return [];
 }
 const nqCache = new Map();
+// Trả về Buffer PDF, hoặc null và ghi lý do vào a._loi (để chẩn đoán).
 async function taiPdf(a, giay) {
-  for (const u of [a.url, a.sourceUrl].filter(Boolean)) {
+  const loi = [];
+  for (const u of [...new Set([a.url, a.sourceUrl, ...(a.urls || [])].filter(Boolean))]) {
+    // Hạn giờ áp cho CẢ phần tải nội dung (trước đây chỉ áp tới lúc nhận header: tải chậm có thể treo tới hết 300 giây).
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), giay);
     try {
-      // Hạn giờ áp cho CẢ phần tải nội dung (trước đây chỉ áp tới lúc nhận header: tải chậm từ máy chủ nước ngoài có thể treo tới hết 300 giây).
-      const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), giay);
-      try {
-        const r = await fetch(u, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: ctrl.signal });
-        if (!r.ok || !/pdf|octet/i.test(r.headers.get('content-type') || '')) continue;
-        const b = Buffer.from(await r.arrayBuffer());
-        if (b.slice(0, 4).toString() === '%PDF') return b;
-      } finally { clearTimeout(t); }
-    } catch (e) { /* thử link kế */ }
+      const r = await fetch(u, { headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'application/pdf,*/*' }, signal: ctrl.signal });
+      const ct = r.headers.get('content-type') || '';
+      if (!r.ok) { loi.push(`HTTP ${r.status}`); continue; }
+      const b = Buffer.from(await r.arrayBuffer());
+      // Một số máy chủ trả sai content-type: kiểm tra chữ ký %PDF thay vì tin header.
+      if (b.slice(0, 5).toString().includes('%PDF')) return b;
+      loi.push(`không phải PDF (${ct.slice(0, 40)}, ${b.length} byte)`);
+    } catch (e) { loi.push(e.name === 'AbortError' ? `quá ${giay / 1000} giây` : String(e.cause && e.cause.code || e.message).slice(0, 60)); }
+    finally { clearTimeout(t); }
   }
+  a._loi = loi.join('; ');
   return null;
 }
 // File lớn (> 8 MB) tải lên Gemini Files API rồi tham chiếu, tránh giới hạn kích thước một yêu cầu. File tự xoá sau 48 giờ.
@@ -1228,8 +1311,33 @@ async function cheDoNghiQuyet(body, deadline) {
     return 0;
   };
   const vb = (j && j.data || []).filter(moi).map(x => ({ x, loai: loaiVb(x) })).filter(o => o.loai);
-  // Bổ sung file từ HOSE/HNX cho các văn bản thiếu file (tối đa 8 tin, song song).
-  await Promise.all(vb.filter(o => !coFile(o.x)).slice(0, 8).map(async o => { const f = await fileTuSo(o.x); if (f.length) { o.x.attachments = f; o.x._tuSo = true; } }));
+  // Bổ sung file cho các văn bản thiếu file: Simplize (CDN, nhanh) trước, rồi trang công bố HOSE/HNX (chậm khi tải từ nước ngoài).
+  // Khi có cả hai, link HOSE/HNX làm link dự phòng (sourceUrl) để taiPdf thử tiếp.
+  // Thứ tự nguồn file: Simplize (CDN) → website doanh nghiệp (quan hệ cổ đông) → trang công bố HOSE/HNX; các link sau làm dự phòng (a.urls).
+  const thieu = vb.filter(o => !coFile(o.x)).slice(0, 8);
+  let ir = [];
+  if (thieu.length || !vb.some(o => o.loai === 1)) {
+    const [sp, dsSo, dsIr] = await Promise.all([tinSimplize(ma), Promise.all(thieu.map(o => fileTuSo(o.x))), taiLieuIR(ma)]);
+    ir = dsIr;
+    thieu.forEach((o, i) => {
+      const s = sp.find(t => chuanTieuDe(t.tieu_de) === chuanTieuDe(tieuDe(o.x)));
+      const n = nhanVanBanDh(tieuDe(o.x)) || {};
+      // Website DN: khớp theo loại đại hội + năm + loại văn bản; ưu tiên tên có "nghị quyết".
+      const irKhop = ir.filter(d => d.loai === o.loai && d.dh && d.dh === n.dh && d.nam && d.nam === n.nam)
+        .sort((a, b) => /nghi.?quyet/i.test(khongDau(b.url)) - /nghi.?quyet/i.test(khongDau(a.url)));
+      const urls = [...(s ? s.links : []), ...irKhop.map(d => d.url), ...(dsSo[i] || []).map(f => f.url)];
+      if (!urls.length) return;
+      o.x.attachments = [{ name: decodeURIComponent(urls[0].split('/').pop()), url: urls[0], urls: urls.slice(1, 4) }];
+      o.x._nguonFile = s ? 'simplize' : irKhop.length ? 'website' : 'so';
+      o.x._tuSo = !s && !irKhop.length;
+    });
+  }
+  // Không có nghị quyết nào từ nguồn tin (mã ít tin, UPCOM…): dùng thẳng văn bản trên website doanh nghiệp.
+  if (!vb.some(o => o.loai === 1 && coFile(o.x)) && ir.length) {
+    const namToi = new Date().getFullYear() - 1;
+    ir.filter(d => d.loai === 1 && (!d.nam || d.nam >= namToi)).sort((a, b) => (b.nam || 0) - (a.nam || 0)).slice(0, 2)
+      .forEach(d => vb.push({ x: { newsTitle: `${ma}: ${d.ten} (website doanh nghiệp)`, newsDate: String(d.nam || ''), attachments: [{ name: d.ten, url: d.url }], _nguonFile: 'website' }, loai: 1 }));
+  }
   // Tóm tắt đại hội của CTCK: ưu tiên bản tiếng Việt, bỏ bản tiếng Anh trùng ngày.
   const bc = (jbc && jbc.data || []).filter(x => moi(x) && coFile(x) && /đại hội|đhđcđ|đhcđ|cổ đông|\b(egm|agm)\b|general meeting/i.test(tieuDe(x)));
   const bcVi = bc.filter(x => /[đươăâêôạảấầẩẫậắằẳẵặẹẻẽếềểễệịọỏốồổỗộớờởỡợụủứừửữựỳỷỹ]/i.test(tieuDe(x)));
@@ -1268,7 +1376,22 @@ async function cheDoNghiQuyet(body, deadline) {
     const diemF = a => { const n = a.name || ''; return (/nghi.?quyet|\bnq\b/i.test(n) ? 4 : /ket.?qua|bien.?ban|\bbb\b/i.test(n) ? 2 : 0) + (/file.?nhe|light/i.test(n) ? 1 : 0); };
     return (pdfs.length ? pdfs : x.attachments).slice().sort((a, b) => diemF(b) - diemF(a)).slice(0, 1);
   };
-  const tai = (await Promise.all(chon.map(x => Promise.all(fileNq(x).map(async a => ({ x, b: await taiPdf(a, 25000) })))))).flat();
+  // File lấy trực tiếp từ HOSE/HNX có thể rất chậm khi tải từ máy chủ ở nước ngoài: hạn 25 giây,
+  // đồng thời tải sẵn tóm tắt đại hội của CTCK để thay thế ngay nếu nghị quyết mới nhất không tải được.
+  const duPhong = nqMoiNhat && nqMoiNhat.x._tuSo && !chon.some(x => x._loai === 3) && bcChon.length
+    ? (() => { const x = Object.assign(bcChon[0], { _loai: 3 }); const a = fileNq(x)[0]; return a ? taiPdf(a, 30000).then(b => ({ x, a, b })) : null; })() : null;
+  const tai = (await Promise.all(chon.map(x => Promise.all(fileNq(x).map(async a => ({ x, a, b: await taiPdf(a, x._tuSo ? 25000 : 45000) })))))).flat();
+  // Văn bản có file nhưng tải không được: báo lại kèm lý do và link gốc.
+  const khongTai = tai.filter(t => !t.b);
+  khongTai.forEach(t => { if (!thieuFile.some(f => f.tieu_de === toStr(tieuDe(t.x), 200))) thieuFile.push({ tieu_de: toStr(tieuDe(t.x), 200), ngay: String(t.x.newsDate || '').slice(0, 10), url: t.a.url || t.x.newsUrl || '', ly_do: t.a._loi || '' }); });
+  // Nghị quyết mới nhất không tải được (dù có file): dùng tóm tắt đại hội của CTCK làm nguồn thay thế.
+  const mat = nqMoiNhat && !tai.some(t => t.b && t.x === nqMoiNhat.x);
+  if (mat && duPhong) { const d = await duPhong; if (d && d.b) tai.unshift(d); }
+  else if (mat && !chon.some(x => x._loai === 3) && bcChon.length) {
+    const x = Object.assign(bcChon[0], { _loai: 3 });
+    const a = fileNq(x)[0];
+    if (a) tai.unshift({ x, a, b: await taiPdf(a, 30000) });
+  }
   // Nhúng trực tiếp tổng tối đa ~12 MB; file lớn hơn 8 MB tải qua Files API. Tối đa 5 file, 80 MB.
   let tongNhung = 0, tong = 0; const dung = [];
   // Giữ thứ tự ưu tiên của "chon" (tai đã theo thứ tự đó).
@@ -1312,8 +1435,9 @@ async function cheDoNghiQuyet(body, deadline) {
     nguon: dung.filter((t, i, a) => a.findIndex(u => u.x === t.x) === i).map(t => ({ tieu_de: toStr(t.x.newsTitle, 200), ngay: String(t.x.newsDate || '').slice(0, 10), url: (t.x.attachments[0] || {}).url || '', loai: t.x._loai })),
     thieu_file: thieuFile
   };
-  const kq = { nghi_quyet: nq, bo_qua: tai.length - dung.length };
-  nqCache.set(ma, { luc: Date.now(), kq });
+  const kq = { nghi_quyet: nq, bo_qua: tai.length - dung.length, tai_loi: khongTai.length > 0 };
+  // Có file tải lỗi: chỉ nhớ 30 phút để lần sau thử lại.
+  nqCache.set(ma, { luc: khongTai.length ? Date.now() - 11.5 * 3600e3 : Date.now(), kq });
   return kq;
 }
 
@@ -1543,4 +1667,4 @@ module.exports = async (req, res) => {
 };
 
 module.exports.config = { maxDuration: 300 };
-module.exports._internal = { chuanHoaJSON, toNum, verifyToken, makeToken, vciTuMa, layVci, layVnd, layKbsKy, cheDoMaCk, cheDoNghiQuyet, nhanDienNganh, SYSTEM_INSTRUCTION, CDKT_KEYS, KQKD_KEYS, LCTT_KEYS, NH_KEYS, CK_KEYS, BH_KEYS, TM_SPEC };
+module.exports._internal = { chuanHoaJSON, toNum, verifyToken, makeToken, vciTuMa, layVci, layVnd, layKbsKy, cheDoMaCk, cheDoNghiQuyet, taiLieuIR, nhanDienNganh, SYSTEM_INSTRUCTION, CDKT_KEYS, KQKD_KEYS, LCTT_KEYS, NH_KEYS, CK_KEYS, BH_KEYS, TM_SPEC };

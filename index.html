@@ -2367,12 +2367,12 @@ footer p{margin:0 0 6px}
       st.nghiQuyet = { dang_tai: true, ma: maNq };
       const phienNq = {}; st.nqId = phienNq;
       // Nhớ kết quả trong trình duyệt 12 giờ: tra lại cùng mã thì hiện ngay, không gọi AI lại.
-      const KHO_NQ = 'nq_v2_' + maNq;
+      const KHO_NQ = 'nq_v3_' + maNq;
       let daNho = null;
       try { const c = JSON.parse(localStorage.getItem(KHO_NQ) || 'null'); if (c && Date.now() - c.luc < 12 * 3600e3 && c.r && c.r.nq) daNho = c.r; } catch (e) { daNho = null; }
       st.nqPromise = (daNho ? Promise.resolve(daNho) : goi('nghi_quyet', { ma: maNq })
-        .then(j => ({ ma: maNq, nq: j.nghi_quyet, ly_do: j.ly_do || '', thieu_file: j.thieu_file || [] }))
-        .then(r => { if (r.nq) { try { localStorage.setItem(KHO_NQ, JSON.stringify({ luc: Date.now(), r })); } catch (e) { /* bỏ qua */ } } return r; }))
+        .then(j => ({ ma: maNq, nq: j.nghi_quyet, ly_do: j.ly_do || '', thieu_file: j.thieu_file || [], tai_loi: !!j.tai_loi }))
+        .then(r => { if (r.nq && !r.tai_loi) { try { localStorage.setItem(KHO_NQ, JSON.stringify({ luc: Date.now(), r })); } catch (e) { /* bỏ qua */ } } return r; }))
         .catch(e => ({ ma: maNq, nq: null, loi: e.message || 'lỗi không rõ' }))
         .then(r => { if (st.nqId === phienNq) { st.nghiQuyet = r; document.querySelectorAll('[data-nghi-quyet]').forEach(el => { el.outerHTML = khoiNghiQuyet(); }); } return r; });
     }
@@ -2603,7 +2603,7 @@ footer p{margin:0 0 6px}
     return `<div class="the the-cs ${mau}" style="margin-top:12px"><div class="ten"><b>Rủi ro giá cổ phiếu</b> <span class="nhan ${mau}">${esc(rg.muc)}</span></div>
       <div class="bang-cuon"><table><thead><tr><th>Chỉ tiêu</th><th>Giá trị</th><th>Mức</th></tr></thead><tbody>${rg.chi_so.map(x =>
         `<tr><td title="${esc(x.y_nghia || '')}">${esc(x.ten)}</td><td>${esc(x.gia_tri)}</td><td><span class="nhan ${x.muc}">${x.muc === 'DO' ? 'Cao' : x.muc === 'VANG' ? 'Chú ý' : 'Ổn'}</span></td></tr>`).join('')}</tbody></table></div>
-      <p class="phu">${esc(rg.so_phien)} phiên từ ${esc(rg.tu_ngay)} đến ${esc(rg.den_ngay)}. Mức chung: "Cao" khi có từ 2 chỉ tiêu mức cao; "Trung bình" khi có 1 chỉ tiêu cao hoặc từ 2 chỉ tiêu cần chú ý.</p></div>`;
+      <p class="phu">${esc(rg.so_phien)} phiên từ ${esc(rg.tu_ngay)} đến ${esc(rg.den_ngay)}, giá đã điều chỉnh cổ tức tiền/cổ phiếu và chia tách (ngày chia cổ phiếu không tính là giảm giá)${(rg.dieu_chinh || []).length ? '. Sự kiện đã điều chỉnh: ' + rg.dieu_chinh.map(esc).join('; ') : ''}. Mức chung: "Cao" khi có từ 2 chỉ tiêu mức cao; "Trung bình" khi có 1 chỉ tiêu cao hoặc từ 2 chỉ tiêu cần chú ý.</p></div>`;
   }
   function veDanhGia() {
     const kq = st.kq, mt = kq.meta;
@@ -2815,7 +2815,7 @@ footer p{margin:0 0 6px}
     if (ai) h += `<p style="margin:6px 0 2px">AI đọc văn bản: <span class="nhan ${(NH[ai.huong] || NH.trung_tinh)[0]}">${(NH[ai.huong] || NH.trung_tinh)[1]}</span></p>${ai.ly_do.length ? `<ul class="ghi-chu" style="margin:0;padding-left:18px">${ai.ly_do.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}`;
     return h;
   }
-  const khoiThieuFile = a => (a && a.length ? `<p class="phu" style="margin-top:6px">Văn bản đã công bố nhưng nguồn dữ liệu không kèm file (mở bản gốc để kiểm tra): ${a.map(x => x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.tieu_de)}</a> (${esc(x.ngay)})` : esc(x.tieu_de)).join(' · ')}</p>` : '');
+  const khoiThieuFile = a => (a && a.length ? `<p class="phu" style="margin-top:6px">Văn bản đã công bố nhưng không đọc được file (mở bản gốc để kiểm tra): ${a.map(x => (x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.tieu_de)}</a>` : esc(x.tieu_de)) + ` (${esc(x.ngay)}${x.ly_do ? ' – lỗi tải: ' + esc(x.ly_do) : ''})`).join(' · ')}</p>` : '');
   function khoiNghiQuyet() {
     const r = st.nghiQuyet;
     if (!r) return '';
