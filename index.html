@@ -1079,6 +1079,9 @@ footer p{margin:0 0 6px}
 
     // ===== Beneish M-Score =====
     const PPE = c.tai_san_co_dinh_huu_hinh_gia_tri_con_lai, CA = c.tai_san_ngan_han;
+    // AQI theo VAS: Beneish (US GAAP) tính chi phí XDCB dở dang và bất động sản đầu tư trong PP&E; VAS tách riêng
+    // nên cộng lại làm tài sản "cứng", tránh doanh nghiệp đang xây nhà máy/BĐS bị coi là tăng tài sản "mềm".
+    const cung = p => cong(cong(CA[p], PPE[p]), cong(vz(c.xay_dung_co_ban_do_dang && c.xay_dung_co_ban_do_dang[p]), vz(c.bat_dong_san_dau_tu && c.bat_dong_san_dau_tu[p])));
     const DEP = { n: tri(l.khau_hao_tscd.n), t: tri(l.khau_hao_tscd.t) };
     const SGA = p => (isNum(k.chi_phi_ban_hang[p]) || isNum(k.chi_phi_quan_ly_doanh_nghiep[p]) ? vz(cp('chi_phi_ban_hang', p)) + vz(cp('chi_phi_quan_ly_doanh_nghiep', p)) : null);
     const gm = p => chia(tru(DTT[p], GV[p]), DTT[p]);
@@ -1086,7 +1089,7 @@ footer p{margin:0 0 6px}
     const bien = [
       { ma: 'DSRI', ten: 'Chỉ số phải thu trên doanh thu', gt: chia(chia(PTKH.n, DTT.n), chia(PTKH.t, DTT.t)), he_so: 0.920, dien_giai: 'Lớn hơn 1: phải thu tăng nhanh hơn doanh thu.' },
       { ma: 'GMI', ten: 'Chỉ số biên lãi gộp', gt: chia(gm('t'), gm('n')), he_so: 0.528, dien_giai: 'Lớn hơn 1: biên lãi gộp xấu đi, áp lực làm đẹp số.' },
-      { ma: 'AQI', ten: 'Chỉ số chất lượng tài sản', gt: chia(motTru(chia(cong(CA.n, PPE.n), TTS.n)), motTru(chia(cong(CA.t, PPE.t), TTS.t))), he_so: 0.404, dien_giai: 'Lớn hơn 1: tăng tài sản “mềm”, có thể vốn hoá chi phí.' },
+      { ma: 'AQI', ten: 'Chỉ số chất lượng tài sản', gt: chia(motTru(chia(cung('n'), TTS.n)), motTru(chia(cung('t'), TTS.t))), he_so: 0.404, dien_giai: 'Lớn hơn 1: tăng tài sản “mềm”, có thể vốn hoá chi phí. Theo VAS, XDCB dở dang và BĐS đầu tư được tính là tài sản cứng.' },
       { ma: 'SGI', ten: 'Chỉ số tăng trưởng doanh thu', gt: chia(DTT.n, DTT.t), he_so: 0.892, dien_giai: 'Tăng trưởng nóng tạo áp lực duy trì con số.' },
       { ma: 'DEPI', ten: 'Chỉ số khấu hao', gt: chia(chia(DEP.t, cong(DEP.t, PPE.t)), chia(DEP.n, cong(DEP.n, PPE.n))), he_so: 0.115, dien_giai: 'Lớn hơn 1: tốc độ khấu hao chậm lại, lãi được đẩy lên.' },
       { ma: 'SGAI', ten: 'Chỉ số chi phí bán hàng & quản lý', gt: chia(chia(SGA('n'), DTT.n), chia(SGA('t'), DTT.t)), he_so: -0.172, dien_giai: 'Chi phí bán hàng, quản lý trên doanh thu so với kỳ trước.' },
