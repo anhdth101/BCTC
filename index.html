@@ -1797,7 +1797,7 @@ footer p{margin:0 0 6px}
     [...coDo, ...coVang].forEach(x => yThem(true, `${x.ten}: ${x.gia_tri}`));
     if (!yeu.length) yeu.push('Chưa thấy điểm yếu lớn trong các chỉ số tự động.');
 
-    // 4. Góc nhìn kiểm toán viên
+    // 4. Độ tin cậy số liệu
     const kiemToan = [];
     const kt = (d && d.kiem_toan) || {};
     const TT = { da_kiem_toan: 'đã được kiểm toán', soat_xet: 'đã được soát xét (mức đảm bảo thấp hơn kiểm toán)', tu_lap_chua_kiem_toan: 'do công ty tự lập, chưa kiểm toán', khong_ro: 'chưa rõ tình trạng kiểm toán' };
@@ -2449,14 +2449,14 @@ footer p{margin:0 0 6px}
     if (ai) {
       than = `<p>${esc(ai.tom_tat)}</p>
         <div class="hai-cot"><div>${ds('Điểm mạnh', ai.diem_manh)}</div><div>${ds('Rủi ro & điểm yếu', ai.rui_ro)}</div></div>
-        <div class="hai-cot"><div>${ds('Góc nhìn kiểm toán viên', ai.goc_nhin_kiem_toan)}</div><div>${ds('Cần kiểm tra thêm', ai.thu_tuc_can_lam)}</div></div>
+        <div class="hai-cot"><div>${ds('Độ tin cậy số liệu', ai.goc_nhin_kiem_toan)}</div><div>${ds('Cần kiểm tra thêm', ai.thu_tuc_can_lam)}</div></div>
         ${bangDinhGia(r.dinh_gia)}
         ${ai.dinh_gia ? `<p>${esc(ai.dinh_gia)}</p>` : ''}
         <h3>Kết luận</h3><p>${esc(ai.ket_luan)}</p>`;
     } else {
       than = `<p>${r.tom_tat.map(esc).join(' ')}</p>
         <div class="hai-cot"><div>${ds('Điểm mạnh', r.manh)}</div><div>${ds('Rủi ro & điểm yếu', r.yeu)}</div></div>
-        <div class="hai-cot"><div>${ds('Góc nhìn kiểm toán viên', r.kiem_toan)}</div><div>${ds('Cần kiểm tra thêm', r.thu_tuc)}</div></div>
+        <div class="hai-cot"><div>${ds('Độ tin cậy số liệu', r.kiem_toan)}</div><div>${ds('Cần kiểm tra thêm', r.thu_tuc)}</div></div>
         ${bangDinhGia(r.dinh_gia)}
         <h3>Kết luận</h3><p>${r.ket_luan.map(esc).join(' ')}</p>`;
     }

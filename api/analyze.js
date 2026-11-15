@@ -603,7 +603,7 @@ async function cheDoDinhVi(body, deadline) {
 }
 
 // ===== Bản đánh giá kiểu chuyên gia do AI viết từ số liệu đã tính =====
-const PROMPT_DANH_GIA = `Bạn là chuyên viên phân tích cổ phiếu kỳ cựu kiêm kiểm toán viên điều tra (forensic) am hiểu chuẩn mực kế toán và thị trường chứng khoán Việt Nam.
+const PROMPT_DANH_GIA = `Bạn là chuyên viên phân tích cổ phiếu kỳ cựu, giỏi soi chất lượng số liệu kế toán am hiểu chuẩn mực kế toán và thị trường chứng khoán Việt Nam.
 Nhiệm vụ: viết BẢN ĐÁNH GIÁ NGẮN (vừa 1 trang A4, khoảng 450–600 từ) về doanh nghiệp, CHÂN THẬT, bám đúng thực trạng thể hiện trong dữ liệu JSON được cung cấp.
 
 QUY TẮC BẮT BUỘC:
@@ -620,7 +620,7 @@ Trả về đúng một JSON:
  "tom_tat": "2–3 câu tổng quan thực trạng",
  "diem_manh": ["tối đa 4 ý, mỗi ý 1–2 câu có số liệu"],
  "rui_ro": ["tối đa 5 ý, mỗi ý 1–2 câu có số liệu, sắp xếp từ nghiêm trọng nhất"],
- "goc_nhin_kiem_toan": ["tối đa 4 ý: độ tin cậy của số liệu, kiểm toán, điểm kế toán cần soi"],
+ "goc_nhin_kiem_toan": ["tối đa 4 ý về ĐỘ TIN CẬY SỐ LIỆU: tình trạng kiểm toán/soát xét, số liệu có khớp nội bộ không, khoản mục kế toán cần soi; viết như nhà phân tích độc lập, không xưng là kiểm toán viên"],
  "thu_tuc_can_lam": ["tối đa 4 việc cụ thể nhà đầu tư/kiểm toán viên nên kiểm tra thêm"],
  "dinh_gia": "1–2 câu về định giá nếu dữ liệu có giá thị trường, ngược lại để chuỗi rỗng",
  "ket_luan": "2–3 câu kết luận thẳng thắn"}`;
