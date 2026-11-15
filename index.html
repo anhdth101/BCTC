@@ -2288,11 +2288,12 @@ footer p{margin:0 0 6px}
             : await goi('ma_ck', Object.assign({}, tim, kyTuPdf(duLieuPdf) || { ky: 'nam' }));
           if (!ma) {
             const maTim = j.tim_thay ? j.tim_thay.ma : tim.ma;
-            st.thongBao.push(`Tự nhận diện mã ${maTim}${j.tim_thay ? ` (theo ${j.tim_thay.cach})` : ''}: đã lấy giá, định giá và lịch sử xử lý giao dịch để đối chiếu.`);
+            // Chỉ lấy giá (để định giá) và lịch sử xử lý giao dịch; số liệu tài chính giữ nguyên theo PDF.
+            st.thongBao.push(`Mã ${maTim}: đã lấy giá thị trường để định giá và lịch sử cảnh báo, hạn chế giao dịch. Số liệu tài chính vẫn lấy từ PDF.`);
             $('#o-ma-ck').value = maTim;
-          }
-          nguon = j.nguon; thiTruong = j.thi_truong || null;
-          if (duLieuPdf) {
+            thiTruong = j.thi_truong || null;
+          } else nguon = j.nguon, thiTruong = j.thi_truong || null;
+          if (!ma) { /* không ghép số liệu */ } else if (duLieuPdf) {
             const kyPdf = kyTuPdf(duLieuPdf);
             if (!kyPdf) st.thongBao.push('Không xác định được kỳ của PDF nên không ghép với số liệu theo mã.');
             else { const g = ghepNguon(duLieuPdf, j.du_lieu); ketQua = g.d; oLech = g.o; nguon = Object.assign({}, nguon, { ghep: true }); }
