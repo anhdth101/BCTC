@@ -2591,7 +2591,7 @@ footer p{margin:0 0 6px}
     if (rg && rg.muc === 'Cao') out.push({ muc: 'VANG', ly_do: 'Rủi ro giá cao: ' + rg.chi_so.filter(x => x.muc === 'DO').map(x => `${x.ten} ${x.gia_tri}`).join('; ') });
     return out;
   }
-  // ===== Tiêu chí danh mục ký quỹ & dấu hiệu theo checklist thẩm định margin của phòng QLRR (tham khảo) =====
+  // ===== Tiêu chí danh mục ký quỹ & dấu hiệu cần soi thêm (tham khảo) =====
   // Tiêu chí định lượng nội bộ thường dùng: (Phải thu + Đầu tư tài chính)/TTS < 65%; vốn hoá ≥ 30 tỷ; tăng vốn bình quân 4 năm < 65%;
   // cộng các điều kiện chung: lãi, kiểm toán chấp nhận toàn phần, không bị cảnh báo/kiểm soát/hạn chế, niêm yết ≥ 6 tháng.
   function tieuChiKyQuy() {
@@ -2634,7 +2634,7 @@ footer p{margin:0 0 6px}
     if (rg && E.isNum(rg.gt20)) them('Thanh khoản: giá trị khớp bình quân 20 phiên ≥ 1 tỷ', E.fmtTien(rg.gt20), rg.gt20 >= 1e9, 'Thanh khoản thấp: khó bán giải chấp khi cần.');
     const ocf = (tt.fcf_nam || []).slice().sort((a, b) => b.nam - a.nam).slice(0, 4).filter(x => E.isNum(x.ocf));
     if (ocf.length >= 3) { const am = ocf.filter(x => x.ocf < 0).length; them(`Dòng tiền kinh doanh không âm kéo dài (${ocf.length} năm)`, ocf.slice().reverse().map(x => `${x.nam}: ${E.fmtTien(x.ocf)}`).join('; '), am < 2, am >= 2 ? `Âm ${am}/${ocf.length} năm: lãi trên sổ sách nhưng không thu được tiền.` : ''); }
-    // Dấu hiệu thêm theo checklist thẩm định: áp lực đáo hạn nợ vay, dự phòng đi ngược biến động tài sản.
+    // Dấu hiệu thêm: áp lực đáo hạn nợ vay, dự phòng đi ngược biến động tài sản.
     const canh = [];
     const vNH = g(cd, 'vay_ngan_han'), vDH = g(cd, 'vay_dai_han'), vNHt = g(cd, 'vay_ngan_han', 'ky_truoc'), vDHt = g(cd, 'vay_dai_han', 'ky_truoc');
     const VCSH = g(cd, 'von_chu_so_huu');
@@ -2663,7 +2663,7 @@ footer p{margin:0 0 6px}
       <div class="bang-cuon"><table><thead><tr><th>Tiêu chí</th><th>Số liệu</th><th>Kết quả</th></tr></thead><tbody>${k.tieu_chi.map(x =>
         `<tr><td>${esc(x.ten)}${x.ghi_chu ? `<div class="phu">${esc(x.ghi_chu)}</div>` : ''}</td><td>${esc(x.gia_tri)}</td><td>${NH(x.dat)}</td></tr>`).join('')}</tbody></table></div>
       ${k.canh_bao.length ? `<div class="hop-tb" style="margin-top:8px"><b>Dấu hiệu cần soi thêm</b><ul>${k.canh_bao.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>` : ''}
-      <p class="phu">Theo tiêu chí định lượng thường dùng khi thẩm định đưa cổ phiếu vào danh mục ký quỹ (Quy chế giao dịch ký quỹ của UBCKNN và quy định nội bộ CTCK). Ngưỡng nội bộ từng công ty có thể khác.</p></div>`;
+      <p class="phu">Theo các tiêu chí định lượng thường dùng để xét cổ phiếu được giao dịch ký quỹ (Quy chế giao dịch ký quỹ của UBCKNN và quy định của các CTCK). Ngưỡng nội bộ từng công ty có thể khác.</p></div>`;
   }
   function bangDinhGia(dg) {
     if (!dg) return '<h3>Định giá nhanh</h3><p class="ghi-chu">Chưa có giá thị trường (chỉ có khi tra theo mã cổ phiếu).</p>';
@@ -2706,7 +2706,7 @@ footer p{margin:0 0 6px}
         `<tr><td title="${esc(x.y_nghia || '')}">${esc(x.ten)}</td><td>${esc(x.gia_tri)}</td><td><span class="nhan ${x.muc}">${x.muc === 'DO' ? 'Cao' : x.muc === 'VANG' ? 'Chú ý' : 'Ổn'}</span></td></tr>`).join('')}</tbody></table></div>
       <p class="phu">${esc(rg.so_phien)} phiên từ ${esc(rg.tu_ngay)} đến ${esc(rg.den_ngay)}, giá đã điều chỉnh cổ tức tiền/cổ phiếu và chia tách (ngày chia cổ phiếu không tính là giảm giá)${(rg.dieu_chinh || []).length ? '. Sự kiện đã điều chỉnh: ' + rg.dieu_chinh.map(esc).join('; ') : ''}. Mức chung: "Cao" khi có từ 2 chỉ tiêu mức cao; "Trung bình" khi có 1 chỉ tiêu cao hoặc từ 2 chỉ tiêu cần chú ý.</p></div>`;
   }
-  // ===== Báo cáo thẩm định chi tiết (theo mẫu báo cáo thẩm định cho vay margin của phòng QLRR) =====
+  // ===== Báo cáo đánh giá nhanh =====
   const tyDong = v => (E.isNum(v) ? new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v / 1e9) : '–');
   function bangNhieuKyHtml(nk, nhom) {
     if (!nk || !nk.dong) return '<p class="phu">Chưa có bảng nhiều kỳ (chỉ có khi tra theo mã).</p>';
@@ -2740,12 +2740,13 @@ footer p{margin:0 0 6px}
     const cs = id => kq.chi_so.find(x => x.id === id);
     const CHI_SO = ['cr', 'qr', 'cashr', 'no_vcsh', 'vay_vcsh', 'vay_tts', 'icr'].map(cs).filter(x => x && x.gt !== null);
     const MAU_M = { 'THẤP': 'XANH', 'TRUNG BÌNH': 'VANG', 'TRUNG BÌNH CAO': 'VANG', 'CAO': 'DO' };
-    const o = (n = 6) => Array.from({ length: n }, () => '<td contenteditable="true"></td>').join('');
-    let h = `<div class="td-dau" style="text-align:center;margin-bottom:10px"><div class="phu">PHÒNG QUẢN LÝ RỦI RO</div>
-      <h2 style="margin:6px 0">BÁO CÁO THẨM ĐỊNH CHO VAY MARGIN</h2>
+    const PH = { phu_hop: ['XANH', 'Rủi ro chấp nhận được – phù hợp làm tài sản ký quỹ'], than_trong: ['VANG', 'Rủi ro cao hơn mức thông thường – chỉ phù hợp với tỷ lệ ký quỹ thận trọng'], chua_phu_hop: ['DO', 'Rủi ro cao – chưa phù hợp làm tài sản ký quỹ tại thời điểm đánh giá'] };
+    const ph = PH[td.muc_phu_hop] || PH.than_trong;
+    let h = `<div class="td-dau" style="text-align:center;margin-bottom:10px">
+      <h2 style="margin:6px 0">BÁO CÁO ĐÁNH GIÁ NHANH</h2>
       <h3 style="margin:0">${esc(mt.ten || hs.ten || '')}${mt.ma ? ` (${esc(ls.san || '')}${ls.san ? ': ' : ''}${esc(mt.ma)})` : ''}</h3>
       <div class="phu">Dữ liệu: ${esc(mt.ten_ky || '')}${mt.ngay ? ' kết thúc ' + esc(mt.ngay) : ''} · ${esc(TT_KT[sl.tinh_trang_kiem_toan] || 'Chưa rõ tình trạng kiểm toán')} · Lập ngày ${esc(new Date().toLocaleDateString('vi-VN'))}</div></div>`;
-    h += `<div class="banner do" style="display:block;margin:8px 0">Khuyến nghị: <b>${esc(td.khuyen_nghi || '–')}</b>${td.khuyen_nghi_ghi_chu ? ` <span class="phu">(${esc(td.khuyen_nghi_ghi_chu)})</span>` : ''}</div>`;
+    h += `<div class="the the-cs ${ph[0]}" style="margin:8px 0;padding:10px 14px">Mức độ phù hợp làm tài sản ký quỹ: <span class="nhan ${ph[0]}">${esc(ph[1])}</span>${td.muc_ghi_chu ? ` <span class="phu">(${esc(td.muc_ghi_chu)})</span>` : ''}</div>`;
     // Phần 1
     h += `<h3>PHẦN 1: THÔNG TIN DOANH NGHIỆP</h3><div class="bang-cuon"><table><tbody>
       ${[['Tên công ty', hs.ten || mt.ten], ['Tên tiếng Anh', hs.ten_en], ['Mã CK / Sàn', `${mt.ma || ''}${ls.san ? ' / ' + ls.san : ''}${ls.ngay_niem_yet ? ` (niêm yết từ ${String(ls.ngay_niem_yet).split('-').reverse().join('/')})` : ''}`],
@@ -2780,20 +2781,15 @@ footer p{margin:0 0 6px}
     h += `<h3>PHẦN 7: SỰ KIỆN DOANH NGHIỆP ĐÁNG CHÚ Ý</h3>${ul(td.su_kien)}`;
     // Phần 8
     h += `<h3>PHẦN 8: ĐỊNH GIÁ</h3>${bangDinhGia(r.dinh_gia)}${nq ? khoiKichBan(nq) : ''}${td.nhan_xet_dinh_gia ? `<p>${esc(td.nhan_xet_dinh_gia)}</p>` : ''}`;
-    // Phần 9: phần người thẩm định tự điền
-    h += `<h3>PHẦN 9: CHÍNH SÁCH MARGIN THỊ TRƯỜNG VÀ THÔNG SỐ ĐỀ XUẤT</h3><p class="phu">Phần này không có dữ liệu công khai – người thẩm định điền trực tiếp vào bảng (bấm vào ô để gõ) trước khi in/tải Word.</p>
-      <div class="bang-cuon"><table><thead><tr><th>CTCK</th><th>Tỷ lệ ký quỹ</th><th>Giá chặn</th><th>Giá cho vay</th><th>Ghi chú</th></tr></thead><tbody>${['VBSE (nội bộ)', 'SSI', 'VPS', 'TCBS', 'VNDIRECT', 'HSC', 'VCI', 'MBS', 'Khác'].map(c => `<tr><td>${esc(c)}</td>${o(4)}</tr>`).join('')}</tbody></table></div>
-      <div class="bang-cuon"><table><tbody>${['Giá chặn trần đề xuất', 'Tỷ lệ ký quỹ ban đầu', 'Tỷ lệ ký quỹ duy trì', 'Tỷ lệ ký quỹ xử lý', 'Hạn mức toàn công ty', 'Khối lượng cho vay tối đa (CP)', 'Hạn mức một khách hàng', 'Dư nợ hiện tại / room còn lại'].map(c => `<tr><td style="width:40%"><b>${esc(c)}</b></td>${o(1)}</tr>`).join('')}</tbody></table></div>`;
+    // Phần 9
+    const RR = [['thi_truong', 'Rủi ro thị trường'], ['thanh_khoan', 'Rủi ro thanh toán và thanh khoản'], ['pha_loang', 'Rủi ro pha loãng'], ['noi_tai', 'Rủi ro nội tại tổ chức phát hành'], ['nganh', 'Rủi ro đặc thù ngành'], ['quan_tri_co_dong', 'Rủi ro quản trị, cổ đông, bên liên quan']];
+    h += `<h3>PHẦN 9: ĐÁNH GIÁ RỦI RO</h3>${RR.map(([id, ten]) => `<p><b>${esc(ten)}</b></p>${ul((td.rui_ro || {})[id])}`).join('')}`;
     // Phần 10
-    const RR = [['thi_truong', 'Rủi ro thị trường'], ['thanh_khoan', 'Rủi ro thanh toán và thanh khoản'], ['pha_loang', 'Rủi ro pha loãng'], ['noi_tai', 'Rủi ro nội tại tổ chức phát hành'], ['nganh', 'Rủi ro đặc thù ngành'], ['quan_tri_co_dong', 'Rủi ro quản trị, cổ đông, khách hàng liên quan']];
-    h += `<h3>PHẦN 10: ĐÁNH GIÁ RỦI RO CỦA PHƯƠNG ÁN CHO VAY</h3>${RR.map(([id, ten]) => `<p><b>${esc(ten)}</b></p>${ul((td.rui_ro || {})[id])}`).join('')}`;
-    // Phần 11
-    h += `<h3>PHẦN 11: KẾT LUẬN VÀ KHUYẾN NGHỊ</h3>`;
+    h += `<h3>PHẦN 10: KẾT LUẬN</h3>`;
     if ((td.bang_tong_hop || []).length) h += `<div class="bang-cuon"><table><thead><tr><th>Tiêu chí</th><th>Đánh giá</th><th>Mức rủi ro</th></tr></thead><tbody>${td.bang_tong_hop.map(x => `<tr><td><b>${esc(x.tieu_chi)}</b></td><td>${esc(x.danh_gia)}</td><td><span class="nhan ${MAU_M[x.muc] || 'VANG'}">${esc(x.muc)}</span></td></tr>`).join('')}</tbody></table></div>`;
     h += `<div class="hai-cot"><div><p><b>Ưu điểm</b></p>${ul(td.uu_diem)}</div><div><p><b>Nhược điểm & rủi ro</b></p>${ul(td.nhuoc_diem)}</div></div>`;
-    h += `<p><b>Kết luận:</b> ${esc(td.ket_luan)}</p><p><b>Khuyến nghị:</b> ${esc(td.khuyen_nghi)}</p>`;
-    h += `<p><b>Biện pháp phòng ngừa, giảm thiểu rủi ro / yêu cầu giải trình</b></p>${ul(td.bien_phap)}`;
-    h += `<div class="chan">Bảng số liệu tính tự động từ dữ liệu công bố theo mã; phần nhận xét do AI viết dựa trên các số liệu đó. Thông tin chỉ có trong thuyết minh BCTC (cho vay cá nhân, vay ngoài ngân hàng, chi tiết bên liên quan, tài sản đảm bảo) cần bổ sung từ BCTC gốc. Người thẩm định chịu trách nhiệm đối chiếu trước khi trình duyệt.</div>`;
+    h += `<p><b>Kết luận:</b> ${esc(td.ket_luan)}</p><p><b>Mức độ phù hợp làm tài sản ký quỹ:</b> <span class="nhan ${ph[0]}">${esc(ph[1])}</span></p>`;
+    h += `<div class="chan">Bảng số liệu tính tự động từ dữ liệu công bố theo mã; phần nhận xét do AI viết dựa trên các số liệu đó. Thông tin chỉ có trong thuyết minh BCTC (cho vay cá nhân, vay ngoài ngân hàng, chi tiết bên liên quan, tài sản đảm bảo) cần bổ sung từ BCTC gốc. Đây là phân tích tham khảo, không phải khuyến nghị đầu tư; hãy đối chiếu số liệu trước khi sử dụng.</div>`;
     return h;
   }
   async function lapThamDinh() {
@@ -2813,10 +2809,10 @@ footer p{margin:0 0 6px}
     const el = document.getElementById('bao-cao-td');
     if (!el) return;
     const css = 'body{font-family:"Times New Roman";font-size:12pt}table{border-collapse:collapse;width:100%}td,th{border:1px solid #999;padding:3px 5px;font-size:10.5pt;vertical-align:top}th{background:#eee}.so{text-align:right}h2,h3{color:#1f3864}.phu{color:#555;font-size:10pt}.nhan{font-weight:bold}.DO{color:#c00}.VANG{color:#b26b00}.XANH{color:#2e7d32}';
-    const doc = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>Bao cao tham dinh</title><style>${css}</style></head><body>${el.innerHTML.replace(/contenteditable="true"/g, '')}</body></html>`;
+    const doc = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>Bao cao danh gia nhanh</title><style>${css}</style></head><body>${el.innerHTML.replace(/contenteditable="true"/g, '')}</body></html>`;
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob(['﻿' + doc], { type: 'application/msword' }));
-    a.download = `tham-dinh-${(st.kq.meta.ma || 'cp').toLowerCase()}-${new Date().toISOString().slice(0, 10)}.doc`;
+    a.download = `danh-gia-nhanh-${(st.kq.meta.ma || 'cp').toLowerCase()}-${new Date().toISOString().slice(0, 10)}.doc`;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   }
@@ -2848,7 +2844,7 @@ footer p{margin:0 0 6px}
     $('#pane-danh-gia').innerHTML = `<div class="cong-cu khong-in" style="justify-content:flex-end;margin-bottom:10px">
         <button type="button" class="btn nho" data-viet-danh-gia>${ai ? 'Viết lại' : 'Nhờ AI viết đánh giá'}</button>
         <button type="button" class="btn nho" data-in-danh-gia>In / Lưu PDF khổ A4</button>
-        ${st.thiTruong && !st.demo ? `<button type="button" class="btn nho chinh" data-tham-dinh ${st.dangThamDinh ? 'disabled' : ''}>${st.thamDinh ? 'Lập lại báo cáo thẩm định' : 'Lập báo cáo thẩm định chi tiết'}</button>` : ''}</div>
+        ${st.thiTruong && !st.demo ? `<button type="button" class="btn nho chinh" data-tham-dinh ${st.dangThamDinh ? 'disabled' : ''}>${st.thamDinh ? 'Lập lại báo cáo đánh giá nhanh' : 'Lập báo cáo đánh giá nhanh'}</button>` : ''}</div>
       ${trangThai}
       <article class="a4">
         <header><div><h2>${esc(r.tieu_de)}</h2><div class="meta">${esc([mt.ten_ky, mt.ngay ? 'kết thúc ' + mt.ngay : '', mt.ten_chuan, 'Nguồn: ' + nguon].filter(Boolean).join(' · '))}</div></div>
@@ -2856,9 +2852,9 @@ footer p{margin:0 0 6px}
         ${than}
         <div class="chan">${ai ? 'Bản đánh giá do AI viết dựa trên số liệu và kết quả kiểm tra ở các tab khác; hãy đối chiếu con số trước khi dùng.' : 'Bản đánh giá dựng tự động từ số liệu và quy tắc kiểm tra cố định.'} Đây không phải khuyến nghị đầu tư; các cảnh báo là “dấu hiệu đáng ngờ, cần kiểm tra thêm”, không khẳng định gian lận. Lập ngày ${esc(new Date().toLocaleDateString('vi-VN'))}.</div>
       </article>
-      ${st.dangThamDinh ? '<p class="dang-viet khong-in" style="margin-top:14px">Đang lập báo cáo thẩm định chi tiết (bảng số liệu + nhận xét từng phần, khoảng 40–90 giây)…</p>' : ''}
-      ${st.loiThamDinh ? `<p class="ghi-chu khong-in" style="margin-top:14px">Chưa lập được báo cáo thẩm định (${esc(st.loiThamDinh)}). <button type="button" class="btn nho" data-tham-dinh>Thử lại</button></p>` : ''}
-      ${st.thamDinh ? (() => { try { return `<div class="cong-cu khong-in" style="justify-content:flex-end;margin:16px 0 8px"><button type="button" class="btn nho" data-word-tham-dinh>Tải Word (.doc)</button><button type="button" class="btn nho" data-in-tham-dinh>In / Lưu PDF báo cáo thẩm định</button></div><article class="a4" id="bao-cao-td">${baoCaoThamDinhHtml(st.thamDinh)}</article>`; } catch (e) { return `<p class="ghi-chu">Không dựng được báo cáo thẩm định: ${esc(e.message)}</p>`; } })() : ''}`;
+      ${st.dangThamDinh ? '<p class="dang-viet khong-in" style="margin-top:14px">Đang lập báo cáo đánh giá nhanh (bảng số liệu + nhận xét từng phần, khoảng 40–90 giây)…</p>' : ''}
+      ${st.loiThamDinh ? `<p class="ghi-chu khong-in" style="margin-top:14px">Chưa lập được báo cáo đánh giá nhanh (${esc(st.loiThamDinh)}). <button type="button" class="btn nho" data-tham-dinh>Thử lại</button></p>` : ''}
+      ${st.thamDinh ? (() => { try { return `<div class="cong-cu khong-in" style="justify-content:flex-end;margin:16px 0 8px"><button type="button" class="btn nho" data-word-tham-dinh>Tải Word (.doc)</button><button type="button" class="btn nho" data-in-tham-dinh>In / Lưu PDF báo cáo</button></div><article class="a4" id="bao-cao-td">${baoCaoThamDinhHtml(st.thamDinh)}</article>`; } catch (e) { return `<p class="ghi-chu">Không dựng được báo cáo: ${esc(e.message)}</p>`; } })() : ''}`;
   }
   // Mỗi lần số liệu đổi (nạp mới, Tính lại, Hoàn nguyên) tăng số phiên; kết quả AI của phiên cũ bị bỏ để không gắn nhầm công ty.
   async function vietDanhGiaAI() {
@@ -3370,12 +3366,12 @@ footer p{margin:0 0 6px}
     if (e.target.closest('[data-tham-dinh]')) lapThamDinh();
     if (e.target.closest('[data-word-tham-dinh]')) taiWordThamDinh();
     if (e.target.closest('[data-in-tham-dinh]')) {
-      // In riêng báo cáo thẩm định: mở cửa sổ mới chỉ chứa báo cáo (giữ nội dung đã điền tay).
+      // In riêng báo cáo đánh giá nhanh: mở cửa sổ mới chỉ chứa báo cáo.
       const el = document.getElementById('bao-cao-td');
       const w = el && window.open('', '_blank');
       if (w) {
         const css = [...document.querySelectorAll('style')].map(s => s.outerHTML).join('');
-        w.document.write(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Báo cáo thẩm định ${esc(st.kq.meta.ma || '')}</title>${css}<style>body{background:#fff;padding:16px}.khong-in{display:none}</style></head><body><article class="a4">${el.innerHTML.replace(/contenteditable="true"/g, '')}</article></body></html>`);
+        w.document.write(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Báo cáo đánh giá nhanh ${esc(st.kq.meta.ma || '')}</title>${css}<style>body{background:#fff;padding:16px}.khong-in{display:none}</style></head><body><article class="a4">${el.innerHTML.replace(/contenteditable="true"/g, '')}</article></body></html>`);
         w.document.close(); setTimeout(() => w.print(), 400);
       }
     }
