@@ -2396,7 +2396,7 @@ footer p{margin:0 0 6px}
           return r;
         });
     }
-    st.danhGiaAI = null; st.loiDanhGia = '';
+    st.danhGiaAI = null; st.loiDanhGia = ''; st.thamDinh = null; st.loiThamDinh = '';
     st.goc = clone(duLieu); st.duLieu = clone(duLieu); st.demo = !!demo;
     tinhVaVe('tong');
     $('#ket-qua').hidden = false;
@@ -2553,7 +2553,7 @@ footer p{margin:0 0 6px}
       quy_mo: { doanh_thu: E.fmtTien(qm.dt), von_gop: E.fmtTien(qm.vg), von_chu_so_huu: E.fmtTien(qm.vcsh), loi_nhuan_chua_phan_phoi: E.fmtTien(qm.lnpp), san: ls ? ls.san : undefined },
       lich_su_giao_dich: ls ? (ls.su_kien || []).map(x => `${x.ngay}: ${x.ten}${x.ly_do ? ' – ' + x.ly_do : ''}`) : 'chỉ có khi tra theo mã',
       rui_ro_cau_truc: ruiRoCauTruc(kq, d, ls),
-      tieu_chi_ky_quy: (() => { const k = tieuChiKyQuy(); return k ? { ket_luan: k.ket_luan, tieu_chi: k.tieu_chi.map(x => `${x.ten}: ${x.gia_tri} → ${x.dat === true ? 'đạt' : x.dat === false ? 'KHÔNG ĐẠT' : 'chưa kết luận'}`), dau_hieu: k.canh_bao } : undefined; })(),
+      tieu_chi_ky_quy: (() => { const k = tieuChiKyQuy(); return k ? { ket_luan: k.ket_luan, so_khong_dat: k.khong_dat, tieu_chi: k.tieu_chi.map(x => `${x.ten}: ${x.gia_tri} → ${x.dat === true ? 'đạt' : x.dat === false ? 'KHÔNG ĐẠT' : 'chưa kết luận'}`), dau_hieu: k.canh_bao } : undefined; })(),
       rui_ro_gia: st.thiTruong && st.thiTruong.rui_ro_gia ? { muc: st.thiTruong.rui_ro_gia.muc, chi_so: st.thiTruong.rui_ro_gia.chi_so.map(x => ({ ten: x.ten, gia_tri: x.gia_tri, muc: CHU[x.muc] })) } : 'chỉ có khi tra theo mã',
       nghi_quyet_dhdcd: st.nghiQuyet && st.nghiQuyet.nq ? Object.assign({}, st.nghiQuyet.nq, { nguon: undefined, thieu_file: undefined,
         tien_do_ke_hoach: tienDoKeHoach(st.nghiQuyet.nq).map(x => `${x.ten}: thực hiện ${E.fmtTien(x.thuc_hien)} sau ${x.thang} tháng = ${E.fmtPct(x.ty_le, 0)} kế hoạch năm ${E.fmtTien(x.ke_hoach)}${x.cham ? ' (chậm so với tiến độ)' : ''}`),
@@ -2706,6 +2706,122 @@ footer p{margin:0 0 6px}
         `<tr><td title="${esc(x.y_nghia || '')}">${esc(x.ten)}</td><td>${esc(x.gia_tri)}</td><td><span class="nhan ${x.muc}">${x.muc === 'DO' ? 'Cao' : x.muc === 'VANG' ? 'Chú ý' : 'Ổn'}</span></td></tr>`).join('')}</tbody></table></div>
       <p class="phu">${esc(rg.so_phien)} phiên từ ${esc(rg.tu_ngay)} đến ${esc(rg.den_ngay)}, giá đã điều chỉnh cổ tức tiền/cổ phiếu và chia tách (ngày chia cổ phiếu không tính là giảm giá)${(rg.dieu_chinh || []).length ? '. Sự kiện đã điều chỉnh: ' + rg.dieu_chinh.map(esc).join('; ') : ''}. Mức chung: "Cao" khi có từ 2 chỉ tiêu mức cao; "Trung bình" khi có 1 chỉ tiêu cao hoặc từ 2 chỉ tiêu cần chú ý.</p></div>`;
   }
+  // ===== Báo cáo thẩm định chi tiết (theo mẫu báo cáo thẩm định cho vay margin của phòng QLRR) =====
+  const tyDong = v => (E.isNum(v) ? new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v / 1e9) : '–');
+  function bangNhieuKyHtml(nk, nhom) {
+    if (!nk || !nk.dong) return '<p class="phu">Chưa có bảng nhiều kỳ (chỉ có khi tra theo mã).</p>';
+    const loc = nk.dong.filter(x => nhom === 'kqkd' ? /^is|bien_gop/.test(x.ma) : nhom === 'cdkt' ? /^bs/.test(x.ma) : /^cf/.test(x.ma));
+    if (!loc.length) return '';
+    const coLk = nk.cot.length >= 2 && /T\//.test(nk.cot[nk.cot.length - 1]);
+    const yoy = (a, b) => (E.isNum(a) && E.isNum(b) && b !== 0 ? (a - b) / Math.abs(b) : null);
+    return `<div class="bang-cuon"><table><thead><tr><th>Chỉ tiêu (tỷ đồng)</th>${nk.cot.map(c => `<th class="so">${esc(c)}</th>`).join('')}${coLk ? '<th class="so">+/- cùng kỳ</th>' : ''}</tr></thead><tbody>${loc.map(x => {
+      const o = x.gt.map(v => (x.loai === 'pct' ? (E.isNum(v) ? E.fmtPct(v, 1) : '–') : tyDong(v)));
+      const n = x.gt.length, bd = coLk ? (x.loai === 'pct' ? (E.isNum(x.gt[n - 1]) && E.isNum(x.gt[n - 2]) ? `${((x.gt[n - 1] - x.gt[n - 2]) * 100).toFixed(1).replace('.', ',')} đpt` : '–') : (E.isNum(yoy(x.gt[n - 1], x.gt[n - 2])) ? E.fmtPct(yoy(x.gt[n - 1], x.gt[n - 2]), 1) : '–')) : '';
+      return `<tr><td>${esc(x.ten)}</td>${o.map(v => `<td class="so">${esc(v)}</td>`).join('')}${coLk ? `<td class="so">${esc(bd)}</td>` : ''}</tr>`;
+    }).join('')}</tbody></table></div>`;
+  }
+  function tomTatThamDinh() {
+    const tt = st.thiTruong || {}, base = tomTatChoAI();
+    const nk = tt.bang_nhieu_ky;
+    return Object.assign({}, base, {
+      bang_nhieu_ky: nk ? { cot: nk.cot, don_vi: 'tỷ đồng (biên gộp: %)', dong: nk.dong.map(x => ({ ten: x.ten, gia_tri: x.gt.map(v => (x.loai === 'pct' ? (E.isNum(v) ? E.fmtPct(v, 1) : null) : (E.isNum(v) ? Math.round(v / 1e7) / 100 : null))) })) } : 'không có',
+      ho_so: tt.ho_so || undefined,
+      co_dong_lon: (tt.co_dong || []).map(x => `${x.ten} (${x.vai_tro}): ${E.fmtPct(x.ty_le, 2)}${x.ngay ? ', cập nhật ' + x.ngay : ''}`),
+      thong_tin_co_phieu: { gia: tt.gia, so_cp: tt.so_cp, von_hoa: E.fmtTien(tt.von_hoa), san: tt.lich_su_gd && tt.lich_su_gd.san, ngay_niem_yet: tt.lich_su_gd && tt.lich_su_gd.ngay_niem_yet }
+    });
+  }
+  function baoCaoThamDinhHtml(td) {
+    const kq = st.kq, mt = kq.meta, tt = st.thiTruong || {}, d = st.duLieu || {}, sl = d.suy_luan || {};
+    const r = E.danhGia(kq, d, tt, dieuChinhDinhGia());
+    const ul = a => (a && a.length ? `<ul>${a.map(s => `<li>${/^RED FLAG/i.test(s) ? `<b style="color:var(--do)">${esc(s)}</b>` : esc(s)}</li>`).join('')}</ul>` : '<p class="phu">Chưa có nhận xét.</p>');
+    const hs = tt.ho_so || {}, ls = tt.lich_su_gd || {};
+    const TT_KT = { da_kiem_toan: 'Đã kiểm toán', soat_xet: 'Đã soát xét', tu_lap_chua_kiem_toan: 'Tự lập, chưa kiểm toán/soát xét' };
+    const k = tieuChiKyQuy(), rg = tt.rui_ro_gia, nq = st.nghiQuyet && st.nghiQuyet.nq;
+    const cs = id => kq.chi_so.find(x => x.id === id);
+    const CHI_SO = ['cr', 'qr', 'cashr', 'no_vcsh', 'vay_vcsh', 'vay_tts', 'icr'].map(cs).filter(x => x && x.gt !== null);
+    const MAU_M = { 'THẤP': 'XANH', 'TRUNG BÌNH': 'VANG', 'TRUNG BÌNH CAO': 'VANG', 'CAO': 'DO' };
+    const o = (n = 6) => Array.from({ length: n }, () => '<td contenteditable="true"></td>').join('');
+    let h = `<div class="td-dau" style="text-align:center;margin-bottom:10px"><div class="phu">PHÒNG QUẢN LÝ RỦI RO</div>
+      <h2 style="margin:6px 0">BÁO CÁO THẨM ĐỊNH CHO VAY MARGIN</h2>
+      <h3 style="margin:0">${esc(mt.ten || hs.ten || '')}${mt.ma ? ` (${esc(ls.san || '')}${ls.san ? ': ' : ''}${esc(mt.ma)})` : ''}</h3>
+      <div class="phu">Dữ liệu: ${esc(mt.ten_ky || '')}${mt.ngay ? ' kết thúc ' + esc(mt.ngay) : ''} · ${esc(TT_KT[sl.tinh_trang_kiem_toan] || 'Chưa rõ tình trạng kiểm toán')} · Lập ngày ${esc(new Date().toLocaleDateString('vi-VN'))}</div></div>`;
+    h += `<div class="banner do" style="display:block;margin:8px 0">Khuyến nghị: <b>${esc(td.khuyen_nghi || '–')}</b>${td.khuyen_nghi_ghi_chu ? ` <span class="phu">(${esc(td.khuyen_nghi_ghi_chu)})</span>` : ''}</div>`;
+    // Phần 1
+    h += `<h3>PHẦN 1: THÔNG TIN DOANH NGHIỆP</h3><div class="bang-cuon"><table><tbody>
+      ${[['Tên công ty', hs.ten || mt.ten], ['Tên tiếng Anh', hs.ten_en], ['Mã CK / Sàn', `${mt.ma || ''}${ls.san ? ' / ' + ls.san : ''}${ls.ngay_niem_yet ? ` (niêm yết từ ${String(ls.ngay_niem_yet).split('-').reverse().join('/')})` : ''}`],
+        ['Mã số doanh nghiệp', hs.mst || sl.ma_so_doanh_nghiep], ['Ngày thành lập', hs.ngay_thanh_lap ? String(hs.ngay_thanh_lap).split('-').reverse().join('/') : ''], ['Trụ sở', hs.dia_chi], ['Website', hs.website],
+        ['Số lượng cổ phiếu', E.isNum(tt.so_cp) ? E.fmtSo(tt.so_cp) : ''], ['Giá / Vốn hoá', E.isNum(tt.gia) ? `${E.fmtSo(tt.gia)} đồng · ${E.fmtTien(tt.von_hoa)}` : ''], ['Ngành', mt.nhom_nganh], ['Nhân sự', hs.nhan_vien ? E.fmtSo(hs.nhan_vien) + ' người' : '']]
+        .filter(([, v]) => v).map(([a, b]) => `<tr><td style="width:32%"><b>${esc(a)}</b></td><td>${esc(b)}</td></tr>`).join('')}</tbody></table></div>`;
+    if ((tt.co_dong || []).length) h += `<p><b>Cổ đông lớn</b></p><div class="bang-cuon"><table><thead><tr><th>Cổ đông</th><th>Vai trò</th><th class="so">Số CP</th><th class="so">Tỷ lệ</th><th>Cập nhật</th></tr></thead><tbody>${tt.co_dong.map(x => `<tr><td>${esc(x.ten)}</td><td>${esc(x.vai_tro)}</td><td class="so">${x.so_cp ? esc(E.fmtSo(x.so_cp)) : '–'}</td><td class="so">${esc(E.fmtPct(x.ty_le, 2))}</td><td>${esc(x.ngay)}</td></tr>`).join('')}</tbody></table></div><p class="phu">Nguồn: dữ liệu cổ đông công bố (có thể chưa cập nhật giao dịch gần nhất).</p>`;
+    h += `<p>${esc(td.tong_quan_dn)}</p>${td.trien_vong_nganh ? `<p><b>Triển vọng ngành:</b> ${esc(td.trien_vong_nganh)}</p>` : ''}`;
+    // Phần 2
+    h += `<h3>PHẦN 2: ĐÁNH GIÁ TIÊU CHÍ DANH MỤC KÝ QUỸ</h3>`;
+    if (k) h += `<div class="bang-cuon"><table><thead><tr><th>Tiêu chí</th><th>Số liệu</th><th>Kết quả</th></tr></thead><tbody>${k.tieu_chi.map(x => `<tr><td>${esc(x.ten)}</td><td>${esc(x.gia_tri)}</td><td><span class="nhan ${x.dat === true ? 'XANH' : x.dat === false ? 'DO' : 'KHONG_DU_DU_LIEU'}">${x.dat === true ? 'Đạt' : x.dat === false ? 'Không đạt' : 'Chưa kết luận'}</span></td></tr>`).join('')}</tbody></table></div>`;
+    h += ul(td.nhan_xet_tieu_chi);
+    if (k && k.canh_bao.length) h += `<div class="hop-tb"><b>Dấu hiệu cần soi thêm</b>${ul(k.canh_bao)}</div>`;
+    // Phần 3
+    h += `<h3>PHẦN 3: KẾT QUẢ KINH DOANH</h3>${bangNhieuKyHtml(tt.bang_nhieu_ky, 'kqkd')}${ul(td.nhan_xet_kqkd)}`;
+    if (nq && nq.ke_hoach_kinh_doanh && nq.ke_hoach_kinh_doanh.nam) {
+      const kh = nq.ke_hoach_kinh_doanh, tdk = tienDoKeHoach(nq);
+      h += `<p><b>Kế hoạch ĐHĐCĐ ${esc(kh.nam)}:</b> ${[E.isNum(kh.doanh_thu) ? 'doanh thu ' + E.fmtTien(kh.doanh_thu) : '', E.isNum(kh.loi_nhuan_truoc_thue) ? 'LNTT ' + E.fmtTien(kh.loi_nhuan_truoc_thue) : '', E.isNum(kh.loi_nhuan_sau_thue) ? 'LNST ' + E.fmtTien(kh.loi_nhuan_sau_thue) : ''].filter(Boolean).map(esc).join(', ')}${tdk.length ? '. Tiến độ: ' + tdk.map(x => `${x.ten} ${E.fmtPct(x.ty_le, 0)}${x.cham ? ' (chậm)' : ''}`).map(esc).join('; ') : ''}.</p>`;
+    }
+    // Phần 4
+    h += `<h3>PHẦN 4: TÀI SẢN, NGUỒN VỐN VÀ NỢ VAY</h3>${bangNhieuKyHtml(tt.bang_nhieu_ky, 'cdkt')}`;
+    if (CHI_SO.length) h += `<div class="bang-cuon"><table><thead><tr><th>Chỉ số</th><th class="so">Kỳ này</th><th class="so">Kỳ trước</th></tr></thead><tbody>${CHI_SO.map(x => `<tr><td>${esc(x.ten)}</td><td class="so">${esc(E.fmt(x.gt, x.kieu))}</td><td class="so">${x.truoc !== null && x.truoc !== undefined ? esc(E.fmt(x.truoc, x.kieu)) : '–'}</td></tr>`).join('')}</tbody></table></div>`;
+    h += ul(td.nhan_xet_tai_san);
+    // Phần 5
+    h += `<h3>PHẦN 5: DÒNG TIỀN</h3>${bangNhieuKyHtml(tt.bang_nhieu_ky, 'lctt')}${ul(td.nhan_xet_dong_tien)}`;
+    // Phần 6
+    h += `<h3>PHẦN 6: GIAO DỊCH CỔ PHIẾU</h3>`;
+    if (rg) h += `<div class="bang-cuon"><table><tbody>${rg.chi_so.map(x => `<tr><td>${esc(x.ten)}</td><td>${esc(x.gia_tri)}</td><td><span class="nhan ${x.muc}">${x.muc === 'DO' ? 'Cao' : x.muc === 'VANG' ? 'Chú ý' : 'Ổn'}</span></td></tr>`).join('')}</tbody></table></div>`;
+    if ((ls.su_kien || []).length) h += `<p class="phu">Lịch sử xử lý giao dịch: ${ls.su_kien.slice(0, 6).map(x => `${x.ngay}: ${x.ten}`).map(esc).join(' · ')}</p>`;
+    h += ul(td.nhan_xet_giao_dich);
+    // Phần 7
+    h += `<h3>PHẦN 7: SỰ KIỆN DOANH NGHIỆP ĐÁNG CHÚ Ý</h3>${ul(td.su_kien)}`;
+    // Phần 8
+    h += `<h3>PHẦN 8: ĐỊNH GIÁ</h3>${bangDinhGia(r.dinh_gia)}${nq ? khoiKichBan(nq) : ''}${td.nhan_xet_dinh_gia ? `<p>${esc(td.nhan_xet_dinh_gia)}</p>` : ''}`;
+    // Phần 9: phần người thẩm định tự điền
+    h += `<h3>PHẦN 9: CHÍNH SÁCH MARGIN THỊ TRƯỜNG VÀ THÔNG SỐ ĐỀ XUẤT</h3><p class="phu">Phần này không có dữ liệu công khai – người thẩm định điền trực tiếp vào bảng (bấm vào ô để gõ) trước khi in/tải Word.</p>
+      <div class="bang-cuon"><table><thead><tr><th>CTCK</th><th>Tỷ lệ ký quỹ</th><th>Giá chặn</th><th>Giá cho vay</th><th>Ghi chú</th></tr></thead><tbody>${['VBSE (nội bộ)', 'SSI', 'VPS', 'TCBS', 'VNDIRECT', 'HSC', 'VCI', 'MBS', 'Khác'].map(c => `<tr><td>${esc(c)}</td>${o(4)}</tr>`).join('')}</tbody></table></div>
+      <div class="bang-cuon"><table><tbody>${['Giá chặn trần đề xuất', 'Tỷ lệ ký quỹ ban đầu', 'Tỷ lệ ký quỹ duy trì', 'Tỷ lệ ký quỹ xử lý', 'Hạn mức toàn công ty', 'Khối lượng cho vay tối đa (CP)', 'Hạn mức một khách hàng', 'Dư nợ hiện tại / room còn lại'].map(c => `<tr><td style="width:40%"><b>${esc(c)}</b></td>${o(1)}</tr>`).join('')}</tbody></table></div>`;
+    // Phần 10
+    const RR = [['thi_truong', 'Rủi ro thị trường'], ['thanh_khoan', 'Rủi ro thanh toán và thanh khoản'], ['pha_loang', 'Rủi ro pha loãng'], ['noi_tai', 'Rủi ro nội tại tổ chức phát hành'], ['nganh', 'Rủi ro đặc thù ngành'], ['quan_tri_co_dong', 'Rủi ro quản trị, cổ đông, khách hàng liên quan']];
+    h += `<h3>PHẦN 10: ĐÁNH GIÁ RỦI RO CỦA PHƯƠNG ÁN CHO VAY</h3>${RR.map(([id, ten]) => `<p><b>${esc(ten)}</b></p>${ul((td.rui_ro || {})[id])}`).join('')}`;
+    // Phần 11
+    h += `<h3>PHẦN 11: KẾT LUẬN VÀ KHUYẾN NGHỊ</h3>`;
+    if ((td.bang_tong_hop || []).length) h += `<div class="bang-cuon"><table><thead><tr><th>Tiêu chí</th><th>Đánh giá</th><th>Mức rủi ro</th></tr></thead><tbody>${td.bang_tong_hop.map(x => `<tr><td><b>${esc(x.tieu_chi)}</b></td><td>${esc(x.danh_gia)}</td><td><span class="nhan ${MAU_M[x.muc] || 'VANG'}">${esc(x.muc)}</span></td></tr>`).join('')}</tbody></table></div>`;
+    h += `<div class="hai-cot"><div><p><b>Ưu điểm</b></p>${ul(td.uu_diem)}</div><div><p><b>Nhược điểm & rủi ro</b></p>${ul(td.nhuoc_diem)}</div></div>`;
+    h += `<p><b>Kết luận:</b> ${esc(td.ket_luan)}</p><p><b>Khuyến nghị:</b> ${esc(td.khuyen_nghi)}</p>`;
+    h += `<p><b>Biện pháp phòng ngừa, giảm thiểu rủi ro / yêu cầu giải trình</b></p>${ul(td.bien_phap)}`;
+    const dk = td.dieu_kien_thay_doi || {};
+    h += `<div class="hai-cot"><div><p><b>Điều kiện làm kết luận tích cực hơn</b></p>${ul(dk.tich_cuc)}</div><div><p><b>Điều kiện làm kết luận tiêu cực hơn</b></p>${ul(dk.tieu_cuc)}</div></div>`;
+    h += `<div class="chan">Bảng số liệu tính tự động từ dữ liệu công bố theo mã; phần nhận xét do AI viết dựa trên các số liệu đó. Thông tin chỉ có trong thuyết minh BCTC (cho vay cá nhân, vay ngoài ngân hàng, chi tiết bên liên quan, tài sản đảm bảo) cần bổ sung từ BCTC gốc. Người thẩm định chịu trách nhiệm đối chiếu trước khi trình duyệt.</div>`;
+    return h;
+  }
+  async function lapThamDinh() {
+    if (!st.kq || st.demo || st.dangThamDinh) return;
+    const phien = st.phien;
+    st.dangThamDinh = true; st.loiThamDinh = ''; veDanhGia();
+    if (st.nqPromise) await Promise.race([st.nqPromise, new Promise(r => setTimeout(r, 90000))]);
+    let j = null;
+    try { j = await goi('tham_dinh', { tom_tat: tomTatThamDinh() }); } catch (e) { st.loiThamDinh = e.message || 'lỗi không rõ'; }
+    if (phien !== st.phien) { st.dangThamDinh = false; return; }
+    st.dangThamDinh = false;
+    if (j) st.thamDinh = j.tham_dinh;
+    veDanhGia();
+    const el = document.getElementById('bao-cao-td'); if (el && j) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function taiWordThamDinh() {
+    const el = document.getElementById('bao-cao-td');
+    if (!el) return;
+    const css = 'body{font-family:"Times New Roman";font-size:12pt}table{border-collapse:collapse;width:100%}td,th{border:1px solid #999;padding:3px 5px;font-size:10.5pt;vertical-align:top}th{background:#eee}.so{text-align:right}h2,h3{color:#1f3864}.phu{color:#555;font-size:10pt}.nhan{font-weight:bold}.DO{color:#c00}.VANG{color:#b26b00}.XANH{color:#2e7d32}';
+    const doc = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>Bao cao tham dinh</title><style>${css}</style></head><body>${el.innerHTML.replace(/contenteditable="true"/g, '')}</body></html>`;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['﻿' + doc], { type: 'application/msword' }));
+    a.download = `tham-dinh-${(st.kq.meta.ma || 'cp').toLowerCase()}-${new Date().toISOString().slice(0, 10)}.doc`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
   function veDanhGia() {
     const kq = st.kq, mt = kq.meta;
     const r = E.danhGia(kq, st.duLieu, st.thiTruong, dieuChinhDinhGia());
@@ -2734,14 +2850,18 @@ footer p{margin:0 0 6px}
       : st.loiDanhGia ? `<p class="ghi-chu khong-in">Chưa nhờ được AI viết (${esc(st.loiDanhGia)}). Đang hiển thị bản tự động dựng từ số liệu. <button type="button" class="btn nho" data-viet-danh-gia>Thử lại</button></p>` : '';
     $('#pane-danh-gia').innerHTML = `<div class="cong-cu khong-in" style="justify-content:flex-end;margin-bottom:10px">
         <button type="button" class="btn nho" data-viet-danh-gia>${ai ? 'Viết lại' : 'Nhờ AI viết đánh giá'}</button>
-        <button type="button" class="btn nho" data-in-danh-gia>In / Lưu PDF khổ A4</button></div>
+        <button type="button" class="btn nho" data-in-danh-gia>In / Lưu PDF khổ A4</button>
+        ${st.thiTruong && !st.demo ? `<button type="button" class="btn nho chinh" data-tham-dinh ${st.dangThamDinh ? 'disabled' : ''}>${st.thamDinh ? 'Lập lại báo cáo thẩm định' : 'Lập báo cáo thẩm định chi tiết'}</button>` : ''}</div>
       ${trangThai}
       <article class="a4">
         <header><div><h2>${esc(r.tieu_de)}</h2><div class="meta">${esc([mt.ten_ky, mt.ngay ? 'kết thúc ' + mt.ngay : '', mt.ten_chuan, 'Nguồn: ' + nguon].filter(Boolean).join(' · '))}</div></div>
           <span class="xep nhan ${MAU_XEP[xep] || 'VANG'}">${esc(xep)}</span></header>
         ${than}
         <div class="chan">${ai ? 'Bản đánh giá do AI viết dựa trên số liệu và kết quả kiểm tra ở các tab khác; hãy đối chiếu con số trước khi dùng.' : 'Bản đánh giá dựng tự động từ số liệu và quy tắc kiểm tra cố định.'} Đây không phải khuyến nghị đầu tư; các cảnh báo là “dấu hiệu đáng ngờ, cần kiểm tra thêm”, không khẳng định gian lận. Lập ngày ${esc(new Date().toLocaleDateString('vi-VN'))}.</div>
-      </article>`;
+      </article>
+      ${st.dangThamDinh ? '<p class="dang-viet khong-in" style="margin-top:14px">Đang lập báo cáo thẩm định chi tiết (bảng số liệu + nhận xét từng phần, khoảng 40–90 giây)…</p>' : ''}
+      ${st.loiThamDinh ? `<p class="ghi-chu khong-in" style="margin-top:14px">Chưa lập được báo cáo thẩm định (${esc(st.loiThamDinh)}). <button type="button" class="btn nho" data-tham-dinh>Thử lại</button></p>` : ''}
+      ${st.thamDinh ? (() => { try { return `<div class="cong-cu khong-in" style="justify-content:flex-end;margin:16px 0 8px"><button type="button" class="btn nho" data-word-tham-dinh>Tải Word (.doc)</button><button type="button" class="btn nho" data-in-tham-dinh>In / Lưu PDF báo cáo thẩm định</button></div><article class="a4" id="bao-cao-td">${baoCaoThamDinhHtml(st.thamDinh)}</article>`; } catch (e) { return `<p class="ghi-chu">Không dựng được báo cáo thẩm định: ${esc(e.message)}</p>`; } })() : ''}`;
   }
   // Mỗi lần số liệu đổi (nạp mới, Tính lại, Hoàn nguyên) tăng số phiên; kết quả AI của phiên cũ bị bỏ để không gắn nhầm công ty.
   async function vietDanhGiaAI() {
@@ -3202,7 +3322,7 @@ footer p{margin:0 0 6px}
       if (sl.chuan_ke_toan === can && !d[g]) { d[g] = {}; E.KHOA[g].forEach(k => d[g][k] = { ky_nay: null, ky_truoc: null, trang: null }); }
     });
     st.duLieu = d;
-    st.danhGiaAI = null; st.loiDanhGia = '';
+    st.danhGiaAI = null; st.loiDanhGia = ''; st.thamDinh = null; st.loiThamDinh = '';
     tinhVaVe('tho');
   }
 
@@ -3239,7 +3359,7 @@ footer p{margin:0 0 6px}
       return;
     }
     if (e.target.id === 'nut-tinh-lai') tinhLai();
-    if (e.target.id === 'nut-hoan-nguyen') { st.duLieu = clone(st.goc); st.danhGiaAI = null; st.loiDanhGia = ''; tinhVaVe('tho'); }
+    if (e.target.id === 'nut-hoan-nguyen') { st.duLieu = clone(st.goc); st.danhGiaAI = null; st.loiDanhGia = ''; st.thamDinh = null; st.loiThamDinh = ''; tinhVaVe('tho'); }
     const locGd = e.target.closest('[data-loc-gd]');
     if (locGd) {
       const k = locGd.dataset.locGd;
@@ -3250,6 +3370,18 @@ footer p{margin:0 0 6px}
     const den = e.target.closest('[data-den-tab]');
     if (den) { chonTab(den.dataset.denTab); $('#ket-qua').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     if (e.target.closest('[data-viet-danh-gia]')) { st.loiDanhGia = ''; vietDanhGiaAI(); }
+    if (e.target.closest('[data-tham-dinh]')) lapThamDinh();
+    if (e.target.closest('[data-word-tham-dinh]')) taiWordThamDinh();
+    if (e.target.closest('[data-in-tham-dinh]')) {
+      // In riêng báo cáo thẩm định: mở cửa sổ mới chỉ chứa báo cáo (giữ nội dung đã điền tay).
+      const el = document.getElementById('bao-cao-td');
+      const w = el && window.open('', '_blank');
+      if (w) {
+        const css = [...document.querySelectorAll('style')].map(s => s.outerHTML).join('');
+        w.document.write(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Báo cáo thẩm định ${esc(st.kq.meta.ma || '')}</title>${css}<style>body{background:#fff;padding:16px}.khong-in{display:none}</style></head><body><article class="a4">${el.innerHTML.replace(/contenteditable="true"/g, '')}</article></body></html>`);
+        w.document.close(); setTimeout(() => w.print(), 400);
+      }
+    }
     if (e.target.closest('[data-in-danh-gia]')) {
       document.body.classList.add('in-danh-gia');
       const bo = () => { document.body.classList.remove('in-danh-gia'); window.removeEventListener('afterprint', bo); };
