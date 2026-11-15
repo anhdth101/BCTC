@@ -428,6 +428,7 @@ BƯỚC 2 – QUY TẮC TRÍCH XUẤT:
 - Chứng khoán: danh_gia_lai_fvtpl_tang = "Chênh lệch tăng đánh giá lại các TSTC thông qua lãi/lỗ"; danh_gia_lai_fvtpl_giam = "Chênh lệch giảm đánh giá lại..." (số âm); phai_thu_du_thu_lai = "Phải thu và dự thu cổ tức, tiền lãi các tài sản tài chính"; doanh_thu_hoat_dong = tổng "Doanh thu hoạt động"; cho_vay_margin = cho vay nghiệp vụ ký quỹ (nếu không tách được thì tổng "Các khoản cho vay").
 - Bảo hiểm: phi_bao_hiem_thuan = "Doanh thu phí bảo hiểm thuần"; phai_thu_bao_hiem = "Phải thu về hợp đồng bảo hiểm"; du_phong_boi_thuong = số dư "Dự phòng bồi thường"; du_phong_nghiep_vu = số dư tổng "Dự phòng nghiệp vụ"; loi_nhuan_hd_bao_hiem = "Lợi nhuận thuần hoạt động kinh doanh bảo hiểm"; loi_nhuan_hd_tai_chinh = "Lợi nhuận hoạt động tài chính".
 - Ngân hàng: no_nhom_2, no_nhom_3_5 lấy từ thuyết minh phân loại nợ (nhóm 3+4+5 cộng sẵn nếu báo cáo có dòng tổng nợ xấu; nếu không có dòng tổng thì để null và ghi diem_nghi_ngo). tai_san_sinh_lai_binh_quan để null nếu báo cáo không in sẵn.
+- kiem_toan: cong_ty_kiem_toan_ky_nay = tên công ty kiểm toán ký Báo cáo kiểm toán/soát xét kỳ này (thường in ở tiêu đề thư đầu báo cáo kiểm toán, ví dụ "Công ty TNHH KPMG", hoặc ở cuối cạnh chữ ký); cong_ty_kiem_toan_ky_truoc chỉ điền khi báo cáo có nêu đơn vị kiểm toán kỳ trước (thường ở đoạn "Vấn đề khác").
 - kiem_toan: y_kien theo Báo cáo kiểm toán/soát xét (chap_nhan_toan_phan, ngoai_tru, trai_nguoc, tu_choi; không có báo cáo kiểm toán thì khong_ro). van_de_ngoai_tru_nhan_manh: tóm tắt ngắn từng vấn đề ngoại trừ / nhấn mạnh, mỗi mục không quá 25 từ.
 - thuyet_minh_dinh_tinh: "co" = true chỉ khi thuyết minh nêu rõ. Mô tả ngắn gọn (≤ 40 từ), kèm trang. tam_ung_nhan_vien_ban_lanh_dao: số dư tạm ứng cho nhân viên/ban lãnh đạo nếu thuyết minh phải thu khác có tách. lai_tien_gui: lãi tiền gửi trong thuyết minh doanh thu hoạt động tài chính. so_co_phieu_luu_hanh: số cổ phiếu đang lưu hành cuối kỳ và đầu kỳ.
 - Ảnh scan: đọc từng ô cẩn thận; ô khó đọc ghi vào suy_luan.diem_nghi_ngo.
@@ -843,7 +844,7 @@ function vciTuMa(d, yeuCau) {
       loai_bao_cao: null, chuan_ke_toan: chuan, nhom_nganh_icb2: cty.sectorVn || '', la_tap_doan_da_nganh: false,
       don_vi_goc: 'dong', he_so_nhan: 1, tinh_trang_kiem_toan: 'khong_ro',
       diem_nghi_ngo: [
-        'Số liệu lấy tự động từ nguồn dữ liệu Vietcap (VCI), không phải từ file BCTC gốc; nên đối chiếu khi cần ra quyết định.',
+        'Số liệu lấy tự động theo mã cổ phiếu từ dữ liệu công bố, không phải đọc từ file BCTC gốc; nên đối chiếu khi cần ra quyết định.',
         'Nguồn dữ liệu không có ý kiến kiểm toán và thuyết minh định tính; tải kèm PDF để kiểm tra phần này.'
       ].concat(laNam ? ['Giả định năm tài chính kết thúc 31/12.'] : [`Kết quả kinh doanh và lưu chuyển tiền tệ là luỹ kế ${Q} quý, cộng từ số liệu từng quý.`])
     },
@@ -909,12 +910,14 @@ function vciTuMa(d, yeuCau) {
     no_vay: bsMoi ? v0(bsMoi, 'bsa56') + v0(bsMoi, 'bsa71') : null,
     tien: bsMoi ? v0(bsMoi, 'bsa2') + v0(bsMoi, 'bsa5') : null,
     lnst_nam: namIS.map(r => ({ nam: r.yearReport, v: so(r.isa22) })).filter(x => x.v !== null),
+    vcsh_nam: (ds('BALANCE_SHEET').years || []).slice().sort((a, b) => b.yearReport - a.yearReport).slice(0, 6)
+      .map(r => ({ nam: r.yearReport, v: so(r.bsa78) === null ? null : so(r.bsa78) - (so(r.bsa210) || so(r.bsa95) || 0) })).filter(x => x.v !== null),
     fcf_nam: namCF.map(r => ({ nam: r.yearReport, ocf: so(r.cfa18), capex: so(r.cfa19) })).filter(x => x.ocf !== null)
   };
   return {
     du_lieu,
     thi_truong,
-    nguon: { ten: 'Vietcap (VCI)', ky: laNam ? `Năm ${Y}` : `Q${Q}/${Y}`, cong_bo: banGhi && banGhi.publicDate ? String(banGhi.publicDate).slice(0, 10) : '' },
+    nguon: { ten: 'Dữ liệu công bố theo mã', ky: laNam ? `Năm ${Y}` : `Q${Q}/${Y}`, cong_bo: banGhi && banGhi.publicDate ? String(banGhi.publicDate).slice(0, 10) : '' },
     ky_co_san: { nam: namCo.slice(0, 8), quy: quyCo.slice(0, 8).map(([y, q]) => `${y}-Q${q}`) }
   };
 }
@@ -1040,13 +1043,22 @@ async function cheDoMaCk(body) {
     try {
       const d = await layVnd(body.ma);
       kq = vciTuMa(d, yc);
-      kq.nguon.ten = 'VNDirect (dự phòng)';
-      kq.du_lieu.suy_luan.diem_nghi_ngo = kq.du_lieu.suy_luan.diem_nghi_ngo.map(s => s.replace('Vietcap (VCI)', 'VNDirect')).concat(['Nguồn chính Vietcap không phản hồi; số liệu lấy từ nguồn dự phòng VNDirect (không có thuyết minh nợ xấu, CASA).']);
+      kq.nguon.ten = 'Dữ liệu công bố theo mã (nguồn dự phòng)';
+      kq.du_lieu.suy_luan.diem_nghi_ngo = kq.du_lieu.suy_luan.diem_nghi_ngo.concat(['Nguồn dữ liệu chính tạm thời không phản hồi; đang dùng nguồn dự phòng (không có thuyết minh nợ xấu, tiền gửi không kỳ hạn của ngân hàng).']);
     } catch (e) {
       console.error('nguon_vnd_loi', body.ma, e.status || '-', e.chiTiet || e.message);
       throw e.status === 404 ? e : (loiVci || e);
     }
   }
+  // Giá cuối mỗi năm (đã điều chỉnh chia tách/cổ tức cổ phiếu) để tính P/E, P/B lịch sử của chính cổ phiếu.
+  try {
+    const y0 = new Date().getFullYear();
+    const j = await layJson(`${VND_BASE}/stock_prices?sort=date&q=code:${body.ma}~date:gte:${y0 - 6}-12-01&size=2500&fields=date,adClose`, VND_H, 10000);
+    const cuoiNam = {};
+    (j && j.data || []).forEach(x => { const y = +String(x.date).slice(0, 4); if (!cuoiNam[y] || x.date > cuoiNam[y].date) cuoiNam[y] = x; });
+    kq.thi_truong.gia_cuoi_nam = Object.keys(cuoiNam).map(Number).filter(y => y < y0 || String(cuoiNam[y].date).slice(5, 7) === '12')
+      .map(y => ({ nam: y, gia: typeof cuoiNam[y].adClose === 'number' ? Math.round(cuoiNam[y].adClose * 1000) : null })).filter(x => x.gia);
+  } catch (e) { kq.thi_truong.gia_cuoi_nam = []; }
   // Bổ sung tình trạng kiểm toán & hợp nhất/riêng lẻ từ KBS (không bắt buộc).
   try {
     const sl = kq.du_lieu.suy_luan;
@@ -1057,7 +1069,7 @@ async function cheDoMaCk(body) {
       if (k && k.tinh_trang) {
         sl.tinh_trang_kiem_toan = k.tinh_trang;
         sl.diem_nghi_ngo = sl.diem_nghi_ngo.filter(s => !/không có ý kiến kiểm toán/.test(s))
-          .concat(['Tình trạng kiểm toán và loại báo cáo lấy từ KB Securities; ý kiến kiểm toán, công ty kiểm toán và thuyết minh chỉ có trong file BCTC gốc.']);
+          .concat(['Tình trạng kiểm toán và loại báo cáo lấy từ dữ liệu công bố theo kỳ; ý kiến kiểm toán, công ty kiểm toán và thuyết minh chỉ có trong file BCTC gốc.']);
       }
       if (k && k.loai) sl.loai_bao_cao = k.loai;
     }

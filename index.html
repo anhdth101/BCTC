@@ -1680,77 +1680,47 @@ footer p{margin:0 0 6px}
     h5: 'Xem bồi thường phát sinh chưa báo cáo (IBNR) và hồ sơ tồn đọng.'
   };
 
-  // ===== Định giá nhanh =====
-  // Giả định mặc định (người dùng sửa được): chi phí vốn chủ 13%, WACC 11%, tăng trưởng dài hạn 3%, P/E ngành (giả định) theo ngành.
-  function peNganhMacDinh(mt) {
-    if (mt.chuan === 'TT49') return 8;
-    if (mt.chuan === 'TT210_334') return 12;
-    if (mt.chuan === 'TT232') return 14;
-    const n = boDau(mt.nhom_nganh || '');
-    if (/bat dong san/.test(n)) return 10;
-    if (/cong nghe|phan mem|vien thong/.test(n)) return 15;
-    if (/ban le|thuc pham|do uong|ca nhan|y te|duoc/.test(n)) return 14;
-    if (/tai nguyen|hoa chat|xay dung|vat lieu|dau khi|thep/.test(n)) return 9;
-    return 11;
-  }
-  function dinhGiaNhanh(kq, tt, gsVao) {
+  // ===== Định giá nhanh: bội số lịch sử của chính cổ phiếu (không dùng giả định) =====
+  // P/E, P/B mỗi năm = giá cuối năm (đã điều chỉnh) / (lợi nhuận hoặc vốn chủ năm đó / số cổ phiếu hiện tại); lấy trung vị tối đa 5 năm.
+  const trungVi = a => { const s = a.slice().sort((x, y) => x - y); return s.length ? (s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2) : null; };
+  function dinhGiaNhanh(kq, tt) {
     if (!tt || !isNum(tt.gia) || !isNum(tt.so_cp) || tt.so_cp <= 0) return null;
-    const mt = kq.meta;
-    // Tăng trưởng 5 năm tới: CAGR lợi nhuận các năm gần nhất (chỉ khi cả đầu và cuối dương), giới hạn 0–15%.
-    let gLs = null;
     const ln = (tt.lnst_nam || []).filter(x => isNum(x.v)).sort((a, b) => b.nam - a.nam);
-    if (ln.length >= 3 && ln[0].v > 0 && ln[ln.length - 1].v > 0) gLs = Math.pow(ln[0].v / ln[ln.length - 1].v, 1 / (ln.length - 1)) - 1;
-    const gs = Object.assign({ r: 0.13, wacc: 0.11, g: 0.03, g5: isNum(gLs) ? Math.max(0, Math.min(0.15, gLs)) : 0.05, pe: peNganhMacDinh(mt), ln: 'tu_dong' }, gsVao || {});
-    // Lợi nhuận dùng để định giá: 4 quý gần nhất, hoặc bình quân 3 năm khi 4 quý lệch quá xa (doanh nghiệp chu kỳ, năm đột biến).
+    const vc = {}; (tt.vcsh_nam || []).forEach(x => { if (isNum(x.v)) vc[x.nam] = x.v; });
+    const gn = {}; (tt.gia_cuoi_nam || []).forEach(x => { if (isNum(x.gia)) gn[x.nam] = x.gia; });
+    const lichSu = ln.filter(x => gn[x.nam]).slice(0, 5).map(x => ({
+      nam: x.nam,
+      pe: x.v > 0 ? gn[x.nam] / (x.v / tt.so_cp) : null,
+      pb: vc[x.nam] > 0 ? gn[x.nam] / (vc[x.nam] / tt.so_cp) : null
+    }));
+    const peLs = trungVi(lichSu.map(x => x.pe).filter(v => isNum(v) && v > 0 && v < 100));
+    const pbLs = trungVi(lichSu.map(x => x.pb).filter(v => isNum(v) && v > 0 && v < 20));
+    // Lợi nhuận dùng để định giá: 4 quý gần nhất; khi sụt dưới một nửa bình quân 3 năm (đáy chu kỳ) thì dùng bình quân 3 năm.
     const ln3 = ln.slice(0, 3).map(x => x.v);
     const lnBq = ln3.length >= 2 ? ln3.reduce((s, x) => s + x, 0) / ln3.length : null;
-    // Chỉ thay khi lợi nhuận 4 quý sụt sâu (đáy chu kỳ); lợi nhuận tăng mạnh thật thì giữ nguyên.
-    const lechNhieu = isNum(tt.lnst_ttm) && isNum(lnBq) && lnBq > 0 && tt.lnst_ttm < 0.5 * lnBq;
-    const dungBq = gs.ln === 'bq3' ? isNum(lnBq) && lnBq > 0 : gs.ln === 'ttm' ? false : lechNhieu;
+    const dungBq = isNum(tt.lnst_ttm) && isNum(lnBq) && lnBq > 0 && tt.lnst_ttm < 0.5 * lnBq;
     const lnDg = dungBq ? lnBq : tt.lnst_ttm;
     const tenLn = dungBq ? `lợi nhuận bình quân ${ln3.length} năm` : 'lợi nhuận 4 quý gần nhất';
     const eps4q = isNum(tt.lnst_ttm) ? tt.lnst_ttm / tt.so_cp : null;
     const eps = isNum(lnDg) ? lnDg / tt.so_cp : null;
     const bvps = isNum(tt.vcsh_me) ? tt.vcsh_me / tt.so_cp : null;
-    const roe = isNum(lnDg) && isNum(tt.vcsh_me) && tt.vcsh_me > 0 ? lnDg / tt.vcsh_me : null;
     const pe = isNum(eps4q) && eps4q > 0 ? tt.gia / eps4q : null, pb = isNum(bvps) && bvps > 0 ? tt.gia / bvps : null;
+    const soNam = lichSu.length;
     const pp = [];
-    const ghiLn = lechNhieu ? `Lợi nhuận 4 quý gần nhất (${fmtTien(tt.lnst_ttm)}) lệch xa bình quân ${ln3.length} năm (${fmtTien(lnBq)}); ${dungBq ? 'đã dùng bình quân để tránh định giá theo đỉnh/đáy chu kỳ' : 'đang dùng 4 quý theo lựa chọn'}.` : '';
-    // 1. P/E so sánh
-    if (isNum(eps) && eps > 0) pp.push({ id: 'pe', ten: 'P/E so sánh', gia_tri: eps * gs.pe, cong_thuc: `EPS theo ${tenLn} ${fmtSo(eps)} đồng × P/E ngành (giả định) ${nf(1).format(gs.pe)}` });
-    else pp.push({ id: 'pe', ten: 'P/E so sánh', gia_tri: null, ghi_chu: 'Không áp dụng: lợi nhuận 4 quý gần nhất âm hoặc thiếu dữ liệu.' });
-    // 2. P/B hợp lý theo ROE: P/B = (ROE − g) / (r − g)
-    if (isNum(bvps) && bvps > 0 && isNum(roe) && roe > gs.g && gs.r > gs.g) {
-      const pbHL = (roe - gs.g) / (gs.r - gs.g);
-      pp.push({ id: 'pb', ten: 'P/B hợp lý theo ROE', gia_tri: bvps * pbHL, cong_thuc: `Giá trị sổ sách ${fmtSo(bvps)} đồng × (ROE ${fmtPct(roe)} theo ${tenLn} − g ${fmtPct(gs.g)}) / (r ${fmtPct(gs.r)} − g)` });
-    } else pp.push({ id: 'pb', ten: 'P/B hợp lý theo ROE', gia_tri: null, ghi_chu: 'Không áp dụng: ROE thấp hơn tăng trưởng dài hạn hoặc vốn chủ âm.' });
-    // 3. DCF dòng tiền tự do (doanh nghiệp thường)
-    if (mt.nganh_tai_chinh) pp.push({ id: 'dcf', ten: 'Chiết khấu dòng tiền (DCF)', gia_tri: null, ghi_chu: 'Không áp dụng cho ngân hàng, chứng khoán, bảo hiểm (dòng tiền gắn với hoạt động cho vay, đầu tư); dùng P/B theo ROE.' });
-    else {
-      let fcf0 = isNum(tt.ocf_ttm) && isNum(tt.capex_ttm) ? tt.ocf_ttm + tt.capex_ttm : null, nguonFcf = '4 quý gần nhất';
-      if (!(fcf0 > 0)) {
-        const ds = (tt.fcf_nam || []).slice(0, 3).filter(x => isNum(x.ocf)).map(x => x.ocf + (isNum(x.capex) ? x.capex : 0));
-        const tb3 = ds.length ? ds.reduce((s, x) => s + x, 0) / ds.length : null;
-        if (tb3 > 0) { fcf0 = tb3; nguonFcf = `bình quân ${ds.length} năm`; }
-      }
-      if (fcf0 > 0 && gs.wacc > gs.g) {
-        let pv = 0, f = fcf0;
-        for (let t = 1; t <= 5; t++) { f *= 1 + gs.g5; pv += f / Math.pow(1 + gs.wacc, t); }
-        const tv = f * (1 + gs.g) / (gs.wacc - gs.g), pvTv = tv / Math.pow(1 + gs.wacc, 5);
-        const vcsh = pv + pvTv - (isNum(tt.no_vay) ? tt.no_vay : 0) + (isNum(tt.tien) ? tt.tien : 0);
-        pp.push(vcsh > 0
-          ? { id: 'dcf', ten: 'Chiết khấu dòng tiền (DCF)', gia_tri: vcsh / tt.so_cp, cong_thuc: `Dòng tiền tự do ${fmtTien(fcf0)} (${nguonFcf}), tăng ${fmtPct(gs.g5)}/năm trong 5 năm, sau đó ${fmtPct(gs.g)}; chiết khấu ${fmtPct(gs.wacc)}; trừ nợ vay ròng` }
-          : { id: 'dcf', ten: 'Chiết khấu dòng tiền (DCF)', gia_tri: null, ghi_chu: 'Không áp dụng: nợ vay ròng lớn hơn giá trị dòng tiền chiết khấu.' });
-      } else pp.push({ id: 'dcf', ten: 'Chiết khấu dòng tiền (DCF)', gia_tri: null, ghi_chu: 'Không áp dụng: dòng tiền tự do (tiền thu từ kinh doanh − chi đầu tư tài sản) âm.' });
-    }
+    if (isNum(eps) && eps > 0 && isNum(peLs)) pp.push({ id: 'pe', ten: 'P/E lịch sử', gia_tri: eps * peLs, cong_thuc: `EPS theo ${tenLn} ${fmtSo(eps)} đồng × P/E trung vị ${soNam} năm của chính cổ phiếu ${nf(1).format(peLs)}` });
+    else pp.push({ id: 'pe', ten: 'P/E lịch sử', gia_tri: null, ghi_chu: !isNum(peLs) ? 'Không đủ lịch sử giá và lợi nhuận để tính.' : 'Không áp dụng: lợi nhuận âm.' });
+    if (isNum(bvps) && bvps > 0 && isNum(pbLs)) pp.push({ id: 'pb', ten: 'P/B lịch sử', gia_tri: bvps * pbLs, cong_thuc: `Giá trị sổ sách ${fmtSo(bvps)} đồng × P/B trung vị ${soNam} năm của chính cổ phiếu ${nf(2).format(pbLs)}` });
+    else pp.push({ id: 'pb', ten: 'P/B lịch sử', gia_tri: null, ghi_chu: !isNum(pbLs) ? 'Không đủ lịch sử giá và vốn chủ để tính.' : 'Không áp dụng: vốn chủ âm.' });
     const coGT = pp.filter(x => isNum(x.gia_tri) && x.gia_tri > 0);
     const tbGT = coGT.length ? coGT.reduce((s, x) => s + x.gia_tri, 0) / coGT.length : null;
     const chenh = isNum(tbGT) ? tt.gia / tbGT - 1 : null;
+    const ghiLn = dungBq ? `Lợi nhuận 4 quý gần nhất (${fmtTien(tt.lnst_ttm)}) thấp hơn nhiều bình quân ${ln3.length} năm (${fmtTien(lnBq)}); đã dùng bình quân để tránh định giá theo đáy chu kỳ.` : '';
     const cau = [`Giá ${fmtSo(tt.gia)} đồng/cổ phiếu, vốn hoá ${fmtTien(tt.von_hoa)}${isNum(pe) ? `, P/E ${nf(1).format(pe)} lần` : ''}${isNum(pb) ? `, P/B ${nf(2).format(pb)} lần` : ''}.`];
+    if (isNum(peLs) || isNum(pbLs)) cau.push(`Trung vị ${soNam} năm của chính cổ phiếu: P/E ${isNum(peLs) ? nf(1).format(peLs) : '–'}, P/B ${isNum(pbLs) ? nf(2).format(pbLs) : '–'}.`);
     coGT.forEach(x => cau.push(`${x.ten}: khoảng ${fmtSo(Math.round(x.gia_tri / 100) * 100)} đồng/cổ phiếu.`));
-    if (isNum(chenh)) cau.push(`Giá hiện tại ${chenh < 0 ? 'thấp hơn' : 'cao hơn'} giá trị ước tính bình quân (${fmtSo(Math.round(tbGT / 100) * 100)} đồng) khoảng ${fmtPct(Math.abs(chenh), 0)}; kết quả nhạy với giả định.`);
+    if (isNum(chenh)) cau.push(`Giá hiện tại ${chenh < 0 ? 'thấp hơn' : 'cao hơn'} giá trị theo bội số lịch sử (${fmtSo(Math.round(tbGT / 100) * 100)} đồng) khoảng ${fmtPct(Math.abs(chenh), 0)}.`);
     if (ghiLn) cau.push(ghiLn);
-    return { pe, pb, eps, eps4q, bvps, roe, phuong_phap: pp, gia_tri_tb: tbGT, chenh, gia_thiet: gs, cau, gia: tt.gia, ghi_ln: ghiLn, co_bq: isNum(lnBq) && lnBq > 0, dung_bq: dungBq };
+    return { pe, pb, eps, eps4q, bvps, pe_ls: peLs, pb_ls: pbLs, lich_su: lichSu, phuong_phap: pp, gia_tri_tb: tbGT, chenh, cau, gia: tt.gia, ghi_ln: ghiLn, dung_bq: dungBq };
   }
 
   function danhGia(kq, d, tt, gs) {
@@ -1821,7 +1791,7 @@ footer p{margin:0 0 6px}
     const thuTuc = [...coDo, ...coVang].map(x => THU_TUC[x.id]).filter(Boolean).slice(0, 5);
 
     // 5. Định giá nhanh (P/E so sánh, P/B theo ROE, DCF) – tự tính, không dùng khuyến nghị của bên nào.
-    const dg = dinhGiaNhanh(kq, tt, gs);
+    const dg = dinhGiaNhanh(kq, tt);
     const dinhGia = dg ? Object.assign(dg, { cau: dg.cau }) : null;
 
     // 6. Kết luận
@@ -1982,7 +1952,7 @@ footer p{margin:0 0 6px}
     ['ben lien quan', 3], ['tai san co dinh', 2], ['vay va no thue tai chinh', 3], ['chi phi xay dung co ban do dang', 3],
     ['loi the thuong mai', 2], ['tien gui co ky han', 2], ['thong tu', 1],
     ['bao cao tinh hinh tai chinh', 10], ['bao cao ket qua hoat dong', 8], ['y kien cua kiem toan vien', 6], ['ket luan cua kiem toan vien', 6],
-    ['theo chat luong no', 8], ['chat luong no cho vay', 6], ['tien gui cua khach hang', 3], ['hang ton kho', 2], ['phai thu', 1],
+    ['theo chat luong no', 8], ['chat luong no cho vay', 6], ['phan loai no', 6], ['no du tieu chuan', 6], ['no can chu y', 6], ['tien gui khong ky han', 3], ['tien gui cua khach hang', 3], ['hang ton kho', 2], ['phai thu', 1],
     ['doanh thu hoat dong tai chinh', 2], ['chi phi tai chinh', 1], ['giao dich voi cac ben lien quan', 3], ['co phieu', 1]
   ];
   function chamDiem(text) {
@@ -2021,10 +1991,20 @@ footer p{margin:0 0 6px}
     return { pdf, trang };
   }
 
+  // Tìm trang báo cáo kiểm toán/soát xét độc lập; lấy kèm trang kế tiếp (ý kiến kiểm toán, tên và chữ ký công ty kiểm toán).
+  const RE_KIEM_TOAN = /bao cao kiem toan doc lap|bao cao soat xet|y kien cua kiem toan vien|ket luan cua kiem toan vien|co so cua y kien|independent auditor/;
+  function trangKiemToan(ds, soTrang) {
+    const kq = [];
+    ds.filter(t => RE_KIEM_TOAN.test(boDau(t.text || '')) && !/thuyet minh/.test(boDau(t.text || '').slice(0, 200)))
+      .sort((a, b) => a.so - b.so).slice(0, 3)
+      .forEach(t => { [t.so, t.so + 1].forEach(s => { if (s <= soTrang && !kq.includes(s)) kq.push(s); }); });
+    return kq.slice(0, 4);
+  }
   function thuTuUuTien(trang) {
     const dau = trang.filter(t => t.so <= 3);
-    const con = trang.filter(t => t.so > 3 && t.diem > 0).sort((a, b) => b.diem - a.diem || a.so - b.so);
-    return [...dau, ...con];
+    const kt = trangKiemToan(trang, trang.length).filter(s => s > 3).map(s => trang[s - 1]).filter(Boolean);
+    const con = trang.filter(t => t.so > 3 && t.diem > 0 && !kt.includes(t)).sort((a, b) => b.diem - a.diem || a.so - b.so);
+    return [...dau, ...kt, ...con];
   }
   const kichThuoc = s => new Blob([s]).size;
 
@@ -2082,8 +2062,12 @@ footer p{margin:0 0 6px}
     });
     if (!Object.keys(tieuDe).length) throw loiCuoi || new LoiThan('Không định vị được trang nào trong file scan.');
     if (loiLo) st.thongBao.push(`${loiLo} lô định vị bị lỗi, một số trang có thể bị bỏ sót.`);
-    let chon = Object.keys(tieuDe).map(Number).map(so => ({ so, diem: chamDiem(tieuDe[so]) }))
-      .filter(x => x.diem > 0).sort((a, b) => b.diem - a.diem || a.so - b.so).slice(0, MAX_OCR).map(x => x.so);
+    // Trang báo cáo kiểm toán/soát xét (và trang kế tiếp chứa ý kiến, chữ ký) luôn được chép, rồi mới lấy các trang điểm cao.
+    const batBuoc = trangKiemToan(Object.keys(tieuDe).map(Number).map(so => ({ so, text: tieuDe[so] })), pdf.numPages);
+    let chon = [...batBuoc];
+    Object.keys(tieuDe).map(Number).map(so => ({ so, diem: chamDiem(tieuDe[so]) }))
+      .filter(x => x.diem > 0 && !batBuoc.includes(x.so)).sort((a, b) => b.diem - a.diem || a.so - b.so)
+      .forEach(x => { if (chon.length < MAX_OCR + batBuoc.length) chon.push(x.so); });
     if (!chon.length) chon = Array.from({ length: Math.min(12, pdf.numPages) }, (_, i) => i + 1);
     chon.sort((a, b) => a - b);
 
@@ -2148,13 +2132,16 @@ footer p{margin:0 0 6px}
       if (!ma[sec]) return;
       if (!x[sec]) x[sec] = clone(ma[sec]);
       Object.keys(ma[sec]).forEach(k => ['ky_nay', 'ky_truoc'].forEach(p => {
+        // Nguồn theo mã ghi 0 khi không có số; EPS kỳ trước bị điều chỉnh sau chia cổ phiếu – không dùng để so/lấp.
+        if (k === 'eps') return;
         const vm = ma[sec][k] && ma[sec][k][p];
-        if (!E.isNum(vm)) return;
+        if (!E.isNum(vm) || vm === 0) return;
         const dong = x[sec][k] || (x[sec][k] = { ky_nay: null, ky_truoc: null, trang: null });
         const vp = dong[p];
         if (!E.isNum(vp)) { dong[p] = vm; lap++; return; }
-        const mau = Math.max(Math.abs(vp), Math.abs(vm));
-        if (mau > 0 && Math.abs(vp - vm) / mau > 0.005) {
+        // Hai nguồn ghi dấu chi phí khác nhau (dương/âm): so theo độ lớn.
+        const a = Math.abs(vp), b = Math.abs(vm), mau = Math.max(a, b);
+        if (mau > 0 && Math.abs(a - b) / mau > 0.005 && Math.abs(a - b) > 1e9) {
           lech.push(`${(E.NHAN[k] || [k])[0]} (${p === 'ky_nay' ? 'kỳ này' : 'kỳ trước'}): PDF ${E.fmtTien(vp)}, theo mã ${E.fmtTien(vm)}`);
           o.push(`${sec}.${k}.${p}`);
         }
@@ -2408,7 +2395,7 @@ footer p{margin:0 0 6px}
   // ===== Bản đánh giá =====
   function tomTatChoAI() {
     const kq = st.kq, mt = kq.meta, d = st.duLieu || {};
-    const r = E.danhGia(kq, d, st.thiTruong, st.giaThiet);
+    const r = E.danhGia(kq, d, st.thiTruong);
     const CHU = { DO: 'đáng ngờ (đỏ)', VANG: 'cần chú ý (vàng)', XANH: 'an toàn (xanh)', KHONG_DU_DU_LIEU: 'không đủ dữ liệu', THONG_TIN: 'thông tin' };
     const TT_KT = { da_kiem_toan: 'đã kiểm toán', soat_xet: 'đã soát xét', tu_lap_chua_kiem_toan: 'tự lập, chưa kiểm toán', khong_ro: 'chưa có dữ liệu' };
     const YK = { chap_nhan_toan_phan: 'chấp nhận toàn phần', ngoai_tru: 'ngoại trừ', trai_nguoc: 'trái ngược', tu_choi: 'từ chối đưa ra ý kiến', khong_ro: 'chưa có dữ liệu' };
@@ -2435,28 +2422,27 @@ footer p{margin:0 0 6px}
   }
   function bangDinhGia(dg) {
     if (!dg) return '<h3>Định giá nhanh</h3><p class="ghi-chu">Chưa có giá thị trường (chỉ có khi tra theo mã cổ phiếu).</p>';
-    const gs = dg.gia_thiet, pct = v => new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(v * 100);
-    const o = (k, ten, v, la) => `<label class="ghi-chu" style="display:inline-flex;gap:4px;align-items:center;margin:2px 10px 2px 0">${ten}
-      <input class="o-nhap" style="width:64px" inputmode="decimal" data-gia-thiet="${k}" data-pct="${la ? 1 : 0}" value="${esc(la ? pct(v) : new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(v))}">${la ? '%' : ''}</label>`;
-    const chon = `<label class="ghi-chu" style="display:inline-flex;gap:4px;align-items:center;margin:2px 10px 2px 0">Lợi nhuận dùng để định giá
-      <select class="o-chu" style="min-width:0;width:auto" data-gia-thiet-ln>
-        <option value="tu_dong"${gs.ln === 'tu_dong' ? ' selected' : ''}>Tự động</option>
-        <option value="ttm"${gs.ln === 'ttm' ? ' selected' : ''}>4 quý gần nhất</option>
-        ${dg.co_bq ? `<option value="bq3"${gs.ln === 'bq3' ? ' selected' : ''}>Bình quân 3 năm</option>` : ''}</select></label>`;
+    const so1 = v => (E.isNum(v) ? new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(v) : '–');
+    const so2 = v => (E.isNum(v) ? new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(v) : '–');
+    const ls = (dg.lich_su || []).slice().sort((a, b) => a.nam - b.nam);
     return `<h3>Định giá nhanh</h3>
-      <p class="ghi-chu" style="margin:0 0 6px">Chỉ số hiện tại: <b>P/E ${E.isNum(dg.pe) ? esc(new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(dg.pe)) : '–'}</b> (theo lợi nhuận 4 quý gần nhất), <b>P/B ${E.isNum(dg.pb) ? esc(new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(dg.pb)) : '–'}</b>. Các trang khác có thể ra P/E khác do dùng EPS của kỳ khác. Bảng dưới là <b>giá trị ước tính cho mỗi cổ phiếu (đồng)</b>, không phải P/E hay P/B.</p>
+      <p class="ghi-chu" style="margin:0 0 6px">Chỉ số hiện tại: <b>P/E ${esc(so1(dg.pe))}</b> (theo lợi nhuận 4 quý gần nhất), <b>P/B ${esc(so2(dg.pb))}</b>. Các trang khác có thể ra P/E hơi khác do cách tính EPS. Định giá dùng <b>P/E và P/B trung vị nhiều năm của chính cổ phiếu</b>, tính từ giá cuối năm và số liệu thực tế, không dùng giả định.</p>
+      ${ls.length ? `<div class="bang-cuon" style="margin-bottom:6px"><table><thead><tr><th>Năm</th>${ls.map(x => `<th class="so">${x.nam}</th>`).join('')}<th class="so">Trung vị</th></tr></thead><tbody>
+        <tr><td>P/E cuối năm</td>${ls.map(x => `<td class="so">${esc(so1(x.pe))}</td>`).join('')}<td class="so"><b>${esc(so1(dg.pe_ls))}</b></td></tr>
+        <tr><td>P/B cuối năm</td>${ls.map(x => `<td class="so">${esc(so2(x.pb))}</td>`).join('')}<td class="so"><b>${esc(so2(dg.pb_ls))}</b></td></tr>
+      </tbody></table></div>` : ''}
       ${dg.ghi_ln ? `<div class="hop-tb" style="margin:0 0 6px">${esc(dg.ghi_ln)}</div>` : ''}
       <div class="bang-cuon"><table><thead><tr><th>Phương pháp</th><th class="so">Giá trị/cổ phiếu</th><th>Cách tính</th></tr></thead><tbody>
       ${dg.phuong_phap.map(x => `<tr><td>${esc(x.ten)}</td><td class="so"><b>${E.isNum(x.gia_tri) && x.gia_tri > 0 ? esc(E.fmtSo(Math.round(x.gia_tri / 100) * 100)) : '–'}</b></td><td class="ghi-chu">${esc(x.cong_thuc || x.ghi_chu || '')}</td></tr>`).join('')}
-      <tr><td><b>Giá trị tham khảo (bình quân)</b></td><td class="so"><b>${E.isNum(dg.gia_tri_tb) ? esc(E.fmtSo(Math.round(dg.gia_tri_tb / 100) * 100)) : '–'}</b></td>
+      <tr><td><b>Giá trị theo bội số lịch sử (bình quân)</b></td><td class="so"><b>${E.isNum(dg.gia_tri_tb) ? esc(E.fmtSo(Math.round(dg.gia_tri_tb / 100) * 100)) : '–'}</b></td>
         <td class="ghi-chu">Giá hiện tại ${esc(E.fmtSo(dg.gia))} đồng${E.isNum(dg.chenh) ? ` – ${dg.chenh < 0 ? 'thấp hơn' : 'cao hơn'} ${esc(E.fmtPct(Math.abs(dg.chenh), 0))}` : ''}</td></tr>
       </tbody></table></div>
-      <p class="ghi-chu" style="margin:4px 0 0">Giả định cố định: lợi suất kỳ vọng ${esc(pct(gs.r))}%/năm, tăng trưởng dài hạn ${esc(pct(gs.g))}%, tăng trưởng 5 năm tới ${esc(pct(gs.g5))}% (theo lịch sử lợi nhuận), P/E ngành (giả định) ${esc(new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(gs.pe))}. Định giá nhanh tự tính từ số liệu, chỉ để tham khảo; không phải khuyến nghị mua bán.</p>`;
+      <p class="ghi-chu" style="margin:4px 0 0">Ý nghĩa: nếu thị trường định giá cổ phiếu này ngang mức trung bình các năm trước của chính nó. Chỉ để tham khảo; không phải khuyến nghị mua bán.</p>`;
   }
   const MAU_XEP = { 'Tích cực': 'XANH', 'Trung tính': 'VANG', 'Trung tính, cần thận trọng': 'VANG', 'Thận trọng': 'VANG', 'Rủi ro cao': 'DO' };
   function veDanhGia() {
     const kq = st.kq, mt = kq.meta;
-    const r = E.danhGia(kq, st.duLieu, st.thiTruong, st.giaThiet);
+    const r = E.danhGia(kq, st.duLieu, st.thiTruong);
     const ai = st.danhGiaAI;
     const ds = (tieuDe, mang) => (mang && mang.length ? `<h3>${tieuDe}</h3><ul>${mang.map(s => `<li>${esc(s)}</li>`).join('')}</ul>` : '');
     const xep = ai ? ai.xep_hang : r.xep_hang;
