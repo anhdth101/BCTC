@@ -1208,7 +1208,8 @@ async function cheDoNghiQuyet(body, deadline) {
     layJson(`${VND_BASE}/news?q=tagCodes:${ma}~newsType:resolutions,meeting&sort=newsDate:desc&size=100`, VND_H, 10000),
     layJson(`${VND_BASE}/news?q=tagCodes:${ma}~newsType:company_report&sort=newsDate:desc&size=40`, VND_H, 10000).catch(() => null)
   ]);
-  const moc = new Date(); moc.setMonth(moc.getMonth() - 18); const mocS = moc.toISOString().slice(0, 10);
+  // 13 tháng: luôn gồm đại hội thường niên gần nhất (họp tháng 3–6) và mọi đại hội bất thường/lấy ý kiến sau đó.
+  const moc = new Date(); moc.setMonth(moc.getMonth() - 13); const mocS = moc.toISOString().slice(0, 10);
   const tieuDe = x => x.newsTitle || '';
   const moi = x => String(x.newsDate || '') >= mocS;
   const coFile = x => (x.attachments || []).some(a => a && a.url);
@@ -1217,6 +1218,8 @@ async function cheDoNghiQuyet(body, deadline) {
     const t = tieuDe(x);
     if (!RE_DHDCD.test(t)) return 0;
     const boHdqt = !/hđqt|hội đồng quản trị/i.test(t.replace(/đại hội|cổ đông/gi, ''));
+    // Thông báo thay đổi nhân sự "kèm nghị quyết" trùng nội dung với nghị quyết chính: bỏ.
+    if (/thay đổi nhân sự/i.test(t)) return 0;
     if (/nghị quyết|biên bản|kết quả (kiểm phiếu|lấy ý kiến)/i.test(t) && boHdqt) return 1;
     if (/tài liệu|tờ trình|phiếu lấy ý kiến|xin ý kiến/i.test(t) && !/ngày đkcc|đăng ký cuối cùng|đính chính/i.test(t)) return 2;
     return 0;
@@ -1230,12 +1233,20 @@ async function cheDoNghiQuyet(body, deadline) {
   const bcChon = bcVi.length ? bcVi : bc;
   // Văn bản đã công bố nhưng nguồn không kèm file (thường là nghị quyết bất thường mới nhất): báo lại để người dùng mở trên HOSE/HNX.
   const thieuFile = vb.filter(o => !coFile(o.x)).slice(0, 6).map(o => ({ tieu_de: toStr(tieuDe(o.x), 200), ngay: String(o.x.newsDate || '').slice(0, 10), url: o.x.newsUrl || o.x.dstockUrl || '' }));
-  // Nghị quyết mới nhất không có file: lấy bản tóm tắt CTCK công bố sau ngày đó làm nguồn thay thế.
+  // Chọn gọn để AI đọc nhanh (mỗi file thêm vài giây tải + đọc):
+  // - tối đa 2 nghị quyết có file (thường là đại hội bất thường/lấy ý kiến mới nhất + thường niên);
+  // - tờ trình chỉ lấy khi công bố SAU nghị quyết mới nhất (đại hội sắp họp, chưa có nghị quyết);
+  // - tóm tắt CTCK chỉ dùng khi nghị quyết mới nhất không lấy được file.
   const nqMoiNhat = vb.find(o => o.loai === 1);
-  const canThayThe = nqMoiNhat && !coFile(nqMoiNhat.x);
-  const tin = [...vb.filter(o => coFile(o.x)), ...bcChon.slice(0, 2).map(x => ({ x, loai: 3 }))];
+  const canThayThe = !nqMoiNhat || !coFile(nqMoiNhat.x);
+  const ngayNq = nqMoiNhat ? String(nqMoiNhat.x.newsDate || '').slice(0, 10) : '';
+  const tin = [
+    ...vb.filter(o => o.loai === 1 && coFile(o.x)).slice(0, 2),
+    ...vb.filter(o => o.loai === 2 && coFile(o.x) && String(o.x.newsDate || '').slice(0, 10) > ngayNq).slice(0, 1),
+    ...(canThayThe ? bcChon.slice(0, 1).map(x => ({ x, loai: 3 })) : [])
+  ];
   if (!tin.length) {
-    const kq = { nghi_quyet: null, thieu_file: thieuFile, ly_do: thieuFile.length ? 'Có văn bản Đại hội đồng cổ đông nhưng nguồn dữ liệu không kèm file để đọc; mở link gốc bên dưới.' : 'Không có nghị quyết Đại hội đồng cổ đông nào được công bố trong 18 tháng gần nhất.' };
+    const kq = { nghi_quyet: null, thieu_file: thieuFile, ly_do: thieuFile.length ? 'Có văn bản Đại hội đồng cổ đông nhưng nguồn dữ liệu không kèm file để đọc; mở link gốc bên dưới.' : 'Không có nghị quyết Đại hội đồng cổ đông nào được công bố trong 13 tháng gần nhất.' };
     nqCache.set(ma, { luc: Date.now(), kq }); return kq;
   }
   // Thứ tự ưu tiên: nghị quyết mới nhất; nếu nghị quyết mới nhất thiếu file thì tóm tắt CTCK và tờ trình đứng trước nghị quyết cũ.
@@ -1248,7 +1259,12 @@ async function cheDoNghiQuyet(body, deadline) {
   };
   const chon = tin.sort((a, b) => (diem(b) - diem(a)) || String(b.x.newsDate).localeCompare(String(a.x.newsDate))).slice(0, 6).map(o => Object.assign(o.x, { _loai: o.loai }));
   // Mỗi tin có thể kèm tài liệu họp: ưu tiên file tên có nghị quyết/biên bản/NQ.
-  const fileNq = x => { const pdfs = x.attachments.filter(a => /\.pdf$/i.test(a.name || a.url || '')); const nq = pdfs.filter(a => /nghi.?quyet|bien.?ban|\bnq\b|ket.?qua/i.test(a.name || '')); return (nq.length ? nq : pdfs.length ? pdfs : x.attachments).slice(0, 2); };
+  // Một file mỗi tin: ưu tiên nghị quyết (bản nhẹ) trước biên bản.
+  const fileNq = x => {
+    const pdfs = x.attachments.filter(a => /\.pdf$/i.test(a.name || a.url || ''));
+    const diemF = a => { const n = a.name || ''; return (/nghi.?quyet|\bnq\b/i.test(n) ? 4 : /ket.?qua|bien.?ban|\bbb\b/i.test(n) ? 2 : 0) + (/file.?nhe|light/i.test(n) ? 1 : 0); };
+    return (pdfs.length ? pdfs : x.attachments).slice().sort((a, b) => diemF(b) - diemF(a)).slice(0, 1);
+  };
   const tai = (await Promise.all(chon.map(x => Promise.all(fileNq(x).map(async a => ({ x, b: await taiPdf(a, 25000) })))))).flat();
   // Nhúng trực tiếp tổng tối đa ~12 MB; file lớn hơn 8 MB tải qua Files API. Tối đa 5 file, 80 MB.
   let tongNhung = 0, tong = 0; const dung = [];
@@ -1272,7 +1288,8 @@ async function cheDoNghiQuyet(body, deadline) {
     parts.push(tep[i].fileData ? { fileData: tep[i].fileData } : tep[i]);
   });
   if (parts.length === 1) return { nghi_quyet: null, ly_do: 'Không gửi được file nghị quyết cho AI đọc.' };
-  const txt = await goiGemini({ parts, json: true, maxOut: 16384, thinking: 'low', khoa: coFileTai ? khoaTai : undefined }, deadline);
+  // Giữ thinking "low": thử "minimal" nhanh hơn (HPG 45→18 giây) nhưng đọc sai đơn vị số tiền (kế hoạch cũ PNJ lệch 10 lần).
+  const txt = await goiGemini({ parts, json: true, maxOut: 16384, thinking: process.env.NQ_THINKING || 'low', khoa: coFileTai ? khoaTai : undefined }, deadline);
   const r = extractJson(txt);
   if (!r || typeof r !== 'object') throw loiCo(502, 'bad_json');
   const so = v => (typeof v === 'number' && isFinite(v) ? v : null);

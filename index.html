@@ -2366,8 +2366,13 @@ footer p{margin:0 0 6px}
     if (/^[A-Z0-9]{3,10}$/.test(maNq) && location.protocol !== 'file:') {
       st.nghiQuyet = { dang_tai: true, ma: maNq };
       const phienNq = {}; st.nqId = phienNq;
-      st.nqPromise = goi('nghi_quyet', { ma: maNq })
+      // Nhớ kết quả trong trình duyệt 12 giờ: tra lại cùng mã thì hiện ngay, không gọi AI lại.
+      const KHO_NQ = 'nq_v2_' + maNq;
+      let daNho = null;
+      try { const c = JSON.parse(localStorage.getItem(KHO_NQ) || 'null'); if (c && Date.now() - c.luc < 12 * 3600e3 && c.r && c.r.nq) daNho = c.r; } catch (e) { daNho = null; }
+      st.nqPromise = (daNho ? Promise.resolve(daNho) : goi('nghi_quyet', { ma: maNq })
         .then(j => ({ ma: maNq, nq: j.nghi_quyet, ly_do: j.ly_do || '', thieu_file: j.thieu_file || [] }))
+        .then(r => { if (r.nq) { try { localStorage.setItem(KHO_NQ, JSON.stringify({ luc: Date.now(), r })); } catch (e) { /* bỏ qua */ } } return r; }))
         .catch(e => ({ ma: maNq, nq: null, loi: e.message || 'lỗi không rõ' }))
         .then(r => { if (st.nqId === phienNq) { st.nghiQuyet = r; document.querySelectorAll('[data-nghi-quyet]').forEach(el => { el.outerHTML = khoiNghiQuyet(); }); } return r; });
     }
@@ -2815,7 +2820,7 @@ footer p{margin:0 0 6px}
     const r = st.nghiQuyet;
     if (!r) return '';
     const vo = h => `<div data-nghi-quyet class="the" style="margin-top:12px"><div class="ten"><b>Kế hoạch & nghị quyết Đại hội đồng cổ đông${r.ma ? ' · ' + esc(r.ma) : ''}</b></div>${h}</div>`;
-    if (r.dang_tai) return vo('<p class="phu">Đang đọc nghị quyết ĐHĐCĐ thường niên, bất thường, lấy ý kiến và tờ trình trong 18 tháng gần nhất (khoảng 15–40 giây)…</p>');
+    if (r.dang_tai) return vo('<p class="phu">Đang đọc nghị quyết ĐHĐCĐ thường niên, bất thường, lấy ý kiến và tờ trình trong 13 tháng gần nhất (khoảng 15–30 giây)…</p>');
     if (!r.nq) return vo(`<p class="phu">${esc(r.loi ? 'Không đọc được nghị quyết: ' + r.loi : r.ly_do || 'Không có dữ liệu nghị quyết.')}</p>${khoiThieuFile(r.thieu_file)}`);
     const nq = r.nq, kh = nq.ke_hoach_kinh_doanh || {};
     const TEN_DH = { thuong_nien: 'thường niên', bat_thuong: 'bất thường', lay_y_kien: 'lấy ý kiến bằng văn bản' };
