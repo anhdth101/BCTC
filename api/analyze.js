@@ -1095,8 +1095,12 @@ async function ruiRoGia(ma, tt) {
   const ret = p.slice(1).map((v, i) => v / p[i] - 1);
   const sd = a => { const m = a.reduce((s, x) => s + x, 0) / a.length; return Math.sqrt(a.reduce((s, x) => s + (x - m) ** 2, 0) / (a.length - 1)); };
   const vol1y = sd(ret) * Math.sqrt(250), vol3m = sd(ret.slice(-60)) * Math.sqrt(250);
-  let dinh = p[0], mdd = 0; p.forEach(v => { dinh = Math.max(dinh, v); mdd = Math.max(mdd, 1 - v / dinh); });
-  const tuDinh = p[n - 1] / Math.max(...p) - 1;
+  // Giảm sâu nhất: ghi lại ngày đỉnh và ngày đáy của đợt giảm đó.
+  let iDinh = 0, mdd = 0, mddTu = 0, mddDen = 0;
+  p.forEach((v, i) => { if (v > p[iDinh]) iDinh = i; const m = 1 - v / p[iDinh]; if (m > mdd) { mdd = m; mddTu = iDinh; mddDen = i; } });
+  const iMax = p.indexOf(Math.max(...p));
+  const tuDinh = p[n - 1] / p[iMax] - 1;
+  const ngayVN = s => String(s || '').slice(0, 10).split('-').reverse().join('/');
   const g60 = d.slice(-60);
   const san60 = g60.filter(x => so(x.floorPrice) && so(x.close) && x.close <= x.floorPrice + 1e-6).length;
   const tran60 = g60.filter(x => so(x.ceilingPrice) && so(x.close) && x.close >= x.ceilingPrice - 1e-6).length;
@@ -1117,7 +1121,7 @@ async function ruiRoGia(ma, tt) {
   // Mọi số dưới đây dùng giá ĐÃ ĐIỀU CHỈNH cổ tức tiền/cổ phiếu, chia tách (adClose): ngày chia cổ tức cổ phiếu không bị tính là giảm giá.
   const daoDongNgay = vol1y / Math.sqrt(250);
   them('bien_dong', 'Độ dao động giá (không phải mức tăng/giảm)', `${pct(vol1y)}/năm, tức giá thường lên xuống khoảng ±${pct(daoDongNgay)} mỗi phiên (3 tháng gần nhất ${pct(vol3m)}/năm)`, vol1y > 0.55 || vol3m > 0.65 ? 'DO' : vol1y > 0.35 || vol3m > 0.45 ? 'VANG' : 'XANH', 'Độ lệch chuẩn lợi suất ngày × √250. Cổ phiếu lớn ổn định thường 20–35%/năm. Đây là mức dao động, không phải giá đã giảm bao nhiêu.');
-  them('sut_giam', 'Mức giảm sâu nhất từ đỉnh (1 năm)', `${pct(-mdd)}; hiện cách đỉnh 1 năm ${pct(tuDinh)}`, mdd > 0.5 ? 'DO' : mdd > 0.3 ? 'VANG' : 'XANH', 'Mức mất giá từ đỉnh xuống đáy mà người mua ở đỉnh đã chịu (giá đã điều chỉnh cổ tức, chia cổ phiếu).');
+  them('sut_giam', 'Mức giảm sâu nhất từ đỉnh (1 năm)', `${pct(-mdd)} (từ ${ngayVN(d[mddTu].date)} đến ${ngayVN(d[mddDen].date)}); hiện thấp hơn đỉnh 1 năm (${ngayVN(d[iMax].date)}) ${pct(-tuDinh)}`, mdd > 0.5 ? 'DO' : mdd > 0.3 ? 'VANG' : 'XANH', 'Mức mất giá từ đỉnh xuống đáy mà người mua ở đỉnh đã chịu (giá đã điều chỉnh cổ tức, chia cổ phiếu).');
   them('giam_san', 'Phiên giảm sàn / tăng trần (60 phiên)', `${san60} sàn / ${tran60} trần`, san60 >= 3 ? 'DO' : san60 >= 1 ? 'VANG' : 'XANH', 'Giảm sàn liên tiếp thường là dấu hiệu bán tháo, khó thoát hàng.');
   them('thanh_khoan', 'Giá trị khớp lệnh bình quân 20 phiên', `${ty(gt20)} (bình quân 1 năm ${ty(gt1y)})`, gt20 < 1e9 ? 'DO' : gt20 < 5e9 ? 'VANG' : 'XANH', 'Thanh khoản thấp: khó mua/bán khối lượng lớn mà không đẩy giá.');
   if (beta !== null) them('beta', 'Beta so với VN-Index (1 năm)', beta.toFixed(2).replace('.', ','), beta > 1.5 ? 'VANG' : 'XANH', 'Beta > 1: giá dao động mạnh hơn thị trường.');
