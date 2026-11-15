@@ -2350,6 +2350,17 @@ footer p{margin:0 0 6px}
     st.oLech = (tuyChon && tuyChon.oLech) || [];
     st.thiTruong = (tuyChon && tuyChon.thiTruong) || null;
     st.giaThiet = null; st.locGd = null;
+    // Có giá theo mã → tải nghị quyết ĐHĐCĐ ở nền (không chặn hiển thị).
+    st.nghiQuyet = null; st.nqPromise = null;
+    const maNq = st.thiTruong && !demo ? (((duLieu || {}).suy_luan || {}).ma_ck || docMa()) : '';
+    if (/^[A-Z0-9]{3,10}$/.test(maNq) && location.protocol !== 'file:') {
+      st.nghiQuyet = { dang_tai: true, ma: maNq };
+      const phienNq = {}; st.nqId = phienNq;
+      st.nqPromise = goi('nghi_quyet', { ma: maNq })
+        .then(j => ({ ma: maNq, nq: j.nghi_quyet, ly_do: j.ly_do || '' }))
+        .catch(e => ({ ma: maNq, nq: null, loi: e.message || 'lỗi không rõ' }))
+        .then(r => { if (st.nqId === phienNq) { st.nghiQuyet = r; document.querySelectorAll('[data-nghi-quyet]').forEach(el => { el.outerHTML = khoiNghiQuyet(); }); } return r; });
+    }
     st.danhGiaAI = null; st.loiDanhGia = '';
     st.goc = clone(duLieu); st.duLieu = clone(duLieu); st.demo = !!demo;
     tinhVaVe('tong');
@@ -2505,7 +2516,10 @@ footer p{margin:0 0 6px}
       den_tong: CHU[kq.tong_hop.den], ket_luan_tu_dong: kq.tong_hop.ket_luan, ghi_chu_nguon: (d.suy_luan || {}).diem_nghi_ngo || [],
       quy_mo: { doanh_thu: E.fmtTien(qm.dt), von_gop: E.fmtTien(qm.vg), von_chu_so_huu: E.fmtTien(qm.vcsh), loi_nhuan_chua_phan_phoi: E.fmtTien(qm.lnpp), san: ls ? ls.san : undefined },
       lich_su_giao_dich: ls ? (ls.su_kien || []).map(x => `${x.ngay}: ${x.ten}${x.ly_do ? ' – ' + x.ly_do : ''}`) : 'chỉ có khi tra theo mã',
-      rui_ro_cau_truc: ruiRoCauTruc(kq, d, ls)
+      rui_ro_cau_truc: ruiRoCauTruc(kq, d, ls),
+      nghi_quyet_dhdcd: st.nghiQuyet && st.nghiQuyet.nq ? Object.assign({}, st.nghiQuyet.nq, { nguon: undefined,
+        tien_do_ke_hoach: tienDoKeHoach(st.nghiQuyet.nq).map(x => `${x.ten}: thực hiện ${E.fmtTien(x.thuc_hien)} sau ${x.thang} tháng = ${E.fmtPct(x.ty_le, 0)} kế hoạch năm ${E.fmtTien(x.ke_hoach)}${x.cham ? ' (chậm so với tiến độ)' : ''}`) })
+        : (st.nghiQuyet && st.nghiQuyet.ly_do) || 'chưa có dữ liệu'
     };
   }
   // Rủi ro cấu trúc: chỉ số "đẹp" không bù được. Dùng để chặn xếp hạng của bản đánh giá AI.
@@ -2591,6 +2605,9 @@ footer p{margin:0 0 6px}
     if (st.dangVietDanhGia === phien) return;
     st.dangVietDanhGia = phien; st.loiDanhGia = ''; veDanhGia();
     let j = null, loi = '';
+    // Chờ nghị quyết ĐHĐCĐ (nếu đang tải) để bản đánh giá có kế hoạch, cổ tức, phát hành.
+    if (st.nqPromise) await Promise.race([st.nqPromise, new Promise(r => setTimeout(r, 90000))]);
+    if (phien !== st.phien) return;
     try { j = await goi('danh_gia', { tom_tat: tomTatChoAI() }); } catch (e) { loi = e.message || 'lỗi không rõ'; }
     if (phien !== st.phien) return;
     st.dangVietDanhGia = 0;
@@ -2623,6 +2640,7 @@ footer p{margin:0 0 6px}
     h += `<div class="the bieu-do" style="margin-top:12px"><h4>Bảng tín hiệu kiểm tra</h4><p class="phu-de">Mỗi ô là một phép kiểm tra; bấm để xem chi tiết. ✓ an toàn · ! cần chú ý · ✕ đáng ngờ · ? thiếu dữ liệu.</p>${luoiTinHieu(kq.thu_thuat)}</div>`;
     h += hopLech(kq);
     h += khoiLichSuGd(true);
+    h += khoiNghiQuyet();
     h += '<div class="luoi c2" style="margin-top:12px">';
     h += `<div class="the the-cs ${f.muc_do}">
       <div class="ten"><span>Piotroski F-Score (sức khoẻ tài chính)</span>${nutHoi(f.giai_thich)}</div>
@@ -2670,6 +2688,50 @@ footer p{margin:0 0 6px}
       </tbody></table></div><p class="ghi-chu">${esc(bp.mo_ta)}</p>`;
     }
     $('#pane-co-ban').innerHTML = h || '<div class="trong">Không đủ dữ liệu để tính chỉ số.</div>';
+  }
+
+  // ===== Kế hoạch & nghị quyết Đại hội đồng cổ đông =====
+  // Tiến độ thực hiện kế hoạch lợi nhuận/doanh thu của năm báo cáo (số luỹ kế kỳ này so với kế hoạch cả năm).
+  function tienDoKeHoach(nq) {
+    const kh = nq && nq.ke_hoach_kinh_doanh, d = st.duLieu || {}, kd = d.kqkd || {};
+    if (!kh || !kh.nam) return [];
+    const m = /(\d{2})\/(\d{2})\/(\d{4})/.exec((d.suy_luan || {}).ngay_ket_thuc_ky || '');
+    if (!m || +m[3] !== kh.nam) return [];
+    const hs = (d.suy_luan || {}).he_so_nhan || 1;
+    const lay = k => (kd[k] && E.isNum(kd[k].ky_nay) ? kd[k].ky_nay * hs : null);
+    const thang = +m[2];
+    return [['Doanh thu', lay('doanh_thu_thuan'), kh.doanh_thu], ['Lợi nhuận trước thuế', lay('loi_nhuan_truoc_thue'), kh.loi_nhuan_truoc_thue], ['Lợi nhuận sau thuế', lay('loi_nhuan_sau_thue'), kh.loi_nhuan_sau_thue]]
+      .filter(([, th, k]) => E.isNum(th) && E.isNum(k) && k > 0)
+      .map(([ten, th, k]) => ({ ten, thuc_hien: th, ke_hoach: k, ty_le: th / k, thang, cham: th / k < (thang / 12) * 0.85 }));
+  }
+  function khoiNghiQuyet() {
+    const r = st.nghiQuyet;
+    if (!r) return '';
+    const vo = h => `<div data-nghi-quyet class="the" style="margin-top:12px"><div class="ten"><b>Kế hoạch & nghị quyết Đại hội đồng cổ đông${r.ma ? ' · ' + esc(r.ma) : ''}</b></div>${h}</div>`;
+    if (r.dang_tai) return vo('<p class="phu">Đang đọc nghị quyết ĐHĐCĐ thường niên và bất thường trong 18 tháng gần nhất (khoảng 15–40 giây)…</p>');
+    if (!r.nq) return vo(`<p class="phu">${esc(r.loi ? 'Không đọc được nghị quyết: ' + r.loi : r.ly_do || 'Không có dữ liệu nghị quyết.')}</p>`);
+    const nq = r.nq, kh = nq.ke_hoach_kinh_doanh || {};
+    const TEN_DH = { thuong_nien: 'thường niên', bat_thuong: 'bất thường', lay_y_kien: 'lấy ý kiến bằng văn bản' };
+    const TEN_PH = { chao_ban_cong_chung: 'Chào bán cho cổ đông/công chúng', rieng_le: 'Phát hành riêng lẻ', esop: 'ESOP (cho người lao động)', co_tuc_co_phieu: 'Cổ tức bằng cổ phiếu', co_phieu_thuong: 'Cổ phiếu thưởng', chuyen_doi_trai_phieu: 'Chuyển đổi trái phiếu', khac: 'Khác' };
+    const PHA_LOANG_TIEN = ['chao_ban_cong_chung', 'rieng_le', 'esop', 'chuyen_doi_trai_phieu'];
+    const ds = (ten, a) => (a && a.length ? `<p style="margin:8px 0 2px"><b>${esc(ten)}</b></p><ul class="ghi-chu" style="margin:0;padding-left:18px">${a.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '');
+    const td = tienDoKeHoach(nq);
+    let h = `<p class="phu">${esc((nq.cac_dai_hoi || []).map(x => `ĐHĐCĐ ${TEN_DH[x.loai] || ''} ${x.nam || ''}${x.ngay ? ' (' + x.ngay + ')' : ''}`).join(' · '))}</p>`;
+    if (nq.diem_can_luu_y && nq.diem_can_luu_y.length) h += `<div class="hop-tb" style="margin:6px 0">${nq.diem_can_luu_y.map(x => '⚠ ' + esc(x)).join('<br>')}</div>`;
+    const chiTieu = [['Doanh thu', kh.doanh_thu], ['Lợi nhuận trước thuế', kh.loi_nhuan_truoc_thue], ['Lợi nhuận sau thuế', kh.loi_nhuan_sau_thue]].filter(([, v]) => E.isNum(v));
+    if (chiTieu.length || (kh.chi_tieu_khac || []).length) {
+      h += `<p style="margin:8px 0 2px"><b>Kế hoạch kinh doanh ${esc(kh.nam || '')}</b></p>`;
+      if (chiTieu.length) h += `<div class="bang-cuon"><table><thead><tr><th>Chỉ tiêu</th><th class="so">Kế hoạch</th><th class="so">Thực hiện luỹ kế</th><th class="so">Hoàn thành</th></tr></thead><tbody>${chiTieu.map(([ten, v]) => {
+        const t = td.find(x => x.ten === ten);
+        return `<tr><td>${esc(ten)}</td><td class="so">${esc(E.fmtTien(v))}</td><td class="so">${t ? esc(E.fmtTien(t.thuc_hien)) : '–'}</td><td class="so">${t ? `${t.cham ? '<b>' : ''}${esc(E.fmtPct(t.ty_le, 0))}${t.cham ? '</b> <span class="nhan VANG">chậm</span>' : ''}` : '–'}</td></tr>`;
+      }).join('')}</tbody></table></div>${td.length ? `<p class="phu">Sau ${td[0].thang} tháng; tiến độ đều cần khoảng ${esc(E.fmtPct(td[0].thang / 12, 0))} kế hoạch năm. "Chậm" khi thấp hơn 85% mức đó.</p>` : ''}`;
+      h += ds('Chỉ tiêu khác', kh.chi_tieu_khac);
+    }
+    if ((nq.co_tuc || []).length) h += ds('Cổ tức', nq.co_tuc.map(x => `Năm ${x.nam_tai_chinh || '?'}: ${x.ty_le || x.hinh_thuc}${x.ghi_chu ? ' – ' + x.ghi_chu : ''}`));
+    if ((nq.phat_hanh_tang_von || []).length) h += ds('Phát hành, tăng vốn', nq.phat_hanh_tang_von.map(x => `${PHA_LOANG_TIEN.includes(x.hinh_thuc) ? '[Pha loãng, thu tiền] ' : ''}${TEN_PH[x.hinh_thuc] || x.hinh_thuc}: ${E.isNum(x.so_luong_cp) ? E.fmtSo(x.so_luong_cp) + ' cổ phiếu' : ''}${E.isNum(x.gia_phat_hanh) ? ', giá ' + E.fmtSo(x.gia_phat_hanh) + ' đồng' : ''}${x.ty_le_so_voi_luu_hanh ? ' (' + x.ty_le_so_voi_luu_hanh + ')' : ''}${x.muc_dich ? ' – ' + x.muc_dich : ''}`));
+    h += ds('Đầu tư, dự án, M&A', nq.dau_tu_du_an) + ds('Vay nợ, trái phiếu', nq.vay_no_trai_phieu) + ds('Giao dịch với bên liên quan', nq.giao_dich_ben_lien_quan) + ds('Nhân sự, thù lao', nq.nhan_su_quan_tri) + ds('Nội dung khác', nq.khac);
+    h += `<p class="phu" style="margin-top:8px">Nguồn: ${(nq.nguon || []).map(x => x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.tieu_de)}</a>` : esc(x.tieu_de)).join(' · ')}. AI tóm tắt từ văn bản gốc; đối chiếu văn bản trước khi ra quyết định.</p>`;
+    return vo(h);
   }
 
   // ===== Lịch sử xử lý của Sở giao dịch (quản trị rủi ro) =====
