@@ -1029,6 +1029,29 @@ footer p{margin:0 0 6px}
     const cpN = isNum(tmv('so_co_phieu_luu_hanh', 'ky_nay', true)) ? tmv('so_co_phieu_luu_hanh', 'ky_nay', true) : c.von_gop_chu_so_huu.n;
     const cpT = isNum(tmv('so_co_phieu_luu_hanh', 'ky_truoc', true)) ? tmv('so_co_phieu_luu_hanh', 'ky_truoc', true) : c.von_gop_chu_so_huu.t;
     const sosanh = (a, b, f) => (isNum(a) && isNum(b) ? f(a, b) : null);
+    // Tiêu chí 7: chỉ trượt khi thực sự huy động tiền từ cổ phiếu mới (LCTT mã 31 > 0).
+    // Vốn tăng do chia cổ tức/thưởng bằng cổ phiếu là kết chuyển nội bộ, không thu tiền → vẫn đạt.
+    const tc7 = (() => {
+      const ten = 'Không phát hành thêm cổ phần (huy động tiền)';
+      const tang = sosanh(cpN, cpT, (a, b) => a > b);
+      const thuGoc = l.tien_thu_phat_hanh_co_phieu ? l.tien_thu_phat_hanh_co_phieu.n : null;
+      // Báo cáo hợp nhất: mã 31 gồm cả tiền cổ đông thiểu số góp vào công ty con (làm tăng lợi ích CĐ không kiểm soát),
+      // không phải công ty mẹ phát hành → trừ phần tăng của lợi ích CĐ không kiểm soát.
+      const nci = c.loi_ich_co_dong_khong_kiem_soat;
+      const tangNci = nci && isNum(nci.n) && isNum(nci.t) ? Math.max(0, nci.n - nci.t) : 0;
+      const thuPh = isNum(thuGoc) ? Math.max(0, Math.abs(thuGoc) - tangNci) : null;
+      const vgT = c.von_gop_chu_so_huu.t;
+      const nguongPh = Math.max(1e9, isNum(vgT) ? Math.abs(vgT) * 0.005 : 0);
+      const coThu = isNum(thuPh) ? thuPh > nguongPh : null;
+      const tienPh = !isNum(thuGoc) ? 'không có số tiền thu từ phát hành cổ phiếu'
+        : `tiền thu từ phát hành cổ phiếu (LCTT mã 31) ${fmtTien(Math.abs(thuGoc))}${tangNci > 0 && Math.abs(thuGoc) > 0 ? `, sau khi trừ phần cổ đông thiểu số góp vào công ty con (lợi ích CĐ không kiểm soát tăng ${fmtTien(tangNci)}) còn ${fmtTien(thuPh)}` : ''}`;
+      if (tang === null) return { ten, dat: coThu === null ? null : !coThu, chi_tiet: `Thiếu số vốn góp kỳ trước; ${tienPh}` };
+      if (!tang) return { ten, dat: true, chi_tiet: 'Vốn góp chủ sở hữu không tăng' };
+      if (coThu === true) return { ten, dat: false, chi_tiet: `Vốn góp tăng và có ${tienPh}: huy động thêm vốn, pha loãng cổ đông` };
+      if (coThu === false) return { ten, dat: true, chi_tiet: !thuGoc ? 'Vốn góp tăng nhưng không thu tiền phát hành cổ phiếu: tăng vốn do chia cổ tức/thưởng bằng cổ phiếu'
+        : `Vốn góp tăng; ${tienPh}${thuPh > 0 ? ' (không đáng kể)' : ''}: công ty mẹ không huy động vốn đáng kể, tăng vốn chủ yếu do chia cổ tức/thưởng bằng cổ phiếu` };
+      return { ten, dat: null, chi_tiet: 'Vốn góp tăng nhưng thiếu số tiền thu từ phát hành cổ phiếu để xác định' };
+    })();
     const tieuChi = [
       { ten: 'ROA dương', dat: isNum(roaN) ? roaN > 0 : null, chi_tiet: `ROA ${fmtPct(roaN)}` },
       { ten: 'Dòng tiền kinh doanh (OCF) dương', dat: isNum(OCF.n) ? OCF.n > 0 : null, chi_tiet: `OCF ${fmtTien(OCF.n)}` },
@@ -1036,7 +1059,7 @@ footer p{margin:0 0 6px}
       { ten: 'OCF lớn hơn LNST', dat: sosanh(OCF.n, LNST.n, (a, b) => a > b), chi_tiet: `${fmtTien(OCF.n)} so với ${fmtTien(LNST.n)}` },
       { ten: 'Đòn bẩy dài hạn giảm', dat: sosanh(levN, levT, (a, b) => a < b || (a === 0 && b === 0)), chi_tiet: `Vay dài hạn/TTS ${fmtPct(levN)} so với ${fmtPct(levT)}` },
       { ten: 'Thanh toán hiện hành tăng', dat: sosanh(crN, crT, (a, b) => a > b), chi_tiet: `${fmtLan(crN)} so với ${fmtLan(crT)}` },
-      { ten: 'Không phát hành thêm cổ phần', dat: sosanh(cpN, cpT, (a, b) => a <= b), chi_tiet: isNum(tmv('so_co_phieu_luu_hanh', 'ky_nay', true)) ? 'So số cổ phiếu lưu hành' : 'So vốn góp chủ sở hữu' },
+      tc7,
       { ten: 'Biên lợi nhuận gộp tăng', dat: sosanh(gpmN, gpmT, (a, b) => a > b), chi_tiet: `${fmtPct(gpmN)} so với ${fmtPct(gpmT)}` },
       { ten: 'Vòng quay tài sản tăng', dat: sosanh(atoN, atoT, (a, b) => a > b), chi_tiet: `${fmtLan(atoN)} so với ${fmtLan(atoT)}` }
     ];
