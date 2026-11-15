@@ -1253,14 +1253,38 @@ async function fileTuSo(x) {
   return [];
 }
 const nqCache = new Map();
+// owa.hnx.vn gửi thiếu chứng chỉ trung gian (UNABLE_TO_VERIFY_LEAF_SIGNATURE) nên fetch của Node từ chối.
+// Chỉ với máy chủ file công bố của HNX: tải bằng https và bỏ kiểm chuỗi chứng chỉ; nội dung vẫn phải là PDF (kiểm chữ ký %PDF).
+function taiHnx(u, ms) {
+  return new Promise((resolve, reject) => {
+    const https = require('https');
+    const req = https.get(u, { headers: { 'User-Agent': 'Mozilla/5.0' }, rejectUnauthorized: false, timeout: ms }, r => {
+      if (r.statusCode >= 300 && r.statusCode < 400 && r.headers.location) { r.resume(); return resolve(taiHnx(new URL(r.headers.location, u).href, ms)); }
+      if (r.statusCode !== 200) { r.resume(); return reject(new Error(`HTTP ${r.statusCode}`)); }
+      const ds = []; let n = 0;
+      r.on('data', c => { n += c.length; if (n > 60 * 1024 * 1024) req.destroy(new Error('quá lớn')); else ds.push(c); });
+      r.on('end', () => resolve(Buffer.concat(ds)));
+      r.on('error', reject);
+    });
+    req.on('timeout', () => req.destroy(new Error(`quá ${ms / 1000} giây`)));
+    req.on('error', reject);
+  });
+}
 // Trả về Buffer PDF, hoặc null và ghi lý do vào a._loi (để chẩn đoán).
 async function taiPdf(a, giay) {
   const loi = [];
   for (const u of [...new Set([a.url, a.sourceUrl, ...(a.urls || [])].filter(Boolean))]) {
+    if (/^https:\/\/owa\.hnx\.vn\//i.test(u)) {
+      try { const b = await taiHnx(u.replace(/([^:])\/{2,}/g, '$1/'), giay); if (b.slice(0, 5).toString().includes('%PDF')) return b; loi.push('HNX: không phải PDF'); }
+      catch (e) { loi.push('HNX: ' + String(e.message).slice(0, 60)); }
+      continue;
+    }
     // Hạn giờ áp cho CẢ phần tải nội dung (trước đây chỉ áp tới lúc nhận header: tải chậm có thể treo tới hết 300 giây).
     const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), giay);
     try {
-      const r = await fetch(u, { headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'application/pdf,*/*' }, signal: ctrl.signal });
+      let r = await fetch(u, { headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'application/pdf,*/*' }, signal: ctrl.signal });
+      // 429 (nguồn giới hạn tốc độ): chờ ngắn rồi thử lại một lần.
+      if (r.status === 429) { await new Promise(x => setTimeout(x, 1500)); r = await fetch(u, { headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'application/pdf,*/*' }, signal: ctrl.signal }); }
       const ct = r.headers.get('content-type') || '';
       if (!r.ok) { loi.push(`HTTP ${r.status}`); continue; }
       const b = Buffer.from(await r.arrayBuffer());
@@ -1365,11 +1389,13 @@ async function cheDoNghiQuyet(body, deadline) {
     nqCache.set(ma, { luc: Date.now(), kq }); return kq;
   }
   // Thứ tự ưu tiên: nghị quyết mới nhất; nếu nghị quyết mới nhất thiếu file thì tóm tắt CTCK và tờ trình đứng trước nghị quyết cũ.
-  const mocThieu = canThayThe ? String(nqMoiNhat.x.newsDate).slice(0, 10) : '';
+  // Không có nghị quyết nào (chỉ có tờ trình/tóm tắt): không có mốc ngày.
+  const mocThieu = canThayThe && nqMoiNhat ? String(nqMoiNhat.x.newsDate || '').slice(0, 10) : '';
   const diem = o => {
     const uu = o.loai === 1 ? 3 : o.loai === 3 ? (canThayThe ? 4 : 1) : (canThayThe ? 2.5 : 0.5);
     // Tờ trình / tóm tắt gần thời điểm nghị quyết thiếu file (trong 60 ngày trước đó trở đi) là thông tin của chính đại hội đó.
-    const gan = canThayThe && o.loai !== 1 && String(o.x.newsDate || '').slice(0, 10) >= new Date(new Date(mocThieu).getTime() - 60 * 864e5).toISOString().slice(0, 10);
+    const t0 = mocThieu ? new Date(mocThieu).getTime() : NaN;
+    const gan = canThayThe && o.loai !== 1 && isFinite(t0) && String(o.x.newsDate || '').slice(0, 10) >= new Date(t0 - 60 * 864e5).toISOString().slice(0, 10);
     return uu + (gan ? 1 : 0);
   };
   const chon = tin.sort((a, b) => (diem(b) - diem(a)) || String(b.x.newsDate).localeCompare(String(a.x.newsDate))).slice(0, 6).map(o => Object.assign(o.x, { _loai: o.loai }));
@@ -1377,7 +1403,8 @@ async function cheDoNghiQuyet(body, deadline) {
   // Một file mỗi tin: ưu tiên nghị quyết (bản nhẹ) trước biên bản.
   const fileNq = x => {
     const pdfs = x.attachments.filter(a => /\.pdf$/i.test(a.name || a.url || ''));
-    const diemF = a => { const n = a.name || ''; return (/nghi.?quyet|\bnq\b/i.test(n) ? 4 : /ket.?qua|bien.?ban|\bbb\b/i.test(n) ? 2 : 0) + (/file.?nhe|light/i.test(n) ? 1 : 0); };
+    // HNX đặt tên file kiểu "..._EN_AnnualGeneralMeetingResolution..." / "..._VI_...": ưu tiên bản tiếng Việt.
+    const diemF = a => { const n = a.name || ''; return (/nghi.?quyet|\bnq\b|resolution/i.test(n) ? 4 : /ket.?qua|bien.?ban|\bbb\b|minutes/i.test(n) ? 2 : 0) + (/file.?nhe|light/i.test(n) ? 1 : 0) + (/(^|[_\-\s])EN([_\-\s]|$)|english/i.test(n) ? -3 : /(^|[_\-\s])VI([_\-\s]|$)/i.test(n) ? 1 : 0); };
     return (pdfs.length ? pdfs : x.attachments).slice().sort((a, b) => diemF(b) - diemF(a)).slice(0, 1);
   };
   // File lấy trực tiếp từ HOSE/HNX có thể rất chậm khi tải từ máy chủ ở nước ngoài: hạn 25 giây,
