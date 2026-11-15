@@ -2844,7 +2844,7 @@ footer p{margin:0 0 6px}
     $('#pane-danh-gia').innerHTML = `<div class="cong-cu khong-in" style="justify-content:flex-end;margin-bottom:10px">
         <button type="button" class="btn nho" data-viet-danh-gia>${ai ? 'Viết lại' : 'Nhờ AI viết đánh giá'}</button>
         <button type="button" class="btn nho" data-in-danh-gia>In / Lưu PDF khổ A4</button>
-        ${st.thiTruong && !st.demo ? `<button type="button" class="btn nho chinh" data-tham-dinh ${st.dangThamDinh ? 'disabled' : ''}>${st.thamDinh ? 'Lập lại đánh giá nhanh' : 'Lập đánh giá nhanh'}</button>` : ''}</div>
+        ${st.thiTruong && !st.demo ? `<button type="button" class="btn nho chinh" data-tham-dinh ${st.dangThamDinh ? 'disabled' : ''}>${st.thamDinh ? 'Đánh giá nhanh lại' : 'Đánh giá nhanh'}</button>` : ''}</div>
       ${trangThai}
       <article class="a4">
         <header><div><h2>${esc(r.tieu_de)}</h2><div class="meta">${esc([mt.ten_ky, mt.ngay ? 'kết thúc ' + mt.ngay : '', mt.ten_chuan, 'Nguồn: ' + nguon].filter(Boolean).join(' · '))}</div></div>
