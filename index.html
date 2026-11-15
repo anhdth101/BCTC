@@ -221,7 +221,7 @@ footer p{margin:0 0 6px}
         <select id="o-ky" class="o-chu" aria-label="Kỳ báo cáo"><option value="nam">Năm gần nhất</option><option value="quy">Quý gần nhất (luỹ kế)</option></select>
         <button class="btn chinh" id="nut-lay-ma" type="button">Lấy số liệu</button>
       </div>
-      <p class="ghi-chu">Gõ mã để lấy số liệu ngay, không cần file. Có thể tải kèm PDF bên dưới: hệ thống đọc PDF (cả bản scan), so sánh với số liệu theo mã, và vẫn cho kết quả theo mã nếu PDF không đọc được.</p>
+      <p class="ghi-chu">Gõ mã để lấy số liệu ngay, không cần file. Có thể tải kèm PDF bên dưới: hệ thống đọc PDF (cả bản scan), so sánh với số liệu theo mã, và vẫn cho kết quả theo mã nếu PDF không đọc được. Chỉ tải PDF mà không gõ mã: hệ thống tự nhận diện mã (theo mã số doanh nghiệp hoặc tên công ty) để lấy giá, định giá và lịch sử xử lý giao dịch.</p>
     </div>
     <div class="hoac" aria-hidden="true">hoặc / và</div>
     <label class="drop" id="vung-tha" for="chon-file">
@@ -2019,7 +2019,7 @@ footer p{margin:0 0 6px}
     ['ben lien quan', 3], ['tai san co dinh', 2], ['vay va no thue tai chinh', 3], ['chi phi xay dung co ban do dang', 3],
     ['loi the thuong mai', 2], ['tien gui co ky han', 2], ['thong tu', 1],
     ['bao cao tinh hinh tai chinh', 10], ['bao cao ket qua hoat dong', 8], ['y kien cua kiem toan vien', 6], ['ket luan cua kiem toan vien', 6],
-    ['theo chat luong no', 8], ['chat luong no cho vay', 6], ['phan loai no', 6], ['no du tieu chuan', 6], ['no can chu y', 6], ['tien gui khong ky han', 3], ['tien gui cua khach hang', 3], ['hang ton kho', 2], ['phai thu', 1],
+    ['giay chung nhan dang ky doanh nghiep', 4], ['ma so doanh nghiep', 4], ['thong tin chung', 3], ['theo chat luong no', 8], ['chat luong no cho vay', 6], ['phan loai no', 6], ['no du tieu chuan', 6], ['no can chu y', 6], ['tien gui khong ky han', 3], ['tien gui cua khach hang', 3], ['hang ton kho', 2], ['phai thu', 1],
     ['doanh thu hoat dong tai chinh', 2], ['chi phi tai chinh', 1], ['giao dich voi cac ben lien quan', 3], ['co phieu', 1]
   ];
   function chamDiem(text) {
@@ -2274,10 +2274,23 @@ footer p{margin:0 0 6px}
       }
       buoc(2, 'xong'); buoc(3, 'dang');
       let ketQua = duLieuPdf, nguon = null, oLech = [], thiTruong = null;
-      if (ma) {
-        chiTiet(`Đang lấy số liệu theo mã ${ma}…`);
+      // Không gõ mã: tự dò mã cổ phiếu từ PDF (mã ghi trong báo cáo → mã số doanh nghiệp → tên công ty).
+      let tim = null;
+      if (!ma && duLieuPdf) {
+        const sl = duLieuPdf.suy_luan || {};
+        if (/^[A-Z0-9]{3,10}$/.test(sl.ma_ck || '')) tim = { ma: sl.ma_ck };
+        else if (sl.ma_so_doanh_nghiep || sl.ten_doanh_nghiep) tim = { tim: { mst: String(sl.ma_so_doanh_nghiep || '').slice(0, 30), ten: String(sl.ten_doanh_nghiep || '').slice(0, 300) } };
+      }
+      if (ma || tim) {
+        chiTiet(ma ? `Đang lấy số liệu theo mã ${ma}…` : 'Đang dò mã cổ phiếu của doanh nghiệp và lấy giá, lịch sử giao dịch…');
         try {
-          const j = await layTheoMa(ma, duLieuPdf ? kyTuPdf(duLieuPdf) : null);
+          const j = ma ? await layTheoMa(ma, kyTuPdf(duLieuPdf || {}) || null)
+            : await goi('ma_ck', Object.assign({}, tim, kyTuPdf(duLieuPdf) || { ky: 'nam' }));
+          if (!ma) {
+            const maTim = j.tim_thay ? j.tim_thay.ma : tim.ma;
+            st.thongBao.push(`Tự nhận diện mã ${maTim}${j.tim_thay ? ` (theo ${j.tim_thay.cach})` : ''}: đã lấy giá, định giá và lịch sử xử lý giao dịch để đối chiếu.`);
+            $('#o-ma-ck').value = maTim;
+          }
           nguon = j.nguon; thiTruong = j.thi_truong || null;
           if (duLieuPdf) {
             const kyPdf = kyTuPdf(duLieuPdf);
@@ -2289,7 +2302,8 @@ footer p{margin:0 0 6px}
           }
         } catch (e) {
           if (!duLieuPdf) throw loiPdf || e;
-          st.thongBao.push('Không lấy được số liệu theo mã: ' + (e.message || 'lỗi không rõ') + '. Đang dùng số liệu PDF.');
+          st.thongBao.push(ma ? 'Không lấy được số liệu theo mã: ' + (e.message || 'lỗi không rõ') + '. Đang dùng số liệu PDF.'
+            : 'Không tự nhận diện được mã cổ phiếu (' + (e.message || 'lỗi không rõ') + '). Gõ mã vào ô phía trên rồi tải lại PDF để có giá, định giá và lịch sử giao dịch.');
         }
       }
       veThongBao();

@@ -288,6 +288,7 @@ function chuanHoaJSON(raw) {
     suy_luan: {
       ten_doanh_nghiep: toStr(sl.ten_doanh_nghiep, 200),
       ma_ck: toStr(sl.ma_ck, 20).toUpperCase(),
+      ma_so_doanh_nghiep: String(sl.ma_so_doanh_nghiep || '').replace(/[^0-9-]/g, '').slice(0, 20),
       ky_bao_cao: toEnum(sl.ky_bao_cao, ENUMS.ky_bao_cao, null),
       ngay_ket_thuc_ky: /^\d{2}\/\d{2}\/\d{4}$/.test(String(sl.ngay_ket_thuc_ky || '').trim()) ? String(sl.ngay_ket_thuc_ky).trim() : '',
       loai_bao_cao: toEnum(sl.loai_bao_cao, ENUMS.loai_bao_cao, null),
@@ -358,7 +359,7 @@ function schemaText() {
   return `LINE = {"ky_nay": number|null, "ky_truoc": number|null, "trang": number|null}
 {
  "suy_luan": {
-   "ten_doanh_nghiep": "", "ma_ck": "", "ky_bao_cao": "nam|quy1|quy2|quy3|quy4|6thang|9thang",
+   "ten_doanh_nghiep": "", "ma_ck": "", "ma_so_doanh_nghiep": "", "ky_bao_cao": "nam|quy1|quy2|quy3|quy4|6thang|9thang",
    "ngay_ket_thuc_ky": "dd/mm/yyyy", "loai_bao_cao": "hop_nhat|rieng_le",
    "chuan_ke_toan": "TT200|TT49|TT210_334|TT232|khac",
    "nhom_nganh_icb2": "", "la_tap_doan_da_nganh": false,
@@ -428,6 +429,7 @@ BƯỚC 2 – QUY TẮC TRÍCH XUẤT:
 - Chứng khoán: danh_gia_lai_fvtpl_tang = "Chênh lệch tăng đánh giá lại các TSTC thông qua lãi/lỗ"; danh_gia_lai_fvtpl_giam = "Chênh lệch giảm đánh giá lại..." (số âm); phai_thu_du_thu_lai = "Phải thu và dự thu cổ tức, tiền lãi các tài sản tài chính"; doanh_thu_hoat_dong = tổng "Doanh thu hoạt động"; cho_vay_margin = cho vay nghiệp vụ ký quỹ (nếu không tách được thì tổng "Các khoản cho vay").
 - Bảo hiểm: phi_bao_hiem_thuan = "Doanh thu phí bảo hiểm thuần"; phai_thu_bao_hiem = "Phải thu về hợp đồng bảo hiểm"; du_phong_boi_thuong = số dư "Dự phòng bồi thường"; du_phong_nghiep_vu = số dư tổng "Dự phòng nghiệp vụ"; loi_nhuan_hd_bao_hiem = "Lợi nhuận thuần hoạt động kinh doanh bảo hiểm"; loi_nhuan_hd_tai_chinh = "Lợi nhuận hoạt động tài chính".
 - Ngân hàng: no_nhom_2, no_nhom_3_5 lấy từ thuyết minh phân loại nợ (nhóm 3+4+5 cộng sẵn nếu báo cáo có dòng tổng nợ xấu; nếu không có dòng tổng thì để null và ghi diem_nghi_ngo). tai_san_sinh_lai_binh_quan để null nếu báo cáo không in sẵn.
+- suy_luan: ma_ck chỉ điền khi báo cáo ghi rõ mã chứng khoán; ma_so_doanh_nghiep = số Giấy chứng nhận đăng ký doanh nghiệp / mã số doanh nghiệp / mã số thuế (10 chữ số, thường ở trang Thông tin chung hoặc Thuyết minh mục Đặc điểm hoạt động); không có thì để rỗng.
 - kiem_toan: cong_ty_kiem_toan_ky_nay = tên công ty kiểm toán ký Báo cáo kiểm toán/soát xét kỳ này (thường in ở tiêu đề thư đầu báo cáo kiểm toán, ví dụ "Công ty TNHH KPMG", hoặc ở cuối cạnh chữ ký); cong_ty_kiem_toan_ky_truoc chỉ điền khi báo cáo có nêu đơn vị kiểm toán kỳ trước (thường ở đoạn "Vấn đề khác").
 - kiem_toan: y_kien theo Báo cáo kiểm toán/soát xét (chap_nhan_toan_phan, ngoai_tru, trai_nguoc, tu_choi; không có báo cáo kiểm toán thì khong_ro). van_de_ngoai_tru_nhan_manh: tóm tắt ngắn từng vấn đề ngoại trừ / nhấn mạnh, mỗi mục không quá 25 từ.
 - thuyet_minh_dinh_tinh: "co" = true chỉ khi thuyết minh nêu rõ. Mô tả ngắn gọn (≤ 40 từ), kèm trang. tam_ung_nhan_vien_ban_lanh_dao: số dư tạm ứng cho nhân viên/ban lãnh đạo nếu thuyết minh phải thu khác có tách. lai_tien_gui: lãi tiền gửi trong thuyết minh doanh thu hoạt động tài chính. so_co_phieu_luu_hanh: số cổ phiếu đang lưu hành cuối kỳ và đầu kỳ.
@@ -1036,7 +1038,39 @@ async function layKbsKy(ma, laNam, Y, Q) {
   return { tinh_trang: TT[h.AuditedStatus] || null, loai: h.United === 'HN' ? 'hop_nhat' : h.United ? 'rieng_le' : null };
 }
 
+// Dò mã cổ phiếu từ thông tin trong PDF: mã số doanh nghiệp (= mã số thuế) khớp chính xác, sau đó tới tên công ty.
+let dsMaCache = null, dsMaLuc = 0;
+async function dsMaNiemYet() {
+  if (dsMaCache && Date.now() - dsMaLuc < 6 * 3600e3) return dsMaCache;
+  const j = await layJson(`${VND_BASE}/stocks?q=type:STOCK~status:listed&size=4000&fields=code,companyName,shortName,taxCode,floor`, VND_H, 10000);
+  dsMaCache = (j && j.data || []).filter(x => x.code); dsMaLuc = Date.now();
+  return dsMaCache;
+}
+const chuanTenCty = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').toLowerCase()
+  .replace(/\b(cong ty|ctcp|cty|co phan|tnhh|trach nhiem huu han|mot thanh vien|tap doan|tong cong ty|joint stock company|jsc|corporation|group)\b/g, ' ')
+  .replace(/[^a-z0-9]+/g, ' ').trim();
+async function timMaCk(tim) {
+  const ds = await dsMaNiemYet();
+  const mst = String(tim.mst || '').replace(/\D/g, '').slice(0, 10);
+  if (mst.length === 10) {
+    const x = ds.find(s => String(s.taxCode || '').replace(/\D/g, '').slice(0, 10) === mst);
+    if (x) return { ma: x.code, cach: 'mã số doanh nghiệp', ten: x.companyName };
+  }
+  const ten = chuanTenCty(tim.ten);
+  if (ten.length >= 3) {
+    const khop = ds.filter(s => chuanTenCty(s.companyName) === ten);
+    if (khop.length === 1) return { ma: khop[0].code, cach: 'tên công ty', ten: khop[0].companyName };
+  }
+  return null;
+}
+
 async function cheDoMaCk(body) {
+  let timThay = null;
+  if (!body.ma && body.tim) {
+    timThay = await timMaCk(body.tim);
+    if (!timThay) throw loiCo(404, 'khong_tim_thay_ma');
+    body.ma = timThay.ma;
+  }
   const yc = { ky: body.ky, nam: body.nam, quy: body.quy };
   let kq, loiVci;
   try {
@@ -1096,6 +1130,7 @@ async function cheDoMaCk(body) {
       if (k && k.loai) sl.loai_bao_cao = k.loai;
     }
   } catch (e) { /* bỏ qua: chỉ là thông tin bổ sung */ }
+  if (timThay) kq.tim_thay = timThay;
   return kq;
 }
 
@@ -1118,7 +1153,11 @@ function validateInput(body) {
   const cheDo = body.che_do === undefined ? 'trich_xuat' : body.che_do;
   if (!CHE_DO[cheDo]) return 'Chế độ không hợp lệ.';
   if (cheDo === 'ma_ck') {
-    if (typeof body.ma !== 'string' || !/^[A-Z0-9]{3,10}$/.test(body.ma)) return 'Mã chứng khoán không hợp lệ (3–10 ký tự chữ hoặc số).';
+    if (body.ma === undefined && body.tim !== undefined) {
+      const t = body.tim;
+      if (!t || typeof t !== 'object' || Array.isArray(t) || (t.ten !== undefined && (typeof t.ten !== 'string' || t.ten.length > 300))
+        || (t.mst !== undefined && (typeof t.mst !== 'string' || t.mst.length > 30)) || (!t.ten && !t.mst)) return 'Thông tin dò mã không hợp lệ.';
+    } else if (typeof body.ma !== 'string' || !/^[A-Z0-9]{3,10}$/.test(body.ma)) return 'Mã chứng khoán không hợp lệ (3–10 ký tự chữ hoặc số).';
     if (body.ky !== undefined && !['nam', 'quy'].includes(body.ky)) return 'Kỳ không hợp lệ.';
     if (body.nam !== undefined && !(Number.isInteger(body.nam) && body.nam >= 2000 && body.nam <= 2100)) return 'Năm không hợp lệ.';
     if (body.quy !== undefined && !(Number.isInteger(body.quy) && body.quy >= 1 && body.quy <= 4)) return 'Quý không hợp lệ.';
@@ -1147,6 +1186,7 @@ function traLoi(res, e, cheDo) {
   console.error('ai_error', cheDo, e.status || '-', e.message || '-', e.chiTiet || '');
   if (e.message === 'no_statements') return fail(res, 422, 'Không tìm thấy Bảng cân đối, Kết quả kinh doanh hay Lưu chuyển tiền tệ trong file. Hãy kiểm tra đây có đúng là BCTC không.');
   if (cheDo === 'ma_ck') {
+    if (e.message === 'khong_tim_thay_ma') return fail(res, 404, 'Không tìm thấy mã cổ phiếu niêm yết khớp với doanh nghiệp trong PDF.');
     if (e.status === 404) return fail(res, 404, 'Không có dữ liệu báo cáo tài chính cho mã này. Hãy kiểm tra lại mã. Lưu ý: chứng chỉ quỹ ETF, chứng quyền, trái phiếu không có BCTC doanh nghiệp để phân tích; mã mới niêm yết có thể chưa có dữ liệu.');
     return fail(res, 502, 'Không lấy được dữ liệu từ nguồn dữ liệu chứng khoán lúc này. Vui lòng thử lại sau hoặc tải PDF.');
   }
