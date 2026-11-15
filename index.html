@@ -2334,7 +2334,7 @@ footer p{margin:0 0 6px}
     st.nguon = (tuyChon && tuyChon.nguon) || null;
     st.oLech = (tuyChon && tuyChon.oLech) || [];
     st.thiTruong = (tuyChon && tuyChon.thiTruong) || null;
-    st.giaThiet = null;
+    st.giaThiet = null; st.locGd = null;
     st.danhGiaAI = null; st.loiDanhGia = '';
     st.goc = clone(duLieu); st.duLieu = clone(duLieu); st.demo = !!demo;
     tinhVaVe('tong');
@@ -2467,6 +2467,9 @@ footer p{margin:0 0 6px}
     const TT_KT = { da_kiem_toan: 'đã kiểm toán', soat_xet: 'đã soát xét', tu_lap_chua_kiem_toan: 'tự lập, chưa kiểm toán', khong_ro: 'chưa có dữ liệu' };
     const YK = { chap_nhan_toan_phan: 'chấp nhận toàn phần', ngoai_tru: 'ngoại trừ', trai_nguoc: 'trái ngược', tu_choi: 'từ chối đưa ra ý kiến', khong_ro: 'chưa có dữ liệu' };
     const kt = d.kiem_toan || {};
+    const ls = st.thiTruong && st.thiTruong.lich_su_gd;
+    const cd = d.cdkt || {}, kd = d.kqkd || {}, gt = (o, k) => (o[k] && E.isNum(o[k].ky_nay) ? o[k].ky_nay : null);
+    const qm = { dt: gt(kd, 'doanh_thu_thuan'), vg: gt(cd, 'von_gop_chu_so_huu'), vcsh: gt(cd, 'von_chu_so_huu'), lnpp: gt(cd, 'loi_nhuan_sau_thue_chua_phan_phoi') };
     return {
       doanh_nghiep: { ten: mt.ten, ma: mt.ma, nganh: mt.nhom_nganh, chuan_ke_toan: mt.ten_chuan, ky: mt.ten_ky, ngay_ket_thuc: mt.ngay, loai_bao_cao: mt.loai_bao_cao || 'không rõ' },
       nguon_so_lieu: st.nguon ? (st.nguon.ghep ? 'PDF đối chiếu với ' : '') + st.nguon.ten : 'File PDF BCTC',
@@ -2484,8 +2487,32 @@ footer p{margin:0 0 6px}
       thong_tin_doi_chieu: kq.thong_tin_doi_chieu,
       bo_phan: kq.bo_phan.co ? kq.bo_phan.ds.map(x => ({ mang: x.ten, doanh_thu: E.fmtTien(x.dt), loi_nhuan: E.fmtTien(x.ln) })) : undefined,
       dinh_gia: r.dinh_gia ? r.dinh_gia.cau : undefined,
-      den_tong: CHU[kq.tong_hop.den], ket_luan_tu_dong: kq.tong_hop.ket_luan, ghi_chu_nguon: (d.suy_luan || {}).diem_nghi_ngo || []
+      den_tong: CHU[kq.tong_hop.den], ket_luan_tu_dong: kq.tong_hop.ket_luan, ghi_chu_nguon: (d.suy_luan || {}).diem_nghi_ngo || [],
+      quy_mo: { doanh_thu: E.fmtTien(qm.dt), von_gop: E.fmtTien(qm.vg), von_chu_so_huu: E.fmtTien(qm.vcsh), loi_nhuan_chua_phan_phoi: E.fmtTien(qm.lnpp), san: ls ? ls.san : undefined },
+      lich_su_giao_dich: ls ? (ls.su_kien || []).map(x => `${x.ngay}: ${x.ten}${x.ly_do ? ' – ' + x.ly_do : ''}`) : 'chỉ có khi tra theo mã',
+      rui_ro_cau_truc: ruiRoCauTruc(kq, d, ls)
     };
+  }
+  // Rủi ro cấu trúc: chỉ số "đẹp" không bù được. Dùng để chặn xếp hạng của bản đánh giá AI.
+  function ruiRoCauTruc(kq, d, ls) {
+    const out = [];
+    const nam = new Date(); nam.setFullYear(nam.getFullYear() - 3); const moc = nam.toISOString().slice(0, 10);
+    kq.dinh_tinh.forEach(x => {
+      if (x.id === 'lo_luy_ke') out.push({ muc: x.muc_do, ly_do: x.ten + ': ' + x.mo_ta });
+      if (['y_kien', 'lien_tuc'].includes(x.id)) out.push({ muc: 'DO', ly_do: x.ten });
+      if (x.id === 'bo_phan') out.push({ muc: 'VANG', ly_do: x.ten });
+    });
+    if (ls) {
+      const sk = ls.su_kien || [];
+      const nang = sk.filter(x => x.muc === 'DO'), ganNang = nang.filter(x => x.ngay >= moc);
+      if (ganNang.length) out.push({ muc: 'DO', ly_do: 'Bị hạn chế/tạm ngừng giao dịch hoặc huỷ niêm yết trong 3 năm gần nhất' });
+      else if (nang.length) out.push({ muc: 'VANG', ly_do: 'Từng bị hạn chế/tạm ngừng giao dịch hoặc huỷ niêm yết' });
+      if (sk.some(x => x.muc === 'VANG' && x.loai !== 'nomargin' && x.ngay >= moc)) out.push({ muc: 'VANG', ly_do: 'Bị cảnh báo/kiểm soát trong 3 năm gần nhất' });
+    }
+    const t9 = kq.thu_thuat.find(x => x.id === 't9');
+    if (t9 && t9.muc_do === 'DO') out.push({ muc: 'VANG', ly_do: 'Lợi nhuận chủ yếu ngoài hoạt động kinh doanh chính' });
+    if (kq.f_score.nen_yeu && kq.f_score.diem >= 7) out.push({ muc: 'VANG', ly_do: 'F-Score cao do so với kỳ trước rất yếu, không phải điểm mạnh' });
+    return out;
   }
   function bangDinhGia(dg) {
     if (!dg) return '<h3>Định giá nhanh</h3><p class="ghi-chu">Chưa có giá thị trường (chỉ có khi tra theo mã cổ phiếu).</p>';
@@ -2580,6 +2607,7 @@ footer p{margin:0 0 6px}
     h += huongDanThieu();
     h += `<div class="the bieu-do" style="margin-top:12px"><h4>Bảng tín hiệu kiểm tra</h4><p class="phu-de">Mỗi ô là một phép kiểm tra; bấm để xem chi tiết. ✓ an toàn · ! cần chú ý · ✕ đáng ngờ · ? thiếu dữ liệu.</p>${luoiTinHieu(kq.thu_thuat)}</div>`;
     h += hopLech(kq);
+    h += khoiLichSuGd(true);
     h += '<div class="luoi c2" style="margin-top:12px">';
     h += `<div class="the the-cs ${f.muc_do}">
       <div class="ten"><span>Piotroski F-Score (sức khoẻ tài chính)</span>${nutHoi(f.giai_thich)}</div>
@@ -2629,6 +2657,50 @@ footer p{margin:0 0 6px}
     $('#pane-co-ban').innerHTML = h || '<div class="trong">Không đủ dữ liệu để tính chỉ số.</div>';
   }
 
+  // ===== Lịch sử xử lý của Sở giao dịch (quản trị rủi ro) =====
+  const NHOM_GD = [
+    ['huy_niem_yet', 'Huỷ niêm yết', ['delistedHose', 'delistedHnx', 'delistedUpcom'], 'DO'],
+    ['tam_ngung', 'Tạm ngừng giao dịch', ['suspend'], 'DO'],
+    ['han_che', 'Hạn chế giao dịch (kiểm soát đặc biệt)', ['halt'], 'DO'],
+    ['kiem_soat', 'Kiểm soát', ['control'], 'VANG'],
+    ['canh_bao', 'Cảnh báo', ['alert'], 'VANG'],
+    ['margin', 'Cắt / cho ký quỹ (margin)', ['nomargin', 'eligibleMargin'], 'VANG'],
+    ['nhac_nho', 'Nhắc nhở', ['noticed'], 'THONG_TIN']
+  ];
+  const nhomCuaGd = loai => (NHOM_GD.find(n => n[2].includes(loai)) || [])[0];
+  // Gom lý do thành nhóm dễ lọc: vốn chủ/lỗ, kiểm toán, chậm công bố thông tin, đại hội cổ đông, khác.
+  function nhomLyDo(s) {
+    const t = E.boDau(s || '');
+    if (/kiem toan|tu choi|ngoai tru|trai nguoc/.test(t)) return 'Ý kiến kiểm toán';
+    if (/cham|cong bo thong tin|cbtt|bao cao/.test(t)) return 'Chậm/vi phạm công bố thông tin';
+    if (/von chu|lo luy ke|chua phan phoi|lnst|thua lo|lo \d|am\b/.test(t)) return 'Lỗ, vốn chủ sở hữu';
+    if (/dai hoi|dhdcd/.test(t)) return 'Chưa họp Đại hội cổ đông';
+    return t ? 'Khác' : '';
+  }
+  function khoiLichSuGd(gon) {
+    const ls = st.thiTruong && st.thiTruong.lich_su_gd;
+    if (!ls) return `<div data-lich-su-gd="${gon ? 'gon' : 'du'}" class="the trong">Lịch sử xử lý giao dịch chỉ có khi tra theo mã cổ phiếu.</div>`;
+    const sk = ls.su_kien || [];
+    const loc = st.locGd || new Set();
+    const dem = {}; sk.forEach(x => { const n = nhomCuaGd(x.loai); dem[n] = (dem[n] || 0) + 1; });
+    const nang = sk.filter(x => x.muc === 'DO').length, vang = sk.filter(x => x.muc === 'VANG').length;
+    const tom = !sk.length ? 'Không có cảnh báo, kiểm soát, hạn chế giao dịch hay huỷ niêm yết trong dữ liệu.'
+      : `${sk.length} sự kiện: ${NHOM_GD.filter(n => dem[n[0]]).map(n => `${n[1].toLowerCase()} ${dem[n[0]]}`).join(', ')}.`;
+    const chip = NHOM_GD.filter(n => dem[n[0]]).map(n => `<button type="button" class="btn nho${loc.has(n[0]) ? ' chinh' : ''}" data-loc-gd="${n[0]}" aria-pressed="${loc.has(n[0])}">${esc(n[1])} (${dem[n[0]]})</button>`).join(' ');
+    const hien = sk.filter(x => !loc.size || loc.has(nhomCuaGd(x.loai)));
+    const muc = nang ? 'DO' : vang ? 'VANG' : 'XANH';
+    return `<div data-lich-su-gd="${gon ? 'gon' : 'du'}" class="the the-cs ${muc}" style="margin-top:12px">
+      <div class="ten"><span><b>Lịch sử xử lý của Sở giao dịch</b>${ls.san ? ` · sàn ${esc(ls.san)}` : ''}</span>${nhanMuc(muc)}</div>
+      <p class="phu" style="color:var(--text)">${esc(tom)}${nang ? ' Đã từng bị hạn chế/tạm ngừng giao dịch hoặc huỷ niêm yết: cần xem kỹ dù chỉ số tài chính đẹp.' : ''}</p>
+      ${sk.length ? `<p class="khong-in" style="margin:6px 0">Lọc: <button type="button" class="btn nho${loc.size ? '' : ' chinh'}" data-loc-gd="tat_ca">Tất cả (${sk.length})</button> ${chip}</p>
+      <div class="bang-cuon"><table><thead><tr><th>Ngày hiệu lực</th><th>Loại</th><th>Nhóm lý do</th><th>Lý do</th></tr></thead><tbody>
+        ${(gon ? hien.slice(0, 5) : hien).map(x => `<tr><td>${esc(x.ngay.split('-').reverse().join('/'))}</td><td>${nhanMuc(x.muc === 'THONG_TIN' ? 'THONG_TIN' : x.muc)} ${esc(x.ten)}</td><td>${esc(nhomLyDo(x.ly_do))}</td><td class="ghi-chu">${esc(x.ly_do)}</td></tr>`).join('')}
+      </tbody></table></div>
+      ${gon && hien.length > 5 ? `<p class="khong-in" style="margin:6px 0 0"><button type="button" class="btn nho" data-den-tab="dieu_tra">Xem đủ ${hien.length} sự kiện</button></p>` : ''}` : ''}
+      <p class="phu">Nguồn: thông báo của Sở giao dịch qua dữ liệu công bố theo mã. Sự kiện trong 3 năm gần nhất được tính vào đèn tổng.</p>
+    </div>`;
+  }
+
   function veDieuTra() {
     const kq = st.kq;
     const mt = kq.meta;
@@ -2645,7 +2717,7 @@ footer p{margin:0 0 6px}
       ${t.ghi_chu.map(g => `<div class="phu">• ${esc(g)}</div>`).join('')}
       ${khoiGiaiThich(t.giai_thich_binh_dan)}
     </div>`).join('');
-    h += '</div>' + hopLech(kq) + '<h3 class="nhom-tieu-de">Kiểm tra định tính</h3>';
+    h += '</div>' + hopLech(kq) + khoiLichSuGd(false) + '<h3 class="nhom-tieu-de">Kiểm tra định tính</h3>';
     if (kq.dinh_tinh.length) {
       h += `<div class="the"><ul class="ds-dt">${kq.dinh_tinh.map(x => `<li>${nhanMuc(x.muc_do)}<div class="nd"><b>${esc(x.ten)}</b><p>${esc(x.mo_ta)}${x.trang ? ` (trang ${esc(x.trang)})` : ''}</p></div></li>`).join('')}</ul></div>`;
     } else h += '<div class="the trong">Không phát hiện vấn đề định tính từ báo cáo kiểm toán và thuyết minh.</div>';
@@ -2845,6 +2917,13 @@ footer p{margin:0 0 6px}
     }
     if (e.target.id === 'nut-tinh-lai') tinhLai();
     if (e.target.id === 'nut-hoan-nguyen') { st.duLieu = clone(st.goc); st.danhGiaAI = null; st.loiDanhGia = ''; tinhVaVe('tho'); }
+    const locGd = e.target.closest('[data-loc-gd]');
+    if (locGd) {
+      const k = locGd.dataset.locGd;
+      st.locGd = st.locGd || new Set();
+      if (k === 'tat_ca') st.locGd.clear(); else if (st.locGd.has(k)) st.locGd.delete(k); else st.locGd.add(k);
+      document.querySelectorAll('[data-lich-su-gd]').forEach(el => { el.outerHTML = khoiLichSuGd(el.dataset.lichSuGd === 'gon'); });
+    }
     const den = e.target.closest('[data-den-tab]');
     if (den) { chonTab(den.dataset.denTab); $('#ket-qua').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     if (e.target.closest('[data-viet-danh-gia]')) { st.loiDanhGia = ''; vietDanhGiaAI(); }

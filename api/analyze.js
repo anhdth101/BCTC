@@ -615,6 +615,9 @@ QUY TẮC BẮT BUỘC:
 - Không dùng cụm "chắc chắn gian lận"; dùng "dấu hiệu đáng ngờ, cần kiểm tra thêm". Không đưa khuyến nghị mua/bán.
 - Câu văn tiếng Việt dễ hiểu cho nhà đầu tư cá nhân; hạn chế thuật ngữ, có thì giải thích ngắn.
 - Nếu dữ liệu thiếu phần nào (ví dụ không có ý kiến kiểm toán) thì nói là chưa có dữ liệu, không đoán.
+- RỦI RO CẤU TRÚC ĐẶT TRƯỚC CHỈ SỐ ĐẸP (thị trường Việt Nam có nhiều mã "làm đẹp" số liệu): xem "rui_ro_cau_truc", "lich_su_giao_dich", "quy_mo", "dinh_tinh" TRƯỚC khi đọc chỉ số. Lỗ luỹ kế lớn, vốn chủ bị bào mòn, từng bị cảnh báo/kiểm soát/hạn chế/tạm ngừng giao dịch/huỷ niêm yết, kiểm toán từ chối hoặc ngoại trừ, lãi chủ yếu từ tài chính hoặc khoản bất thường, quy mô doanh thu rất nhỏ, giao dịch trên UPCOM – phải nêu đầu tiên trong rui_ro và trong tom_tat.
+- Chỉ số tăng mạnh so với kỳ trước khi kỳ trước lỗ hoặc quy mô rất nhỏ KHÔNG phải điểm mạnh (nền thấp); ROA, F-Score cao trong trường hợp này phải nói rõ là do nền thấp.
+- Có bất kỳ mục nào trong rui_ro_cau_truc thì KHÔNG được xếp "Tích cực"; có mục mức "DO" thì xếp "Rủi ro cao" hoặc "Thận trọng".
 
 Trả về đúng một JSON:
 {"xep_hang": "Tích cực|Trung tính|Thận trọng|Rủi ro cao",
@@ -640,6 +643,11 @@ async function cheDoDanhGia(body, deadline) {
     dinh_gia: toStr(j.dinh_gia, 600), ket_luan: toStr(j.ket_luan, 900)
   };
   if (!out.tom_tat && !out.rui_ro.length) throw loiCo(502, 'bad_json');
+  // Chặn cứng: rủi ro cấu trúc không cho xếp hạng đẹp dù AI viết gì.
+  const rr = Array.isArray(body.tom_tat && body.tom_tat.rui_ro_cau_truc) ? body.tom_tat.rui_ro_cau_truc : [];
+  const coDo = rr.some(x => x && x.muc === 'DO');
+  if (coDo && (out.xep_hang === 'Tích cực' || out.xep_hang === 'Trung tính')) out.xep_hang = 'Thận trọng';
+  else if (rr.length && out.xep_hang === 'Tích cực') out.xep_hang = 'Trung tính';
   return { danh_gia: out };
 }
 
