@@ -1,0 +1,9 @@
+# Chỉ đưa code lên GitHub. Không bao giờ đưa file chứa API key, PDF, ảnh, ghi chú.
+*
+!.gitignore
+!.vercelignore
+!index.html
+!package.json
+!api/
+api/*
+!api/analyze.js

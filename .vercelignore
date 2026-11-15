@@ -1,0 +1,8 @@
+# Chỉ deploy index.html và api/analyze.js. Không bao giờ đưa file chứa API key hay tài liệu lên web.
+*
+!index.html
+!api
+api/*
+!api/analyze.js
+!vercel.json
+!package.json

@@ -1,0 +1,9 @@
+{
+  "name": "soi-bctc",
+  "private": true,
+  "description": "Phân tích và sàng lọc báo cáo tài chính doanh nghiệp Việt Nam",
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@anthropic-ai/sdk": "1.8.0"
+  }
+}
