@@ -355,32 +355,55 @@
         "lift": 0.6738
       },
       "muc": "yeu"
+    },
+    "R16": {
+      "ten": "Lỗ luỹ kế ăn mòn vốn",
+      "dieu_kien": "lỗ luỹ kế (lợi nhuận sau thuế chưa phân phối âm) > 50% vốn góp, hoặc vốn chủ sở hữu âm",
+      "n_du_lieu": 7007,
+      "n": 568,
+      "xau": 228,
+      "ty_le": 0.4014,
+      "nen": 0.113,
+      "lift": 3.5513,
+      "recall": 0.2879,
+      "p": 0,
+      "huan_luyen": {
+        "n": 393,
+        "xau": 144,
+        "lift": 3.4805
+      },
+      "kiem_dinh": {
+        "n": 175,
+        "xau": 84,
+        "lift": 3.8199
+      },
+      "muc": "manh"
     }
   },
   "so_quy_tac_cung_luc": {
     "0": {
-      "n": 2558,
-      "xau": 209,
-      "ty_le": 0.0817,
-      "lift": 0.7222
+      "n": 2408,
+      "xau": 157,
+      "ty_le": 0.0652,
+      "lift": 0.5763
     },
     "1": {
-      "n": 1953,
-      "xau": 247,
-      "ty_le": 0.1265,
-      "lift": 1.1178
+      "n": 1905,
+      "xau": 213,
+      "ty_le": 0.1118,
+      "lift": 0.9883
     },
     "2": {
-      "n": 1184,
-      "xau": 174,
-      "ty_le": 0.147,
-      "lift": 1.2989
+      "n": 1250,
+      "xau": 201,
+      "ty_le": 0.1608,
+      "lift": 1.4212
     },
     "3": {
-      "n": 1314,
-      "xau": 163,
-      "ty_le": 0.124,
-      "lift": 1.0964
+      "n": 1446,
+      "xau": 222,
+      "ty_le": 0.1535,
+      "lift": 1.357
     }
   },
   "case_kho": {
@@ -442,7 +465,9 @@
           "nam": 2019,
           "nhan": 0,
           "da_xau_truoc": false,
-          "quy_tac": []
+          "quy_tac": [
+            "R16"
+          ]
         },
         {
           "nam": 2020,
@@ -450,7 +475,8 @@
           "da_xau_truoc": false,
           "quy_tac": [
             "R12",
-            "R15"
+            "R15",
+            "R16"
           ]
         },
         {
@@ -462,27 +488,33 @@
             "R02",
             "R05",
             "R06",
-            "R13"
+            "R13",
+            "R16"
           ]
         },
         {
           "nam": 2022,
           "nhan": 0,
           "da_xau_truoc": false,
-          "quy_tac": []
+          "quy_tac": [
+            "R16"
+          ]
         },
         {
           "nam": 2023,
           "nhan": 0,
           "da_xau_truoc": false,
-          "quy_tac": []
+          "quy_tac": [
+            "R16"
+          ]
         },
         {
           "nam": 2024,
           "nhan": 1,
           "da_xau_truoc": false,
           "quy_tac": [
-            "R06"
+            "R06",
+            "R16"
           ]
         },
         {
@@ -493,7 +525,8 @@
             "R01",
             "R06",
             "R11",
-            "R12"
+            "R12",
+            "R16"
           ]
         }
       ]
@@ -654,7 +687,8 @@
           "da_xau_truoc": false,
           "quy_tac": [
             "R03",
-            "R05"
+            "R05",
+            "R16"
           ]
         },
         {
@@ -663,7 +697,8 @@
           "da_xau_truoc": true,
           "quy_tac": [
             "R04",
-            "R05"
+            "R05",
+            "R16"
           ]
         },
         {
@@ -673,14 +708,17 @@
           "quy_tac": [
             "R05",
             "R06",
-            "R12"
+            "R12",
+            "R16"
           ]
         },
         {
           "nam": 2025,
           "nhan": 0,
           "da_xau_truoc": false,
-          "quy_tac": []
+          "quy_tac": [
+            "R16"
+          ]
         }
       ]
     },
@@ -826,7 +864,8 @@
           "nhan": 0,
           "da_xau_truoc": false,
           "quy_tac": [
-            "R05"
+            "R05",
+            "R16"
           ]
         },
         {
@@ -835,7 +874,8 @@
           "da_xau_truoc": false,
           "quy_tac": [
             "R05",
-            "R06"
+            "R06",
+            "R16"
           ]
         },
         {
@@ -843,34 +883,42 @@
           "nhan": 1,
           "da_xau_truoc": false,
           "quy_tac": [
-            "R05"
+            "R05",
+            "R16"
           ]
         },
         {
           "nam": 2022,
           "nhan": 0,
           "da_xau_truoc": true,
-          "quy_tac": []
+          "quy_tac": [
+            "R16"
+          ]
         },
         {
           "nam": 2023,
           "nhan": 0,
           "da_xau_truoc": false,
           "quy_tac": [
-            "R05"
+            "R05",
+            "R16"
           ]
         },
         {
           "nam": 2024,
           "nhan": 0,
           "da_xau_truoc": false,
-          "quy_tac": []
+          "quy_tac": [
+            "R16"
+          ]
         },
         {
           "nam": 2025,
           "nhan": 0,
           "da_xau_truoc": false,
-          "quy_tac": []
+          "quy_tac": [
+            "R16"
+          ]
         }
       ]
     },
@@ -916,7 +964,8 @@
           "nhan": 1,
           "da_xau_truoc": false,
           "quy_tac": [
-            "R05"
+            "R05",
+            "R16"
           ]
         },
         {
@@ -924,7 +973,8 @@
           "nhan": 1,
           "da_xau_truoc": false,
           "quy_tac": [
-            "R05"
+            "R05",
+            "R16"
           ]
         },
         {
@@ -934,7 +984,8 @@
           "quy_tac": [
             "R05",
             "R06",
-            "R08"
+            "R08",
+            "R16"
           ]
         },
         {
@@ -943,7 +994,8 @@
           "da_xau_truoc": false,
           "quy_tac": [
             "R03",
-            "R05"
+            "R05",
+            "R16"
           ]
         }
       ]
@@ -1137,7 +1189,8 @@
           "da_xau_truoc": false,
           "quy_tac": [
             "R05",
-            "R07"
+            "R07",
+            "R16"
           ]
         },
         {
@@ -1149,7 +1202,8 @@
             "R04",
             "R05",
             "R07",
-            "R12"
+            "R12",
+            "R16"
           ]
         },
         {
@@ -1159,7 +1213,8 @@
           "quy_tac": [
             "R05",
             "R08",
-            "R15"
+            "R15",
+            "R16"
           ]
         },
         {
@@ -1167,7 +1222,8 @@
           "nhan": 0,
           "da_xau_truoc": false,
           "quy_tac": [
-            "R05"
+            "R05",
+            "R16"
           ]
         }
       ]
@@ -1211,7 +1267,8 @@
           "nhan": 1,
           "da_xau_truoc": false,
           "quy_tac": [
-            "R05"
+            "R05",
+            "R16"
           ]
         },
         {
@@ -1219,7 +1276,8 @@
           "nhan": 1,
           "da_xau_truoc": true,
           "quy_tac": [
-            "R05"
+            "R05",
+            "R16"
           ]
         },
         {
@@ -1228,7 +1286,8 @@
           "da_xau_truoc": true,
           "quy_tac": [
             "R04",
-            "R05"
+            "R05",
+            "R16"
           ]
         },
         {
@@ -1236,7 +1295,8 @@
           "nhan": 1,
           "da_xau_truoc": true,
           "quy_tac": [
-            "R05"
+            "R05",
+            "R16"
           ]
         },
         {
@@ -1244,7 +1304,8 @@
           "nhan": 0,
           "da_xau_truoc": true,
           "quy_tac": [
-            "R05"
+            "R05",
+            "R16"
           ]
         }
       ]

@@ -2988,6 +2988,7 @@ footer p{margin:0 0 6px}
       const nhan = m ? (/^RED/i.test(m[1]) ? `<b style="color:var(--do)">RED FLAG:</b> ` : `<b>Nghi vấn:</b> `) : '';
       return `${nhan}${esc(m ? chinh.slice(m[0].length) : chinh)}${i >= 0 ? `<div class="phu" style="margin-top:3px;padding-left:10px;border-left:2px solid var(--vien,#ccc)"><i>${esc(CAU_KC)}</i>${kc ? ' ' + esc(kc) : ''}</div>` : ''}`;
     };
+    const nvMuc = k => { const a = (td.nghi_van_theo_muc || {})[k] || []; return a.length ? `<ul class="nghi-van">${a.map(x => `<li>${yHtml(x)}</li>`).join('')}</ul>` : ''; };
     const ul = (a, rong = 'Không có điểm bất thường cần nêu.') => (a && a.length ? `<ul>${a.map(s => `<li>${yHtml(s)}</li>`).join('')}</ul>` : `<p class="phu">${rong}</p>`);
     const hs = tt.ho_so || {}, ls = tt.lich_su_gd || {};
     const TT_KT = { da_kiem_toan: 'Đã kiểm toán', soat_xet: 'Đã soát xét', tu_lap_chua_kiem_toan: 'Tự lập, chưa kiểm toán/soát xét' };
@@ -3016,7 +3017,7 @@ footer p{margin:0 0 6px}
     h += ul(td.nhan_xet_tieu_chi);
     if (k && k.canh_bao.length) h += `<div class="hop-tb"><b>Dấu hiệu cần soi thêm</b>${ul(k.canh_bao)}</div>`;
     // Phần 3
-    h += `<h3>PHẦN 3: KẾT QUẢ KINH DOANH</h3>${bangNhieuKyHtml(tt.bang_nhieu_ky, 'kqkd')}${ul(td.nhan_xet_kqkd)}`;
+    h += `<h3>PHẦN 3: KẾT QUẢ KINH DOANH</h3>${bangNhieuKyHtml(tt.bang_nhieu_ky, 'kqkd')}${nvMuc('kqkd')}${ul(td.nhan_xet_kqkd)}`;
     if (nq && nq.ke_hoach_kinh_doanh && nq.ke_hoach_kinh_doanh.nam) {
       const kh = nq.ke_hoach_kinh_doanh, tdk = tienDoKeHoach(nq);
       h += `<p><b>Kế hoạch ĐHĐCĐ ${esc(kh.nam)}:</b> ${[E.isNum(kh.doanh_thu) ? 'doanh thu ' + E.fmtTien(kh.doanh_thu) : '', E.isNum(kh.loi_nhuan_truoc_thue) ? 'LNTT ' + E.fmtTien(kh.loi_nhuan_truoc_thue) : '', E.isNum(kh.loi_nhuan_sau_thue) ? 'LNST ' + E.fmtTien(kh.loi_nhuan_sau_thue) : ''].filter(Boolean).map(esc).join(', ')}${tdk.length ? '. Tiến độ: ' + tdk.map(x => `${x.ten} ${E.fmtPct(x.ty_le, 0)}${x.cham ? ' (chậm)' : ''}`).map(esc).join('; ') : ''}.</p>`;
@@ -3024,9 +3025,9 @@ footer p{margin:0 0 6px}
     // Phần 4
     h += `<h3>PHẦN 4: TÀI SẢN, NGUỒN VỐN VÀ NỢ VAY</h3>${bangNhieuKyHtml(tt.bang_nhieu_ky, 'cdkt')}`;
     if (CHI_SO.length) h += `<div class="bang-cuon"><table><thead><tr><th>Chỉ số</th><th class="so">Kỳ này</th><th class="so">Kỳ trước</th></tr></thead><tbody>${CHI_SO.map(x => `<tr><td>${esc(x.ten)}</td><td class="so">${esc(E.fmt(x.gt, x.kieu))}</td><td class="so">${x.truoc !== null && x.truoc !== undefined ? esc(E.fmt(x.truoc, x.kieu)) : '–'}</td></tr>`).join('')}</tbody></table></div>`;
-    h += ul(td.nhan_xet_tai_san);
+    h += nvMuc('tai_san') + ul(td.nhan_xet_tai_san);
     // Phần 5
-    h += `<h3>PHẦN 5: DÒNG TIỀN</h3>${bangNhieuKyHtml(tt.bang_nhieu_ky, 'lctt')}${ul(td.nhan_xet_dong_tien)}`;
+    h += `<h3>PHẦN 5: DÒNG TIỀN</h3>${bangNhieuKyHtml(tt.bang_nhieu_ky, 'lctt')}${nvMuc('dong_tien')}${ul(td.nhan_xet_dong_tien)}`;
     // Phần 6: báo cáo đang che giấu điều gì
     const NHAN_M = { DO: ['DO', 'Đáng ngờ'], VANG: ['VANG', 'Cần soi'] };
     const dauHieu = [...(kq.thu_thuat || []).filter(x => NHAN_M[x.muc_do]).map(x => ({ ten: x.ten, so: x.gia_tri, muc: x.muc_do })),
@@ -3048,7 +3049,8 @@ footer p{margin:0 0 6px}
     if (!(qt && qt.ds)) h += dauHieu.length
       ? `<div class="bang-cuon"><table class="the-hoa"><thead><tr><th>Dấu hiệu</th><th>Số liệu</th><th>Mức</th></tr></thead><tbody>${dauHieu.map(x => `<tr><td>${esc(x.ten)}</td><td>${esc(x.so || '')}</td><td><span class="nhan ${NHAN_M[x.muc][0]}">${NHAN_M[x.muc][1]}</span></td></tr>`).join('')}</tbody></table></div>`
       : `<p class="phu">${soPhep} phép kiểm tra tự động (dòng tiền chạy vòng, tiền mặt ảo, thổi phồng doanh thu, tồn kho, đảo nợ, Beneish M-Score…) không bắt được dấu hiệu đỏ/vàng.</p>`;
-    h += ul(td.nghi_van_bctc, 'Không có quy tắc đã kiểm chứng nào kích hoạt. Các khoản chỉ có trong thuyết minh (bên liên quan, cho vay cá nhân, tài sản đảm bảo) vẫn cần đọc BCTC gốc.');
+    if (td.nghi_van_theo_muc) h += (td.nghi_van_bctc || []).length ? `<p class="phu">Lời giải thích chi tiết của từng dấu hiệu nằm ngay trong mục liên quan ở trên (kết quả kinh doanh, tài sản – nguồn vốn, dòng tiền).</p>` : `<p class="phu">Không có dấu hiệu đã được lịch sử xác nhận nào xuất hiện. Các khoản chỉ có trong thuyết minh (bên liên quan, cho vay cá nhân, tài sản đảm bảo) vẫn cần đọc BCTC gốc.</p>`;
+    else h += ul(td.nghi_van_bctc, 'Không có quy tắc đã kiểm chứng nào kích hoạt. Các khoản chỉ có trong thuyết minh (bên liên quan, cho vay cá nhân, tài sản đảm bảo) vẫn cần đọc BCTC gốc.');
     // Phần 7
     h += `<h3>PHẦN 7: GIAO DỊCH CỔ PHIẾU</h3>`;
     if (rg) h += `<div class="bang-cuon"><table><tbody>${rg.chi_so.map(x => `<tr><td>${esc(x.ten)}</td><td>${esc(x.gia_tri)}</td><td><span class="nhan ${x.muc}">${x.muc === 'DO' ? 'Cao' : x.muc === 'VANG' ? 'Chú ý' : 'Ổn'}</span></td></tr>`).join('')}</tbody></table></div>`;

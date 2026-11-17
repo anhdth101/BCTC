@@ -770,7 +770,7 @@ async function quyTacChoMa(ma) {
     const { Q, bt: BT } = QT_TC[loai];
     const ds = Q.danhGia(d, y).map(r => {
       const q = Q.QUY_TAC.find(x => x.id === r.id), bt = BT && BT.quy_tac[r.id];
-      return { id: r.id, ten: q.ten, dien_giai: q.dien_giai, dieu_kien: q.dieu_kien, kich_hoat: r.kich_hoat,
+      return { id: r.id, ten: q.ten, dien_giai: q.dien_giai, dieu_kien: q.dieu_kien, kich_hoat: r.kich_hoat, muc_bao_cao: q.muc_bao_cao || 'tai_san',
         bang_chung: r.bang_chung.map(([t, val, k]) => `${t}: ${QT.fmtBC(val, k)}`),
         muc: bt ? bt.muc : 'chua_backtest',
         backtest: bt ? { n: bt.n, xau: bt.xau, ty_le: bt.ty_le, nen: bt.nen, lift: bt.lift, p: bt.p, cau: cauBacktest(bt, BT.mau, Q.KQ_XAU, Q.DON_VI) } : null,
@@ -781,7 +781,7 @@ async function quyTacChoMa(ma) {
   const ds = QT.danhGiaQuyTac(d, y).map(r => {
     const q = QT.QUY_TAC.find(x => x.id === r.id), bt = QT_BT && QT_BT.quy_tac[r.id];
     return {
-      id: r.id, ten: q.ten, dien_giai: q.dien_giai, dieu_kien: q.dieu_kien, kich_hoat: r.kich_hoat,
+      id: r.id, ten: q.ten, dien_giai: q.dien_giai, dieu_kien: q.dieu_kien, kich_hoat: r.kich_hoat, muc_bao_cao: q.muc_bao_cao || 'tai_san',
       bang_chung: r.bang_chung.map(([t, val, k]) => `${t}: ${QT.fmtBC(val, k)}`),
       muc: bt ? bt.muc : 'chua_backtest',
       backtest: bt ? { n: bt.n, xau: bt.xau, ty_le: bt.ty_le, nen: bt.nen, lift: bt.lift, p: bt.p,
@@ -866,18 +866,22 @@ async function cheDoThamDinh(body, deadline) {
     if (duocNeu.some(q => q.id === id) && !nvAi.has(id)) nvAi.set(id, x);
   });
   const chonChiSo = (a, ds0, toiDa) => { const c = [...new Set((Array.isArray(a) ? a : []).map(Number).filter(i => Number.isInteger(i) && i >= 0 && i < ds0.length))].slice(0, toiDa); return c.length ? c.map(i => ds0[i]) : ds0.slice(0, toiDa); };
-  const nghiVan = duocNeu.slice().sort((a, b) => (a.muc === b.muc ? (b.backtest ? b.backtest.lift : 0) - (a.backtest ? a.backtest.lift : 0) : a.muc === 'manh' ? -1 : 1)).map(q => {
+  const nghiVanCt = duocNeu.slice().sort((a, b) => (a.muc === b.muc ? (b.backtest ? b.backtest.lift : 0) - (a.backtest ? a.backtest.lift : 0) : a.muc === 'manh' ? -1 : 1)).map(q => {
     const x = nvAi.get(q.id) || {};
     let nx = boMaQuyTac(toStr(String(x.nhan_xet || '').replace(RE_NHAN_NV, ''), 600));
     if (!nx || !CC.hopLe(nx, tap)) { if (nx) { soLoai++; cauLoai.push({ cau: nx, so: CC.soTrongVanBan(nx).filter(v => !CC.coTrongTap(tap, v)).map(v => v.tok) }); } nx = `${q.dien_giai} Số liệu: ${q.bang_chung.join('; ')}.`; }
     const gt = chonChiSo(x.gia_thuyet, q.gia_thuyet, 2), dc = chonChiSo(x.doi_chieu, q.doi_chieu, 3);
-    return `${q.muc === 'manh' ? 'RED FLAG' : 'NGHI VẤN'}: ${q.ten}. ${nx} ${q.backtest ? q.backtest.cau : 'Chưa đủ dữ liệu lịch sử để kiểm chứng'}. ${CAU_HOI_KIEM_CHUNG} Có thể: ${gt.join('; ')}. Cần đối chiếu: ${dc.join('; ')}.`;
+    return { muc: q.muc_bao_cao || 'tai_san', text: `${q.muc === 'manh' ? 'RED FLAG' : 'NGHI VẤN'}: ${q.ten}. ${nx} ${q.backtest ? q.backtest.cau : 'Chưa đủ dữ liệu lịch sử để kiểm chứng'}. ${CAU_HOI_KIEM_CHUNG} Có thể: ${gt.join('; ')}. Cần đối chiếu: ${dc.join('; ')}.` };
   });
+  const nghiVan = nghiVanCt.map(x => x.text);
+  // Đặt nghi vấn vào đúng mục: kết quả kinh doanh (Phần 3), tài sản – nguồn vốn (Phần 4), dòng tiền (Phần 5).
+  const nghiVanTheoMuc = { kqkd: [], tai_san: [], dong_tien: [] };
+  nghiVanCt.forEach(x => (nghiVanTheoMuc[x.muc] || nghiVanTheoMuc.tai_san).push(x.text));
 
   const out = {
     tong_quan_dn: loc(toStr(j.tong_quan_dn, 1200)), trien_vong_nganh: loc(toStr(j.trien_vong_nganh, 1000)),
     nhan_xet_tieu_chi: ds(j.nhan_xet_tieu_chi, 12), nhan_xet_kqkd: ds(j.nhan_xet_kqkd, 10), nhan_xet_tai_san: ds(j.nhan_xet_tai_san, 10),
-    nhan_xet_dong_tien: ds(j.nhan_xet_dong_tien, 8), nghi_van_bctc: nghiVan, nhan_xet_giao_dich: ds(j.nhan_xet_giao_dich, 6), su_kien: ds(j.su_kien, 8),
+    nhan_xet_dong_tien: ds(j.nhan_xet_dong_tien, 8), nghi_van_bctc: nghiVan, nghi_van_theo_muc: nghiVanTheoMuc, nhan_xet_giao_dich: ds(j.nhan_xet_giao_dich, 6), su_kien: ds(j.su_kien, 8),
     nhan_xet_dinh_gia: loc(toStr(j.nhan_xet_dinh_gia, 900)),
     rui_ro: Object.fromEntries(['thi_truong', 'thanh_khoan', 'pha_loang', 'noi_tai', 'nganh', 'quan_tri_co_dong'].map(k => [k, ds(r[k], k === 'noi_tai' ? 12 : 6)])),
     bang_tong_hop: (Array.isArray(j.bang_tong_hop) ? j.bang_tong_hop : []).slice(0, 10).filter(x => x && typeof x === 'object')
