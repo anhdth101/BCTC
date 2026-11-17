@@ -223,6 +223,12 @@ footer p{margin:0 0 6px}
   table.the-hoa td{border:0;padding:3px 12px;text-align:left!important;white-space:normal!important}
   table.the-hoa td[data-nhan]:not(:first-child)::before{content:attr(data-nhan);display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
   table.the-hoa td:first-child{font-weight:600}
+  table.the-hoa td:first-child div{font-weight:400}
+  /* Bảng gọn (cổ đông): mỗi người 2 dòng, nhãn đứng cạnh giá trị */
+  table.the-hoa.gon tr{padding:7px 0}
+  table.the-hoa.gon td:not(:first-child){display:inline-block;width:auto;padding:1px 0 1px 12px;font-size:13px}
+  table.the-hoa.gon td[data-nhan]:not(:first-child)::before{display:inline;content:attr(data-nhan) ": ";text-transform:none;letter-spacing:0;font-weight:400;font-size:12px}
+  table.the-hoa.gon td:nth-child(2){display:block}
   /* Bản đánh giá: tràn sát mép màn hình */
   .a4{padding:16px 14px;margin:0 -16px;border-radius:0;border-left:0;border-right:0;font-size:14px;line-height:1.6}
   .a4 h2{font-size:17px}
@@ -3015,7 +3021,13 @@ footer p{margin:0 0 6px}
         ['Mã số doanh nghiệp', hs.mst || sl.ma_so_doanh_nghiep], ['Ngày thành lập', hs.ngay_thanh_lap ? String(hs.ngay_thanh_lap).split('-').reverse().join('/') : ''], ['Trụ sở', hs.dia_chi], ['Website', hs.website],
         ['Số lượng cổ phiếu', E.isNum(tt.so_cp) ? E.fmtSo(tt.so_cp) : ''], ['Giá / Vốn hoá', E.isNum(tt.gia) ? `${E.fmtSo(tt.gia)} đồng · ${E.fmtTien(tt.von_hoa)}` : ''], ['Ngành', mt.nhom_nganh], ['Nhân sự', hs.nhan_vien ? E.fmtSo(hs.nhan_vien) + ' người' : '']]
         .filter(([, v]) => v).map(([a, b]) => `<tr><td style="width:32%"><b>${esc(a)}</b></td><td>${esc(b)}</td></tr>`).join('')}</tbody></table></div>`;
-    if ((tt.co_dong || []).length) h += `<p><b>Cổ đông lớn</b></p><div class="bang-cuon"><table class="the-hoa"><thead><tr><th>Cổ đông</th><th>Vai trò</th><th class="so">Số CP</th><th class="so">Tỷ lệ</th><th>Cập nhật</th></tr></thead><tbody>${tt.co_dong.map(x => `<tr><td>${esc(x.ten)}</td><td>${esc(x.vai_tro)}</td><td class="so">${x.so_cp ? esc(E.fmtSo(x.so_cp)) : '–'}</td><td class="so">${esc(E.fmtPct(x.ty_le, 2))}</td><td>${esc(x.ngay)}</td></tr>`).join('')}</tbody></table></div><p class="phu">Nguồn: dữ liệu cổ đông công bố (có thể chưa cập nhật giao dịch gần nhất).</p>`;
+    if ((tt.co_dong || []).length) {
+      // Dữ liệu cổ đông cập nhật cách đây hơn 2 năm: ghi rõ là cũ.
+      const moc2 = new Date(); moc2.setFullYear(moc2.getFullYear() - 2); const moc2s = moc2.toISOString().slice(0, 10);
+      const ngayVn = s => (/^\d{4}-\d{2}-\d{2}$/.test(s || '') ? s.split('-').reverse().join('/') : (s || ''));
+      const coCu = tt.co_dong.some(x => x.ngay && x.ngay < moc2s);
+      h += `<p><b>Cổ đông lớn</b></p><div class="bang-cuon"><table class="the-hoa gon"><thead><tr><th>Cổ đông</th><th>Vai trò</th><th class="so">Số CP</th><th class="so">Tỷ lệ</th><th>Cập nhật</th></tr></thead><tbody>${tt.co_dong.map(x => `<tr><td>${esc(x.ten)}</td><td>${esc(x.vai_tro)}</td><td class="so">${x.so_cp ? esc(E.fmtSo(x.so_cp)) : '–'}</td><td class="so"><b>${esc(E.fmtPct(x.ty_le, 2))}</b></td><td>${esc(ngayVn(x.ngay))}${x.ngay && x.ngay < moc2s ? ' <span class="phu">(dữ liệu cũ)</span>' : ''}</td></tr>`).join('')}</tbody></table></div><p class="phu">Nguồn: dữ liệu cổ đông công bố (có thể chưa cập nhật giao dịch gần nhất).${coCu ? ' Dòng ghi "dữ liệu cũ" cập nhật cách đây hơn 2 năm, tỷ lệ thực tế có thể đã khác.' : ''}</p>`;
+    }
     h += `<p>${esc(td.tong_quan_dn)}</p>${td.trien_vong_nganh ? `<p><b>Triển vọng ngành:</b> ${esc(td.trien_vong_nganh)}</p>` : ''}`;
     // Phần 2
     h += `<h3>PHẦN 2: ĐÁNH GIÁ TIÊU CHÍ DANH MỤC KÝ QUỸ</h3>`;
@@ -3043,14 +3055,15 @@ footer p{margin:0 0 6px}
     h += `<h3>PHẦN 6: BÁO CÁO TÀI CHÍNH ĐANG CHE GIẤU ĐIỀU GÌ?</h3>`;
     const qt = td.quy_tac;
     if (qt && qt.ds) {
-      const kh = qt.ds.filter(x => x.kich_hoat);
-      const MUC_QT = { manh: ['DO', 'Đáng ngờ cao'], vua: ['VANG', 'Nghi vấn'], yeu: ['KHONG_DU_DU_LIEU', 'Tham khảo'], chua_backtest: ['KHONG_DU_DU_LIEU', 'Tham khảo'] };
-      const tram = v => (E.isNum(v) ? Math.round(v * 100) : '–');
-      const cauLs = b => (!b || !b.n ? 'Chưa đủ dữ liệu lịch sử.' : `Cứ 100 trường hợp có dấu hiệu này thì khoảng ${tram(b.ty_le)} sau đó gặp sự cố, so với ${tram(b.nen)} ở nhóm chung${E.isNum(b.lift) ? (b.lift >= 1.05 ? ` (cao gấp ${b.lift.toFixed(1).replace('.', ',')} lần)` : ' (không cao hơn nhóm chung)') : ''}.`);
+      // Chỉ nêu dấu hiệu đã được dữ liệu lịch sử xác nhận; bảng gồm dấu hiệu – số liệu – suy luận rút ra từ chính số liệu đó.
+      const nang = { manh: 0, vua: 1 };
+      const kh = qt.ds.filter(x => x.kich_hoat && x.muc in nang).sort((a, b) => nang[a.muc] - nang[b.muc]);
+      const khac = qt.ds.filter(x => x.kich_hoat && !(x.muc in nang));
       h += kh.length
-        ? `<div class="bang-cuon"><table class="the-hoa"><thead><tr><th>Dấu hiệu (BCTC năm ${esc(qt.nam)})</th><th>Số liệu</th><th>Lịch sử cho thấy</th><th>Mức</th></tr></thead><tbody>${kh.map(x => { const m = MUC_QT[x.muc] || MUC_QT.yeu; return `<tr><td><b>${esc(x.ten)}</b><div>${esc(x.dien_giai || '')}</div></td><td>${x.bang_chung.map(esc).join('<br>')}</td><td>${esc(cauLs(x.backtest))}</td><td><span class="nhan ${m[0]}">${m[1]}</span></td></tr>`; }).join('')}</tbody></table></div>`
-        : `<p class="phu">BCTC năm ${esc(qt.nam)}: không xuất hiện dấu hiệu nào trong ${qt.ds.length} dấu hiệu được kiểm tra.</p>`;
-      if (qt.mau) h += `<p class="phu">"Lịch sử cho thấy" được đo trên ${esc(E.fmtSo(qt.mau.n))} trường hợp ${esc(qt.mau.don_vi || 'doanh nghiệp–năm')} (${esc(qt.mau.tu_nam)}–${esc(qt.mau.den_nam)}); "gặp sự cố" nghĩa là ${esc(qt.nhan)}. Chỉ dấu hiệu mức "Nghi vấn" trở lên được bình luận bên dưới; dấu hiệu "Tham khảo" trong quá khứ không báo trước rủi ro tốt hơn nhóm chung.${qt.canh_bao ? ' Lưu ý: số trường hợp lịch sử ít, kết quả chỉ để tham khảo.' : ''}</p>`;
+        ? `<div class="bang-cuon"><table class="the-hoa"><thead><tr><th>Dấu hiệu (BCTC năm ${esc(qt.nam)})</th><th>Số liệu</th><th>Suy luận từ số liệu</th></tr></thead><tbody>${kh.map(x => `<tr><td><b>${x.muc === 'manh' ? 'RED FLAG – ' : ''}${esc(x.ten)}</b><div>${esc(x.dien_giai || '')}</div></td><td>${x.bang_chung.map(esc).join('<br>')}</td><td>${esc(x.suy_luan || '')}</td></tr>`).join('')}</tbody></table></div>`
+        : `<p class="phu">BCTC năm ${esc(qt.nam)}: không xuất hiện dấu hiệu rủi ro nào đã được kiểm chứng.</p>`;
+      if (khac.length) h += `<p class="phu">Dấu hiệu khác có xuất hiện nhưng trong quá khứ không báo trước rủi ro rõ hơn mức chung, nên chỉ ghi nhận: ${khac.map(x => esc(x.ten.toLowerCase())).join('; ')}.</p>`;
+      if (qt.mau) h += `<p class="phu">Các dấu hiệu được chọn sau khi kiểm chứng trên ${esc(E.fmtSo(qt.mau.n))} trường hợp ${esc(qt.mau.don_vi || 'doanh nghiệp–năm')} (${esc(qt.mau.tu_nam)}–${esc(qt.mau.den_nam)}).${qt.canh_bao ? ' Số trường hợp lịch sử ít, chỉ để tham khảo.' : ''}</p>`;
     } else h += qt && qt.ly_do ? `<p class="phu">Bộ quy tắc: ${esc(qt.ly_do)}.</p>` : '';
     if (!(qt && qt.ds)) h += dauHieu.length
       ? `<div class="bang-cuon"><table class="the-hoa"><thead><tr><th>Dấu hiệu</th><th>Số liệu</th><th>Mức</th></tr></thead><tbody>${dauHieu.map(x => `<tr><td>${esc(x.ten)}</td><td>${esc(x.so || '')}</td><td><span class="nhan ${NHAN_M[x.muc][0]}">${NHAN_M[x.muc][1]}</span></td></tr>`).join('')}</tbody></table></div>`

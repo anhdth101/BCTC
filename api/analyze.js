@@ -771,7 +771,7 @@ async function quyTacChoMa(ma) {
     const { Q, bt: BT } = QT_TC[loai];
     const ds = Q.danhGia(d, y).map(r => {
       const q = Q.QUY_TAC.find(x => x.id === r.id), bt = BT && BT.quy_tac[r.id];
-      return { id: r.id, ten: q.ten, dien_giai: q.dien_giai, dieu_kien: q.dieu_kien, kich_hoat: r.kich_hoat, muc_bao_cao: q.muc_bao_cao || 'tai_san',
+      return { id: r.id, ten: q.ten, dien_giai: q.dien_giai, dieu_kien: q.dieu_kien, kich_hoat: r.kich_hoat, muc_bao_cao: q.muc_bao_cao || 'tai_san', suy_luan: r.suy_luan || null,
         bang_chung: r.bang_chung.map(([t, val, k]) => `${t}: ${QT.fmtBC(val, k)}`),
         muc: bt ? bt.muc : 'chua_backtest',
         backtest: bt ? { n: bt.n, xau: bt.xau, ty_le: bt.ty_le, nen: bt.nen, lift: bt.lift, p: bt.p, cau: cauBacktest(bt, BT.mau, Q.KQ_XAU, Q.DON_VI) } : null,
@@ -782,7 +782,7 @@ async function quyTacChoMa(ma) {
   const ds = QT.danhGiaQuyTac(d, y).map(r => {
     const q = QT.QUY_TAC.find(x => x.id === r.id), bt = QT_BT && QT_BT.quy_tac[r.id];
     return {
-      id: r.id, ten: q.ten, dien_giai: q.dien_giai, dieu_kien: q.dieu_kien, kich_hoat: r.kich_hoat, muc_bao_cao: q.muc_bao_cao || 'tai_san',
+      id: r.id, ten: q.ten, dien_giai: q.dien_giai, dieu_kien: q.dieu_kien, kich_hoat: r.kich_hoat, muc_bao_cao: q.muc_bao_cao || 'tai_san', suy_luan: r.suy_luan || null,
       bang_chung: r.bang_chung.map(([t, val, k]) => `${t}: ${QT.fmtBC(val, k)}`),
       muc: bt ? bt.muc : 'chua_backtest',
       backtest: bt ? { n: bt.n, xau: bt.xau, ty_le: bt.ty_le, nen: bt.nen, lift: bt.lift, p: bt.p,
@@ -842,7 +842,7 @@ async function cheDoThamDinh(body, deadline) {
     bang_nhieu_ky: themBienDong(tt0.bang_nhieu_ky),
     quy_tac_nghi_van: qt.ds ? {
       nam_bctc: qt.nam, nhan_backtest: qt.nhan, mau_backtest: qt.mau,
-      duoc_neu: duocNeu.map(r => ({ quy_tac: r.id, ten: r.ten, dien_giai: r.dien_giai, dieu_kien: r.dieu_kien, bang_chung: r.bang_chung, backtest: r.backtest && r.backtest.cau,
+      duoc_neu: duocNeu.map(r => ({ quy_tac: r.id, ten: r.ten, dien_giai: r.dien_giai, suy_luan: r.suy_luan || undefined, dieu_kien: r.dieu_kien, bang_chung: r.bang_chung, backtest: r.backtest && r.backtest.cau,
         gia_thuyet: r.gia_thuyet.map((s, i) => `${i}: ${s}`), doi_chieu: r.doi_chieu.map((s, i) => `${i}: ${s}`) })),
       chua_kiem_chung: chuaKc.map(r => r.ten)
     } : qt.ly_do
@@ -874,7 +874,7 @@ async function cheDoThamDinh(body, deadline) {
     let nx = chuanDonVi(boMaQuyTac(toStr(String(x.nhan_xet || '').replace(RE_NHAN_NV, ''), 600)));
     if (!nx || !CC.hopLe(nx, tap)) { if (nx) { soLoai++; cauLoai.push({ cau: nx, so: CC.soTrongVanBan(nx).filter(v => !CC.coTrongTap(tap, v)).map(v => v.tok) }); } nx = `${q.dien_giai} Số liệu: ${q.bang_chung.join('; ')}.`; }
     const gt = chonChiSo(x.gia_thuyet, q.gia_thuyet, 2), dc = chonChiSo(x.doi_chieu, q.doi_chieu, 3);
-    return { muc: q.muc_bao_cao || 'tai_san', text: `${q.muc === 'manh' ? 'RED FLAG' : 'NGHI VẤN'}: ${q.ten}. ${nx} ${q.backtest ? q.backtest.cau : 'Chưa đủ dữ liệu lịch sử để kiểm chứng'}. ${CAU_HOI_KIEM_CHUNG} Có thể: ${gt.join('; ')}. Cần đối chiếu: ${dc.join('; ')}.` };
+    return { muc: q.muc_bao_cao || 'tai_san', text: `${q.muc === 'manh' ? 'RED FLAG' : 'NGHI VẤN'}: ${q.ten}. ${nx}${q.suy_luan ? ' ' + q.suy_luan : ''} ${CAU_HOI_KIEM_CHUNG} Có thể: ${gt.join('; ')}. Cần đối chiếu: ${dc.join('; ')}.` };
   });
   const nghiVan = nghiVanCt.map(x => x.text);
   // Đặt nghi vấn vào đúng mục: kết quả kinh doanh (Phần 3), tài sản – nguồn vốn (Phần 4), dòng tiền (Phần 5).
