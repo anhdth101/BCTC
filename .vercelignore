@@ -4,5 +4,13 @@
 !api
 api/*
 !api/analyze.js
+!lib
+!lib/quy_tac.js
+!lib/can_cu.js
+!lib/quy_tac_backtest.json
+!lib/quy_tac_ngan_hang.js
+!lib/quy_tac_ngan_hang_backtest.json
+!lib/quy_tac_chung_khoan.js
+!lib/quy_tac_chung_khoan_backtest.json
 !vercel.json
 !package.json

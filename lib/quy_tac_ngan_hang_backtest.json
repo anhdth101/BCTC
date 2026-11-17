@@ -1,0 +1,257 @@
+{
+  "ngay": "2026-11-17",
+  "nhan": "năm sau tỷ lệ nợ xấu (nhóm 3–5) tăng thêm từ 0,5 điểm % trở lên hoặc lợi nhuận sau thuế giảm từ 30% trở lên",
+  "don_vi": "ngân hàng–năm",
+  "mau": {
+    "n": 178,
+    "xau": 40,
+    "nen": 0.2247,
+    "so_ma": 30,
+    "tu_nam": 2019,
+    "den_nam": 2024,
+    "nam_chia": 2021
+  },
+  "canh_bao": "Mẫu nhỏ (một ngân hàng đóng góp nhiều năm, các năm cùng chịu chu kỳ chung). Chỉ dùng làm tham khảo.",
+  "quy_tac": {
+    "B01": {
+      "ten": "Lãi phải thu tăng nhanh hơn cho vay",
+      "dieu_kien": "tăng trưởng lãi, phí phải thu − tăng trưởng cho vay khách hàng > 20 điểm % và lãi phải thu > 1% dư nợ",
+      "n_du_lieu": 178,
+      "n": 25,
+      "xau": 8,
+      "ty_le": 0.32,
+      "nen": 0.2247,
+      "lift": 1.424,
+      "p": 0.181,
+      "bat_npl": 5,
+      "bat_lnst": 5,
+      "huan_luyen": {
+        "n": 6,
+        "xau": 3,
+        "lift": 2.4444
+      },
+      "kiem_dinh": {
+        "n": 19,
+        "xau": 5,
+        "lift": 1.0766
+      },
+      "muc": "yeu"
+    },
+    "B02": {
+      "ten": "Tiền lãi thực thu thấp so với thu nhập lãi",
+      "dieu_kien": "tiền thu lãi và phí (LCTT) / thu nhập lãi và tương tự (KQKD) < 90%",
+      "n_du_lieu": 178,
+      "n": 21,
+      "xau": 4,
+      "ty_le": 0.1905,
+      "nen": 0.2247,
+      "lift": 0.8476,
+      "p": 0.7275,
+      "bat_npl": 3,
+      "bat_lnst": 1,
+      "huan_luyen": {
+        "n": 8,
+        "xau": 3,
+        "lift": 1.8333
+      },
+      "kiem_dinh": {
+        "n": 13,
+        "xau": 1,
+        "lift": 0.3147
+      },
+      "muc": "yeu"
+    },
+    "B03": {
+      "ten": "Nợ nhóm 2 cao hoặc tăng mạnh",
+      "dieu_kien": "nợ cần chú ý (nhóm 2) > 2% dư nợ, hoặc tăng > 50% trong năm",
+      "n_du_lieu": 177,
+      "n": 80,
+      "xau": 25,
+      "ty_le": 0.3125,
+      "nen": 0.226,
+      "lift": 1.3828,
+      "p": 0.0467,
+      "bat_npl": 21,
+      "bat_lnst": 9,
+      "huan_luyen": {
+        "n": 36,
+        "xau": 11,
+        "lift": 1.4769
+      },
+      "kiem_dinh": {
+        "n": 44,
+        "xau": 14,
+        "lift": 1.3017
+      },
+      "muc": "vua"
+    },
+    "B04": {
+      "ten": "Dự phòng mỏng so với nợ xấu",
+      "dieu_kien": "dự phòng rủi ro cho vay / nợ xấu (nhóm 3–5) < 70%",
+      "n_du_lieu": 177,
+      "n": 100,
+      "xau": 31,
+      "ty_le": 0.31,
+      "nen": 0.226,
+      "lift": 1.3718,
+      "p": 0.0327,
+      "bat_npl": 23,
+      "bat_lnst": 14,
+      "huan_luyen": {
+        "n": 47,
+        "xau": 13,
+        "lift": 1.3369
+      },
+      "kiem_dinh": {
+        "n": 53,
+        "xau": 18,
+        "lift": 1.3894
+      },
+      "muc": "vua"
+    },
+    "B05": {
+      "ten": "Tài sản Có khác phình to",
+      "dieu_kien": "tài sản Có khác > 5% tổng tài sản, hoặc > 3% và tăng > 50% trong năm",
+      "n_du_lieu": 178,
+      "n": 81,
+      "xau": 24,
+      "ty_le": 0.2963,
+      "nen": 0.2247,
+      "lift": 1.3185,
+      "p": 0.0822,
+      "bat_npl": 19,
+      "bat_lnst": 9,
+      "huan_luyen": {
+        "n": 41,
+        "xau": 11,
+        "lift": 1.3117
+      },
+      "kiem_dinh": {
+        "n": 40,
+        "xau": 13,
+        "lift": 1.3295
+      },
+      "muc": "vua"
+    },
+    "B06": {
+      "ten": "Cho vay tăng nóng",
+      "dieu_kien": "cho vay khách hàng tăng > 25% trong năm",
+      "n_du_lieu": 178,
+      "n": 30,
+      "xau": 7,
+      "ty_le": 0.2333,
+      "nen": 0.2247,
+      "lift": 1.0383,
+      "p": 0.5258,
+      "bat_npl": 7,
+      "bat_lnst": 0,
+      "huan_luyen": {
+        "n": 15,
+        "xau": 4,
+        "lift": 1.3037
+      },
+      "kiem_dinh": {
+        "n": 15,
+        "xau": 3,
+        "lift": 0.8182
+      },
+      "muc": "yeu"
+    },
+    "B07": {
+      "ten": "Nợ xấu tăng nhanh",
+      "dieu_kien": "nợ xấu (nhóm 3–5) tăng > 30% trong năm và nợ xấu > 1% dư nợ",
+      "n_du_lieu": 176,
+      "n": 53,
+      "xau": 12,
+      "ty_le": 0.2264,
+      "nen": 0.2273,
+      "lift": 0.9962,
+      "p": 0.5593,
+      "bat_npl": 9,
+      "bat_lnst": 5,
+      "huan_luyen": {
+        "n": 21,
+        "xau": 5,
+        "lift": 1.1376
+      },
+      "kiem_dinh": {
+        "n": 32,
+        "xau": 7,
+        "lift": 0.8949
+      },
+      "muc": "yeu"
+    },
+    "B08": {
+      "ten": "Lợi nhuận dựa vào thu nhập ngoài lãi",
+      "dieu_kien": "(tổng thu nhập hoạt động − thu nhập lãi thuần) / tổng thu nhập hoạt động > 35%",
+      "n_du_lieu": 177,
+      "n": 17,
+      "xau": 4,
+      "ty_le": 0.2353,
+      "nen": 0.226,
+      "lift": 1.0412,
+      "p": 0.5571,
+      "bat_npl": 3,
+      "bat_lnst": 1,
+      "huan_luyen": {
+        "n": 11,
+        "xau": 2,
+        "lift": 0.8889
+      },
+      "kiem_dinh": {
+        "n": 6,
+        "xau": 2,
+        "lift": 1.3485
+      },
+      "muc": "yeu"
+    },
+    "B09": {
+      "ten": "Trích lập thấp trong khi nợ xấu tăng",
+      "dieu_kien": "chi phí dự phòng / cho vay bình quân < 0,8% trong khi nợ xấu tăng",
+      "n_du_lieu": 176,
+      "n": 48,
+      "xau": 13,
+      "ty_le": 0.2708,
+      "nen": 0.2273,
+      "lift": 1.1917,
+      "p": 0.2845,
+      "bat_npl": 11,
+      "bat_lnst": 5,
+      "huan_luyen": {
+        "n": 22,
+        "xau": 6,
+        "lift": 1.303
+      },
+      "kiem_dinh": {
+        "n": 26,
+        "xau": 7,
+        "lift": 1.1014
+      },
+      "muc": "yeu"
+    },
+    "B10": {
+      "ten": "Tiền gửi không kỳ hạn giảm tỷ trọng",
+      "dieu_kien": "tiền gửi không kỳ hạn / tiền gửi khách hàng giảm > 3 điểm % trong năm",
+      "n_du_lieu": 176,
+      "n": 20,
+      "xau": 6,
+      "ty_le": 0.3,
+      "nen": 0.2273,
+      "lift": 1.32,
+      "p": 0.2931,
+      "bat_npl": 4,
+      "bat_lnst": 2,
+      "huan_luyen": {
+        "n": 5,
+        "xau": 0,
+        "lift": 0
+      },
+      "kiem_dinh": {
+        "n": 15,
+        "xau": 6,
+        "lift": 1.6364
+      },
+      "muc": "yeu"
+    }
+  }
+}

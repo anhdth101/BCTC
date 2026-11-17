@@ -1,0 +1,1331 @@
+{
+  "ngay": "2026-11-17",
+  "nhan": "bị kiểm soát, tạm ngừng, đình chỉ hoặc huỷ niêm yết bắt buộc trong 24 tháng kể từ 01/04 năm sau năm tài chính",
+  "mau": {
+    "n": 7009,
+    "xau": 793,
+    "nen": 0.1131,
+    "tu_nam": 2019,
+    "den_nam": 2023,
+    "so_ma": 1886,
+    "nam_chia": 2021
+  },
+  "quy_tac": {
+    "R01": {
+      "ten": "Lãi trên sổ, tiền không về",
+      "dieu_kien": "LNST dương 2 năm liền nhưng tổng lưu chuyển tiền thuần từ HĐKD 2 năm đó âm",
+      "n_du_lieu": 6973,
+      "n": 1410,
+      "xau": 131,
+      "ty_le": 0.0929,
+      "nen": 0.1132,
+      "lift": 0.8211,
+      "recall": 0.166,
+      "p": 0.9938,
+      "huan_luyen": {
+        "n": 782,
+        "xau": 67,
+        "lift": 0.8117
+      },
+      "kiem_dinh": {
+        "n": 628,
+        "xau": 64,
+        "lift": 0.8119
+      },
+      "muc": "yeu"
+    },
+    "R02": {
+      "ten": "Lợi nhuận dồn tích cao",
+      "dieu_kien": "(LNST − CFO) / tổng tài sản bình quân > 10% khi LNST dương",
+      "n_du_lieu": 6989,
+      "n": 918,
+      "xau": 86,
+      "ty_le": 0.0937,
+      "nen": 0.113,
+      "lift": 0.8288,
+      "recall": 0.1089,
+      "p": 0.974,
+      "huan_luyen": {
+        "n": 552,
+        "xau": 49,
+        "lift": 0.8413
+      },
+      "kiem_dinh": {
+        "n": 366,
+        "xau": 37,
+        "lift": 0.8069
+      },
+      "muc": "yeu"
+    },
+    "R03": {
+      "ten": "Phải thu khách hàng tăng nhanh hơn doanh thu",
+      "dieu_kien": "tăng trưởng phải thu khách hàng ngắn hạn − tăng trưởng doanh thu thuần > 30 điểm % và phải thu khách hàng > 5% tổng tài sản",
+      "n_du_lieu": 6895,
+      "n": 1254,
+      "xau": 190,
+      "ty_le": 0.1515,
+      "nen": 0.1104,
+      "lift": 1.3728,
+      "recall": 0.2497,
+      "p": 0,
+      "huan_luyen": {
+        "n": 785,
+        "xau": 123,
+        "lift": 1.5217
+      },
+      "kiem_dinh": {
+        "n": 469,
+        "xau": 67,
+        "lift": 1.1669
+      },
+      "muc": "vua"
+    },
+    "R04": {
+      "ten": "Tồn kho tăng nhanh hơn giá vốn",
+      "dieu_kien": "tăng trưởng hàng tồn kho − tăng trưởng giá vốn > 30 điểm % và tồn kho > 10% tổng tài sản",
+      "n_du_lieu": 6721,
+      "n": 1058,
+      "xau": 132,
+      "ty_le": 0.1248,
+      "nen": 0.1089,
+      "lift": 1.1455,
+      "recall": 0.1803,
+      "p": 0.0563,
+      "huan_luyen": {
+        "n": 680,
+        "xau": 81,
+        "lift": 1.1671
+      },
+      "kiem_dinh": {
+        "n": 378,
+        "xau": 51,
+        "lift": 1.1238
+      },
+      "muc": "yeu"
+    },
+    "R05": {
+      "ten": "Tiền đi ra qua trả trước, cho vay, phải thu khác",
+      "dieu_kien": "(trả trước người bán + phải thu về cho vay + phải thu khác ngắn và dài hạn) > 20% tổng tài sản, hoặc > 10% và tăng trên 50% trong năm",
+      "n_du_lieu": 7009,
+      "n": 1455,
+      "xau": 276,
+      "ty_le": 0.1897,
+      "nen": 0.1131,
+      "lift": 1.6766,
+      "recall": 0.348,
+      "p": 0,
+      "huan_luyen": {
+        "n": 886,
+        "xau": 162,
+        "lift": 1.7334
+      },
+      "kiem_dinh": {
+        "n": 569,
+        "xau": 114,
+        "lift": 1.595
+      },
+      "muc": "vua"
+    },
+    "R06": {
+      "ten": "Lợi nhuận không đến từ kinh doanh cốt lõi",
+      "dieu_kien": "LNTT dương nhưng lợi nhuận cốt lõi (LN gộp − chi phí bán hàng − chi phí quản lý) ≤ 0, hoặc phần ngoài cốt lõi > 50% LNTT",
+      "n_du_lieu": 7009,
+      "n": 1117,
+      "xau": 102,
+      "ty_le": 0.0913,
+      "nen": 0.1131,
+      "lift": 0.8071,
+      "recall": 0.1286,
+      "p": 0.992,
+      "huan_luyen": {
+        "n": 689,
+        "xau": 67,
+        "lift": 0.9219
+      },
+      "kiem_dinh": {
+        "n": 428,
+        "xau": 35,
+        "lift": 0.651
+      },
+      "muc": "yeu"
+    },
+    "R07": {
+      "ten": "Lợi thế thương mại biến động mạnh",
+      "dieu_kien": "lợi thế thương mại đầu năm > 2% vốn chủ và thay đổi > 50% trong năm, hoặc cuối năm > 5% vốn chủ và tăng gấp đôi",
+      "n_du_lieu": 7009,
+      "n": 124,
+      "xau": 14,
+      "ty_le": 0.1129,
+      "nen": 0.1131,
+      "lift": 0.9979,
+      "recall": 0.0177,
+      "p": 0.5453,
+      "huan_luyen": {
+        "n": 77,
+        "xau": 6,
+        "lift": 0.7387
+      },
+      "kiem_dinh": {
+        "n": 47,
+        "xau": 8,
+        "lift": 1.3551
+      },
+      "muc": "yeu"
+    },
+    "R08": {
+      "ten": "Chi phí lãi vay thấp bất thường so với nợ vay",
+      "dieu_kien": "vay bình quân > 20% tổng tài sản và (chi phí lãi vay/vay bình quân < 3%/năm, hoặc lãi vay thực trả > 1,3 lần chi phí lãi vay)",
+      "n_du_lieu": 7009,
+      "n": 338,
+      "xau": 62,
+      "ty_le": 0.1834,
+      "nen": 0.1131,
+      "lift": 1.6213,
+      "recall": 0.0782,
+      "p": 0.0001,
+      "huan_luyen": {
+        "n": 234,
+        "xau": 43,
+        "lift": 1.7421
+      },
+      "kiem_dinh": {
+        "n": 104,
+        "xau": 19,
+        "lift": 1.4544
+      },
+      "muc": "vua"
+    },
+    "R09": {
+      "ten": "Vừa nhiều tiền vừa vay nhiều",
+      "dieu_kien": "tiền + đầu tư tài chính ngắn hạn > 15% tổng tài sản, vay > 25% tổng tài sản và doanh thu tài chính/tiền bình quân < 2%/năm",
+      "n_du_lieu": 7009,
+      "n": 40,
+      "xau": 8,
+      "ty_le": 0.2,
+      "nen": 0.1131,
+      "lift": 1.7677,
+      "recall": 0.0101,
+      "p": 0.0762,
+      "huan_luyen": {
+        "n": 32,
+        "xau": 4,
+        "lift": 1.185
+      },
+      "kiem_dinh": {
+        "n": 8,
+        "xau": 4,
+        "lift": 3.9806
+      },
+      "muc": "vua"
+    },
+    "R10": {
+      "ten": "Xây dựng dở dang lớn và không giảm",
+      "dieu_kien": "XDCB dở dang > 15% tổng tài sản và không giảm trong 3 năm liền",
+      "n_du_lieu": 5897,
+      "n": 262,
+      "xau": 40,
+      "ty_le": 0.1527,
+      "nen": 0.128,
+      "lift": 1.1925,
+      "recall": 0.053,
+      "p": 0.1362,
+      "huan_luyen": {
+        "n": 136,
+        "xau": 22,
+        "lift": 1.2242
+      },
+      "kiem_dinh": {
+        "n": 126,
+        "xau": 18,
+        "lift": 1.1629
+      },
+      "muc": "yeu"
+    },
+    "R11": {
+      "ten": "Sống bằng nợ",
+      "dieu_kien": "CFO âm 2 năm liền, lưu chuyển tiền tài chính dương và nợ vay tăng > 20%",
+      "n_du_lieu": 6973,
+      "n": 318,
+      "xau": 41,
+      "ty_le": 0.1289,
+      "nen": 0.1132,
+      "lift": 1.1395,
+      "recall": 0.052,
+      "p": 0.2095,
+      "huan_luyen": {
+        "n": 171,
+        "xau": 19,
+        "lift": 1.0526
+      },
+      "kiem_dinh": {
+        "n": 147,
+        "xau": 22,
+        "lift": 1.1923
+      },
+      "muc": "yeu"
+    },
+    "R12": {
+      "ten": "Biên gộp tăng trong khi hàng tồn ứ",
+      "dieu_kien": "biên lợi nhuận gộp tăng ≥ 2 điểm % trong khi số ngày tồn kho tăng ≥ 20% và tồn kho > 5% tổng tài sản",
+      "n_du_lieu": 6697,
+      "n": 607,
+      "xau": 88,
+      "ty_le": 0.145,
+      "nen": 0.1078,
+      "lift": 1.3447,
+      "recall": 0.1219,
+      "p": 0.0027,
+      "huan_luyen": {
+        "n": 389,
+        "xau": 50,
+        "lift": 1.2722
+      },
+      "kiem_dinh": {
+        "n": 218,
+        "xau": 38,
+        "lift": 1.467
+      },
+      "muc": "vua"
+    },
+    "R13": {
+      "ten": "Cổ đông thiểu số hưởng phần lớn lợi nhuận",
+      "dieu_kien": "LNST của cổ đông không kiểm soát > 40% LNST trong khi lợi ích cổ đông không kiểm soát < 15% vốn chủ",
+      "n_du_lieu": 7009,
+      "n": 56,
+      "xau": 3,
+      "ty_le": 0.0536,
+      "nen": 0.1131,
+      "lift": 0.4735,
+      "recall": 0.0038,
+      "p": 0.9601,
+      "huan_luyen": {
+        "n": 27,
+        "xau": 2,
+        "lift": 0.7022
+      },
+      "kiem_dinh": {
+        "n": 29,
+        "xau": 1,
+        "lift": 0.2745
+      },
+      "muc": "yeu"
+    },
+    "R14": {
+      "ten": "Phải thu ngắn hạn chuyển thành khoản dài hạn",
+      "dieu_kien": "phải thu ngắn hạn giảm > 30%, phải thu dài hạn + đầu tư tài chính dài hạn tăng ≥ 50% mức giảm, trong khi tiền chi đầu tư < 30% mức tăng",
+      "n_du_lieu": 7007,
+      "n": 23,
+      "xau": 4,
+      "ty_le": 0.1739,
+      "nen": 0.113,
+      "lift": 1.5386,
+      "recall": 0.0051,
+      "p": 0.2582,
+      "huan_luyen": {
+        "n": 16,
+        "xau": 2,
+        "lift": 1.1848
+      },
+      "kiem_dinh": {
+        "n": 7,
+        "xau": 2,
+        "lift": 2.2806
+      },
+      "muc": "yeu"
+    },
+    "R15": {
+      "ten": "Doanh thu tăng đột biến, dòng tiền đi ngược",
+      "dieu_kien": "doanh thu thuần tăng > 50% nhưng CFO giảm so với năm trước",
+      "n_du_lieu": 6926,
+      "n": 286,
+      "xau": 30,
+      "ty_le": 0.1049,
+      "nen": 0.1109,
+      "lift": 0.946,
+      "recall": 0.0391,
+      "p": 0.6541,
+      "huan_luyen": {
+        "n": 178,
+        "xau": 21,
+        "lift": 1.1451
+      },
+      "kiem_dinh": {
+        "n": 108,
+        "xau": 9,
+        "lift": 0.6738
+      },
+      "muc": "yeu"
+    }
+  },
+  "so_quy_tac_cung_luc": {
+    "0": {
+      "n": 2558,
+      "xau": 209,
+      "ty_le": 0.0817,
+      "lift": 0.7222
+    },
+    "1": {
+      "n": 1953,
+      "xau": 247,
+      "ty_le": 0.1265,
+      "lift": 1.1178
+    },
+    "2": {
+      "n": 1184,
+      "xau": 174,
+      "ty_le": 0.147,
+      "lift": 1.2989
+    },
+    "3": {
+      "n": 1314,
+      "xau": 163,
+      "ty_le": 0.124,
+      "lift": 1.0964
+    }
+  },
+  "case_kho": {
+    "ROS": {
+      "su_kien": [
+        "2022-09-05 delistedHose",
+        "2022-08-12 suspend",
+        "2022-06-01 halt",
+        "2022-05-30 control"
+      ],
+      "nam": [
+        {
+          "nam": 2018,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": []
+        },
+        {
+          "nam": 2019,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R05"
+          ]
+        },
+        {
+          "nam": 2020,
+          "nhan": 1,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R04",
+            "R05",
+            "R06"
+          ]
+        },
+        {
+          "nam": 2021,
+          "nhan": 1,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R05"
+          ]
+        }
+      ]
+    },
+    "TTF": {
+      "su_kien": [
+        "2026-10-21 halt",
+        "2026-10-07 control"
+      ],
+      "nam": [
+        {
+          "nam": 2018,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": []
+        },
+        {
+          "nam": 2019,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": []
+        },
+        {
+          "nam": 2020,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R12",
+            "R15"
+          ]
+        },
+        {
+          "nam": 2021,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R01",
+            "R02",
+            "R05",
+            "R06",
+            "R13"
+          ]
+        },
+        {
+          "nam": 2022,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": []
+        },
+        {
+          "nam": 2023,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": []
+        },
+        {
+          "nam": 2024,
+          "nhan": 1,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R06"
+          ]
+        },
+        {
+          "nam": 2025,
+          "nhan": 1,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R01",
+            "R06",
+            "R11",
+            "R12"
+          ]
+        }
+      ]
+    },
+    "HVG": {
+      "su_kien": [
+        "2026-01-09 delistedUpcom",
+        "2024-05-23 suspend",
+        "2023-12-07 suspend",
+        "2023-02-28 suspend",
+        "2022-10-20 halt",
+        "2022-07-27 halt"
+      ],
+      "nam": [
+        {
+          "nam": 2018,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": []
+        },
+        {
+          "nam": 2019,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": []
+        }
+      ]
+    },
+    "NVL": {
+      "su_kien": [],
+      "nam": [
+        {
+          "nam": 2018,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": []
+        },
+        {
+          "nam": 2019,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R04",
+            "R06",
+            "R08"
+          ]
+        },
+        {
+          "nam": 2020,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R01",
+            "R04",
+            "R05",
+            "R06",
+            "R07",
+            "R08",
+            "R12"
+          ]
+        },
+        {
+          "nam": 2021,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R05",
+            "R07",
+            "R08"
+          ]
+        },
+        {
+          "nam": 2022,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R04",
+            "R05",
+            "R06",
+            "R08"
+          ]
+        },
+        {
+          "nam": 2023,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R01",
+            "R04",
+            "R05",
+            "R06",
+            "R08"
+          ]
+        },
+        {
+          "nam": 2024,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R05",
+            "R08"
+          ]
+        },
+        {
+          "nam": 2025,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R04",
+            "R07",
+            "R08",
+            "R12"
+          ]
+        }
+      ]
+    },
+    "HBC": {
+      "su_kien": [
+        "2024-09-06 delistedHose",
+        "2024-01-19 control",
+        "2023-05-23 halt",
+        "2023-05-15 control",
+        "2023-04-17 control"
+      ],
+      "nam": [
+        {
+          "nam": 2018,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": []
+        },
+        {
+          "nam": 2019,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R01"
+          ]
+        },
+        {
+          "nam": 2020,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R01",
+            "R04"
+          ]
+        },
+        {
+          "nam": 2021,
+          "nhan": 1,
+          "da_xau_truoc": false,
+          "quy_tac": []
+        },
+        {
+          "nam": 2022,
+          "nhan": 1,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R03",
+            "R05"
+          ]
+        },
+        {
+          "nam": 2023,
+          "nhan": 1,
+          "da_xau_truoc": true,
+          "quy_tac": [
+            "R04",
+            "R05"
+          ]
+        },
+        {
+          "nam": 2024,
+          "nhan": 0,
+          "da_xau_truoc": true,
+          "quy_tac": [
+            "R05",
+            "R06",
+            "R12"
+          ]
+        },
+        {
+          "nam": 2025,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": []
+        }
+      ]
+    },
+    "FLC": {
+      "su_kien": [
+        "2025-12-31 delistedUpcom",
+        "2023-03-03 suspend",
+        "2023-02-20 delistedHose",
+        "2022-09-09 suspend",
+        "2022-06-01 halt",
+        "2022-05-12 control"
+      ],
+      "nam": [
+        {
+          "nam": 2018,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": []
+        },
+        {
+          "nam": 2019,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R05",
+            "R06"
+          ]
+        },
+        {
+          "nam": 2020,
+          "nhan": 1,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R05",
+            "R06"
+          ]
+        },
+        {
+          "nam": 2021,
+          "nhan": 1,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R03",
+            "R05",
+            "R06",
+            "R10",
+            "R12"
+          ]
+        }
+      ]
+    },
+    "HAI": {
+      "su_kien": [
+        "2025-12-31 delistedUpcom",
+        "2023-04-27 suspend",
+        "2023-04-18 delistedHose",
+        "2022-09-09 suspend",
+        "2022-06-01 halt",
+        "2022-05-12 control"
+      ],
+      "nam": [
+        {
+          "nam": 2018,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": []
+        },
+        {
+          "nam": 2019,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R05",
+            "R06",
+            "R15"
+          ]
+        },
+        {
+          "nam": 2020,
+          "nhan": 1,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R03",
+            "R04",
+            "R05",
+            "R06"
+          ]
+        },
+        {
+          "nam": 2021,
+          "nhan": 1,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R05"
+          ]
+        },
+        {
+          "nam": 2022,
+          "nhan": 1,
+          "da_xau_truoc": true,
+          "quy_tac": [
+            "R03",
+            "R04",
+            "R05",
+            "R06",
+            "R12"
+          ]
+        },
+        {
+          "nam": 2023,
+          "nhan": 1,
+          "da_xau_truoc": true,
+          "quy_tac": [
+            "R05",
+            "R06"
+          ]
+        },
+        {
+          "nam": 2024,
+          "nhan": 1,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R05"
+          ]
+        }
+      ]
+    },
+    "OGC": {
+      "su_kien": [
+        "2022-12-14 control",
+        "2022-06-09 halt",
+        "2022-05-31 control"
+      ],
+      "nam": [
+        {
+          "nam": 2018,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": []
+        },
+        {
+          "nam": 2019,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R05"
+          ]
+        },
+        {
+          "nam": 2020,
+          "nhan": 1,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R05",
+            "R06"
+          ]
+        },
+        {
+          "nam": 2021,
+          "nhan": 1,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R05"
+          ]
+        },
+        {
+          "nam": 2022,
+          "nhan": 0,
+          "da_xau_truoc": true,
+          "quy_tac": []
+        },
+        {
+          "nam": 2023,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R05"
+          ]
+        },
+        {
+          "nam": 2024,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": []
+        },
+        {
+          "nam": 2025,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": []
+        }
+      ]
+    },
+    "DLG": {
+      "su_kien": [
+        "2024-04-11 control"
+      ],
+      "nam": [
+        {
+          "nam": 2018,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": []
+        },
+        {
+          "nam": 2019,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R05"
+          ]
+        },
+        {
+          "nam": 2020,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R03",
+            "R05",
+            "R07"
+          ]
+        },
+        {
+          "nam": 2021,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R03"
+          ]
+        },
+        {
+          "nam": 2022,
+          "nhan": 1,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R05"
+          ]
+        },
+        {
+          "nam": 2023,
+          "nhan": 1,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R05"
+          ]
+        },
+        {
+          "nam": 2024,
+          "nhan": 0,
+          "da_xau_truoc": true,
+          "quy_tac": [
+            "R05",
+            "R06",
+            "R08"
+          ]
+        },
+        {
+          "nam": 2025,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R03",
+            "R05"
+          ]
+        }
+      ]
+    },
+    "ITA": {
+      "su_kien": [
+        "2025-02-13 suspend",
+        "2025-02-04 delistedHose",
+        "2024-09-26 suspend",
+        "2024-07-16 halt",
+        "2023-06-22 control"
+      ],
+      "nam": [
+        {
+          "nam": 2018,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": []
+        },
+        {
+          "nam": 2019,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": []
+        },
+        {
+          "nam": 2020,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R04",
+            "R12"
+          ]
+        },
+        {
+          "nam": 2021,
+          "nhan": 1,
+          "da_xau_truoc": false,
+          "quy_tac": []
+        },
+        {
+          "nam": 2022,
+          "nhan": 1,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R05"
+          ]
+        },
+        {
+          "nam": 2023,
+          "nhan": 1,
+          "da_xau_truoc": true,
+          "quy_tac": [
+            "R04",
+            "R05",
+            "R11",
+            "R14"
+          ]
+        },
+        {
+          "nam": 2024,
+          "nhan": 0,
+          "da_xau_truoc": true,
+          "quy_tac": [
+            "R01",
+            "R03",
+            "R04",
+            "R05",
+            "R11"
+          ]
+        },
+        {
+          "nam": 2025,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R01",
+            "R05"
+          ]
+        }
+      ]
+    },
+    "AMD": {
+      "su_kien": [
+        "2025-12-31 delistedUpcom",
+        "2023-07-19 suspend",
+        "2023-07-07 delistedHose",
+        "2023-05-15 control",
+        "2023-03-09 suspend",
+        "2022-10-24 halt",
+        "2022-10-06 control"
+      ],
+      "nam": [
+        {
+          "nam": 2018,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": []
+        },
+        {
+          "nam": 2019,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R01",
+            "R02",
+            "R03",
+            "R11"
+          ]
+        },
+        {
+          "nam": 2020,
+          "nhan": 1,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R01",
+            "R04",
+            "R05",
+            "R07",
+            "R12"
+          ]
+        },
+        {
+          "nam": 2021,
+          "nhan": 1,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R01",
+            "R05"
+          ]
+        },
+        {
+          "nam": 2022,
+          "nhan": 1,
+          "da_xau_truoc": true,
+          "quy_tac": [
+            "R04",
+            "R05"
+          ]
+        }
+      ]
+    },
+    "TGG": {
+      "su_kien": [
+        "2024-05-29 halt",
+        "2023-12-29 suspend",
+        "2023-12-18 delistedHose",
+        "2023-09-18 suspend",
+        "2023-05-25 halt",
+        "2023-05-12 control"
+      ],
+      "nam": [
+        {
+          "nam": 2018,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": []
+        },
+        {
+          "nam": 2019,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R05",
+            "R06"
+          ]
+        },
+        {
+          "nam": 2020,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R03",
+            "R05"
+          ]
+        },
+        {
+          "nam": 2021,
+          "nhan": 1,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R02",
+            "R05",
+            "R06",
+            "R15"
+          ]
+        },
+        {
+          "nam": 2022,
+          "nhan": 1,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R05",
+            "R07"
+          ]
+        },
+        {
+          "nam": 2023,
+          "nhan": 1,
+          "da_xau_truoc": true,
+          "quy_tac": [
+            "R03",
+            "R04",
+            "R05",
+            "R07",
+            "R12"
+          ]
+        },
+        {
+          "nam": 2024,
+          "nhan": 0,
+          "da_xau_truoc": true,
+          "quy_tac": [
+            "R05",
+            "R08",
+            "R15"
+          ]
+        },
+        {
+          "nam": 2025,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R05"
+          ]
+        }
+      ]
+    },
+    "FTM": {
+      "su_kien": [
+        "2025-04-08 halt",
+        "2024-08-21 halt",
+        "2024-04-04 halt",
+        "2023-08-18 halt",
+        "2023-04-07 halt",
+        "2022-05-16 delistedHose"
+      ],
+      "nam": [
+        {
+          "nam": 2018,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": []
+        },
+        {
+          "nam": 2019,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R03",
+            "R05"
+          ]
+        },
+        {
+          "nam": 2020,
+          "nhan": 1,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R03",
+            "R05"
+          ]
+        },
+        {
+          "nam": 2021,
+          "nhan": 1,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R05"
+          ]
+        },
+        {
+          "nam": 2022,
+          "nhan": 1,
+          "da_xau_truoc": true,
+          "quy_tac": [
+            "R05"
+          ]
+        },
+        {
+          "nam": 2023,
+          "nhan": 1,
+          "da_xau_truoc": true,
+          "quy_tac": [
+            "R04",
+            "R05"
+          ]
+        },
+        {
+          "nam": 2024,
+          "nhan": 1,
+          "da_xau_truoc": true,
+          "quy_tac": [
+            "R05"
+          ]
+        },
+        {
+          "nam": 2025,
+          "nhan": 0,
+          "da_xau_truoc": true,
+          "quy_tac": [
+            "R05"
+          ]
+        }
+      ]
+    },
+    "HQC": {
+      "su_kien": [],
+      "nam": [
+        {
+          "nam": 2018,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": []
+        },
+        {
+          "nam": 2019,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R05"
+          ]
+        },
+        {
+          "nam": 2020,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R05"
+          ]
+        },
+        {
+          "nam": 2021,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R03",
+            "R05",
+            "R12"
+          ]
+        },
+        {
+          "nam": 2022,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R05"
+          ]
+        },
+        {
+          "nam": 2023,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R01",
+            "R05"
+          ]
+        },
+        {
+          "nam": 2024,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R01",
+            "R02",
+            "R03",
+            "R04",
+            "R05",
+            "R11"
+          ]
+        },
+        {
+          "nam": 2025,
+          "nhan": 0,
+          "da_xau_truoc": false,
+          "quy_tac": [
+            "R01",
+            "R04",
+            "R05",
+            "R06"
+          ]
+        }
+      ]
+    }
+  }
+}

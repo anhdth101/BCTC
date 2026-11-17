@@ -188,6 +188,43 @@ footer p{margin:0 0 6px}
 @media (min-width:700px){.a4 .hai-cot{grid-template-columns:1fr 1fr}}
 .a4 .chan{margin-top:14px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:var(--muted)}
 .a4 .dang-viet{color:var(--muted);font-style:italic}
+/* ===== Điện thoại ===== */
+@media (max-width:640px){
+  body{font-size:15px}
+  header.top .wrap{flex-wrap:wrap;gap:8px}
+  .logo{font-size:16px}
+  .btn{min-height:44px}
+  .btn.nho{min-height:40px;padding:8px 12px}
+  .cong-cu{gap:6px}
+  .cong-cu .btn{flex:1 1 auto}
+  .dau-kq h2{font-size:17px}
+  .tabs{margin-left:-16px;margin-right:-16px;padding:0 8px}
+  .tabs button{padding:12px 10px}
+  .nhan{white-space:normal;line-height:1.35}
+  .den-tong{padding:12px;gap:12px;align-items:flex-start}
+  .buoc{grid-template-columns:repeat(2,1fr)}
+  th,td{padding:6px 7px;font-size:13px}
+  /* Bảng số nhiều cột: giữ cuộn ngang, ghim cột tên chỉ tiêu */
+  .bang-cuon table:not(.the-hoa):has(thead) th:first-child,.bang-cuon table:not(.the-hoa):has(thead) td:first-child{position:sticky;left:0;z-index:1;background:var(--surface);min-width:132px;max-width:46vw;box-shadow:1px 0 0 var(--border)}
+  .bang-cuon table:not(.the-hoa):has(thead) th:first-child{background:var(--surface-2)}
+  /* Bảng thông tin 2 cột (không có tiêu đề cột): xuống dòng, không cuộn ngang */
+  .bang-cuon table:not(:has(thead)) td{overflow-wrap:anywhere;word-break:break-word}
+  /* Bảng nhiều chữ: chuyển thành thẻ, mỗi ô có nhãn cột */
+  table.the-hoa thead{display:none}
+  table.the-hoa,table.the-hoa tbody,table.the-hoa tr,table.the-hoa td{display:block;width:100%}
+  table.the-hoa tr{padding:8px 0;border-bottom:1px solid var(--border)}
+  table.the-hoa tr:last-child{border-bottom:0}
+  table.the-hoa td{border:0;padding:3px 12px;text-align:left!important;white-space:normal!important}
+  table.the-hoa td[data-nhan]:not(:first-child)::before{content:attr(data-nhan);display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+  table.the-hoa td:first-child{font-weight:600}
+  /* Bản đánh giá: tràn sát mép màn hình */
+  .a4{padding:16px 14px;margin:0 -16px;border-radius:0;border-left:0;border-right:0;font-size:14px;line-height:1.6}
+  .a4 h2{font-size:17px}
+  .a4 h3{font-size:12.5px}
+  .a4 ul{padding-left:16px}
+  .a4 .the-cs{padding:10px 12px}
+  .a4 [style*="width:32%"]{width:40%!important}
+}
 @media print{
   body{background:#fff;color:#000}
   header.top .cong-cu,.drop,.tien-trinh,.tabs,.cong-cu,.nut-hoi,#pane-tho,.hop-loi,#khu-tai,.khong-in{display:none!important}
@@ -310,6 +347,8 @@ footer p{margin:0 0 6px}
     m_do: -1.78, m_vang: -2.22,
     f_manh: 8, f_tb: 5
   };
+  // Hệ số Z″ ước lượng lại trên dữ liệu Việt Nam (calib/3_uoc_luong.js --ghi-vao-index). null = dùng hệ số Altman EM gốc.
+  const ALTMAN_VN_HIEU_CHINH = null;
 
   const KHOA = {
     cdkt: ['tien_va_tuong_duong_tien', 'tien_gui_ky_han_ngan_han', 'dau_tu_tai_chinh_ngan_han', 'phai_thu_ngan_han',
@@ -320,7 +359,7 @@ footer p{margin:0 0 6px}
       'dau_tu_lien_doanh_lien_ket', 'dau_tu_gop_von_don_vi_khac', 'dau_tu_tai_chinh_dai_han', 'loi_the_thuong_mai', 'tai_san_dai_han',
       'tong_tai_san', 'phai_tra_nguoi_ban', 'nguoi_mua_tra_tien_truoc', 'vay_ngan_han', 'no_ngan_han', 'vay_dai_han', 'no_dai_han',
       'tong_no_phai_tra', 'thue_phai_nop', 'von_gop_chu_so_huu', 'loi_nhuan_sau_thue_chua_phan_phoi', 'loi_ich_co_dong_khong_kiem_soat',
-      'von_chu_so_huu', 'tong_nguon_von'],
+      'von_chu_so_huu', 'tong_nguon_von', 'thang_du_von_co_phan'],
     kqkd: ['doanh_thu_ban_hang_cung_cap_dich_vu', 'cac_khoan_giam_tru_doanh_thu', 'doanh_thu_thuan', 'gia_von_hang_ban', 'loi_nhuan_gop',
       'doanh_thu_hoat_dong_tai_chinh', 'chi_phi_tai_chinh', 'chi_phi_lai_vay', 'lai_lo_cong_ty_lien_doanh_lien_ket', 'chi_phi_ban_hang',
       'chi_phi_quan_ly_doanh_nghiep', 'loi_nhuan_thuan_hdkd', 'thu_nhap_khac', 'chi_phi_khac', 'loi_nhuan_truoc_thue', 'chi_phi_thue_tndn',
@@ -329,7 +368,7 @@ footer p{margin:0 0 6px}
       'thue_tndn_da_nop', 'luu_chuyen_tien_thuan_hdkd', 'tien_chi_mua_sam_tscd', 'tien_chi_cho_vay_mua_cong_cu_no', 'tien_thu_hoi_cho_vay',
       'tien_chi_dau_tu_gop_von', 'tien_thu_hoi_dau_tu_gop_von', 'tien_thu_lai_cho_vay_co_tuc', 'luu_chuyen_tien_thuan_hddt',
       'tien_thu_phat_hanh_co_phieu', 'tien_thu_di_vay', 'tien_tra_no_goc_vay', 'co_tuc_da_tra', 'luu_chuyen_tien_thuan_hdtc',
-      'luu_chuyen_tien_thuan_trong_ky', 'tien_dau_ky', 'anh_huong_ty_gia', 'tien_cuoi_ky'],
+      'luu_chuyen_tien_thuan_trong_ky', 'tien_dau_ky', 'anh_huong_ty_gia', 'tien_cuoi_ky', 'tien_thu_thanh_ly_tscd', 'tang_giam_cac_khoan_phai_tra'],
     nhom_ngan_hang: ['thu_nhap_lai_thuan', 'tong_thu_nhap_hoat_dong', 'chi_phi_hoat_dong', 'chi_phi_du_phong_rui_ro_tin_dung', 'cho_vay_khach_hang',
       'du_phong_rui_ro_cho_vay', 'tien_gui_khach_hang', 'tien_gui_khong_ky_han', 'no_nhom_2', 'no_nhom_3_5',
       'tai_san_sinh_lai_binh_quan', 'he_so_an_toan_von_car', 'thu_nhap_lai_gop', 'tien_lai_thu_duoc', 'lai_phi_phai_thu',
@@ -361,7 +400,7 @@ footer p{margin:0 0 6px}
     tong_no_phai_tra: ['Nợ phải trả', '300'], thue_phai_nop: ['Thuế và các khoản phải nộp Nhà nước', '313'],
     von_gop_chu_so_huu: ['Vốn góp của chủ sở hữu', '411'], loi_nhuan_sau_thue_chua_phan_phoi: ['LNST chưa phân phối', '421'],
     loi_ich_co_dong_khong_kiem_soat: ['Lợi ích cổ đông không kiểm soát', '429'], von_chu_so_huu: ['Vốn chủ sở hữu', '400'],
-    tong_nguon_von: ['Tổng nguồn vốn', '440'],
+    tong_nguon_von: ['Tổng nguồn vốn', '440'], thang_du_von_co_phan: ['Thặng dư vốn cổ phần', '412'],
     doanh_thu_ban_hang_cung_cap_dich_vu: ['Doanh thu bán hàng và cung cấp dịch vụ', '01'], cac_khoan_giam_tru_doanh_thu: ['Các khoản giảm trừ doanh thu', '02'],
     doanh_thu_thuan: ['Doanh thu thuần', '10'], gia_von_hang_ban: ['Giá vốn hàng bán', '11'], loi_nhuan_gop: ['Lợi nhuận gộp', '20'],
     doanh_thu_hoat_dong_tai_chinh: ['Doanh thu hoạt động tài chính', '21'], chi_phi_tai_chinh: ['Chi phí tài chính', '22'],
@@ -393,6 +432,7 @@ footer p{margin:0 0 6px}
     doanh_thu_tai_chinh: ['Doanh thu hoạt động tài chính', ''], du_phong_nghiep_vu: ['Dự phòng nghiệp vụ', ''],
     tien_dau_ky: ['Tiền và tương đương tiền đầu kỳ (theo LCTT)', '60'], anh_huong_ty_gia: ['Ảnh hưởng của thay đổi tỷ giá', '61'],
     tien_cuoi_ky: ['Tiền và tương đương tiền cuối kỳ (theo LCTT)', '70'],
+    tien_thu_thanh_ly_tscd: ['Tiền thu thanh lý, nhượng bán TSCĐ', '22'], tang_giam_cac_khoan_phai_tra: ['Tăng/giảm các khoản phải trả', '11'],
     thu_nhap_lai_gop: ['Thu nhập lãi và các khoản tương tự', ''], tien_lai_thu_duoc: ['Tiền lãi thực thu (LCTT)', ''],
     lai_phi_phai_thu: ['Các khoản lãi, phí phải thu (lãi dự thu)', ''], tai_san_co_khac: ['Tài sản Có khác', ''],
     tien_gui_vay_tctd_khac: ['Tiền gửi và vay các TCTD khác', ''], giay_to_co_gia: ['Phát hành giấy tờ có giá', ''],
@@ -415,7 +455,9 @@ footer p{margin:0 0 6px}
     lai_tien_gui: ['Lãi tiền gửi', { ky_nay: 'num', ky_truoc: 'num', trang: 'page' }],
     tien_gui_co_ky_han_tren_3_thang: ['Tiền gửi có kỳ hạn trên 3 tháng', { ky_nay: 'num', ky_truoc: 'num', trang: 'page' }],
     loi_the_thuong_mai_phan_bo: ['Phân bổ lợi thế thương mại', { ky_nay: 'num', trang: 'page' }],
-    so_co_phieu_luu_hanh: ['Số cổ phiếu lưu hành (cổ phiếu)', { ky_nay: 'num', ky_truoc: 'num', trang: 'page' }]
+    so_co_phieu_luu_hanh: ['Số cổ phiếu lưu hành (cổ phiếu)', { ky_nay: 'num', ky_truoc: 'num', trang: 'page' }],
+    cho_vay_ben_lien_quan: ['Cho bên liên quan vay (kể cả mục đầu tư nắm giữ đến ngày đáo hạn)', { ky_nay: 'num', ky_truoc: 'num', trang: 'page' }],
+    doanh_thu_ben_lien_quan: ['Doanh thu với bên liên quan', { ky_nay: 'num', ky_truoc: 'num', trang: 'page' }]
   };
 
   const SO_NGAY = { nam: 365, quy1: 90, quy2: 181, quy3: 273, quy4: 365, '6thang': 181, '9thang': 273 };
@@ -922,6 +964,26 @@ footer p{margin:0 0 6px}
         () => cong(c.tien_va_tuong_duong_tien.t, l.luu_chuyen_tien_thuan_trong_ky.n), () => c.tien_va_tuong_duong_tien.n,
         () => ['cdkt.tien_va_tuong_duong_tien.ky_nay', 'cdkt.tien_va_tuong_duong_tien.ky_truoc', 'lctt.luu_chuyen_tien_thuan_trong_ky.ky_nay'], NGUONG.hop_le_lech_tien, true);
     }
+    // Dòng 20 + 30 + 40 = 50. Chỉ khớp khi đổi dấu dòng 20 → báo cáo (hoặc bản đọc) in sai dấu; các phép tính sau dùng số đã sửa.
+    const LCDT_CON = ['tien_chi_mua_sam_tscd', 'tien_thu_thanh_ly_tscd', 'tien_chi_cho_vay_mua_cong_cu_no', 'tien_thu_hoi_cho_vay',
+      'tien_chi_dau_tu_gop_von', 'tien_thu_hoi_dau_tu_gop_von', 'tien_thu_lai_cho_vay_co_tuc'];
+    const suaDauOcf = [];
+    ['n', 't'].forEach(p => {
+      const hdkd = OCF[p], hdtc = l.luu_chuyen_tien_thuan_hdtc[p], thuan = l.luu_chuyen_tien_thuan_trong_ky[p];
+      const hddt = isNum(ICF[p]) ? ICF[p] : LCDT_CON.every(x => !isNum(l[x][p]) || l[x][p] === 0) ? 0 : null;
+      if (![hdkd, hddt, hdtc, thuan].every(isNum)) return;
+      const mau = Math.max(Math.abs(thuan), Math.abs(hdkd), Math.abs(hdtc), 1);
+      const lech = Math.abs(hdkd + hddt + hdtc - thuan) / mau;
+      if (lech <= NGUONG.hop_le_lech_tien) return;
+      const ky = p === 'n' ? 'Kỳ này' : 'Kỳ trước';
+      const oLc = [o('lctt', 'luu_chuyen_tien_thuan_hdkd', p), o('lctt', 'luu_chuyen_tien_thuan_hddt', p), o('lctt', 'luu_chuyen_tien_thuan_hdtc', p), o('lctt', 'luu_chuyen_tien_thuan_trong_ky', p)];
+      oLc.forEach(x => oCanhBao.add(x));
+      const saiDau = hdkd !== 0 && Math.abs(-hdkd + hddt + hdtc - thuan) / mau <= NGUONG.hop_le_lech_tien;
+      kiemTra.push({ ten: 'LCTT: HĐ kinh doanh + HĐ đầu tư + HĐ tài chính = Lưu chuyển thuần (20+30+40=50)', ky, lech, trai: hdkd + hddt + hdtc, phai: thuan, chenh: hdkd + hddt + hdtc - thuan, o: oLc,
+        thong_bao: saiDau ? `Dòng 20 in ${fmtTien(hdkd)} nhưng chỉ khớp dòng 50 khi là ${fmtTien(-hdkd)}: in sai dấu` : 'Hai vế lẽ ra phải bằng nhau nhưng đang lệch' });
+      if (saiDau) { suaDauOcf.push({ ky, in: hdkd, dung: -hdkd }); OCF[p] = -hdkd; }
+    });
+    if (suaDauOcf.length) ghiChuChung.push('Dòng tiền kinh doanh đã được sửa dấu theo phép cộng 20+30+40=50 trước khi tính các chỉ số.');
 
     // ===== 9.2 Chỉ số cơ bản =====
     const chiSo = [];
@@ -1129,6 +1191,120 @@ footer p{margin:0 0 6px}
     const mScore = { ap_dung: !nganhTC, bien, m: nganhTC ? null : m, muc_do: mucM, ghi_chu: ghiM, ly_do: lyDoM, tham_khao: mThamKhao };
     mScore.giai_thich = isNum(mScore.m) ? giaiThich('mscore', mScore) : null;
 
+    // ===== Mô hình dự báo kiệt quệ tài chính & chất lượng lợi nhuận =====
+    // Số kết quả kinh doanh giữa niên độ quy đổi theo năm (×heSoNam) trước khi chia cho số dư bảng cân đối.
+    const moHinh = [];
+    if (!nganhTC) {
+      const nam = v => nhan(v, heSoNam);
+      const TA = TTS.n, TL = c.tong_no_phai_tra.n, CA = c.tai_san_ngan_han.n, CL = c.no_ngan_han.n;
+      const WC = tru(CA, CL), RE = c.loi_nhuan_sau_thue_chua_phan_phoi.n;
+      const EBIT = isNum(LNTT.n) ? LNTT.n + vz(laiVay.n) : null;
+      const X1 = chia(WC, TA), X2 = chia(RE, TA), X3 = chia(nam(EBIT), TA), X5 = chia(nam(DTT.n), TA);
+      const mh = (id, ten, nguon, bien, gt, muc, vung, nguong, ghi) => moHinh.push({ id, ten, nguon, bien, gt, muc_do: isNum(gt) ? muc : 'KHONG_DU_DU_LIEU', vung: isNum(gt) ? vung : KDL, nguong, ghi_chu: ghi || [] });
+      const ghiKy = laNam ? [] : ['Số kết quả kinh doanh luỹ kế đã quy đổi theo năm.'];
+      const du = b => b.every(x => isNum(x.gt));
+      const tong = (k, b) => (du(b) ? b.reduce((s, x) => s + x.he_so * x.gt, k) : null);
+
+      // Altman Z gốc (1968) – cần giá trị thị trường vốn chủ.
+      const vonHoa = thiTruong && isNum(thiTruong.von_hoa) ? thiTruong.von_hoa : null;
+      const bZ = [{ ma: 'X1', ten: 'Vốn lưu động / Tổng tài sản', he_so: 1.2, gt: X1 }, { ma: 'X2', ten: 'Lợi nhuận giữ lại / Tổng tài sản', he_so: 1.4, gt: X2 },
+        { ma: 'X3', ten: 'EBIT / Tổng tài sản', he_so: 3.3, gt: X3 }, { ma: 'X4', ten: 'Vốn hoá thị trường / Nợ phải trả', he_so: 0.6, gt: chia(vonHoa, TL) },
+        { ma: 'X5', ten: 'Doanh thu / Tổng tài sản', he_so: 1.0, gt: X5 }];
+      const z = tong(0, bZ);
+      mh('altman_z', 'Altman Z-Score (gốc)', 'Altman (1968), doanh nghiệp sản xuất niêm yết', bZ, z,
+        z < 1.81 ? 'DO' : z <= 2.99 ? 'VANG' : 'XANH', z < 1.81 ? 'Vùng nguy hiểm' : z <= 2.99 ? 'Vùng xám' : 'Vùng an toàn',
+        '< 1,81 nguy hiểm; 1,81–2,99 xám; > 2,99 an toàn', [...ghiKy, ...(isNum(vonHoa) ? [] : ['Cần vốn hoá thị trường (tra theo mã).'])]);
+
+      // Altman Z'' cho thị trường mới nổi (1995) – dùng giá trị sổ sách, áp dụng được cho DN không sản xuất.
+      const bZ2 = [{ ma: 'X1', ten: 'Vốn lưu động / Tổng tài sản', he_so: 6.56, gt: X1 }, { ma: 'X2', ten: 'Lợi nhuận giữ lại / Tổng tài sản', he_so: 3.26, gt: X2 },
+        { ma: 'X3', ten: 'EBIT / Tổng tài sản', he_so: 6.72, gt: X3 }, { ma: 'X4', ten: 'Vốn chủ sở hữu (sổ sách) / Nợ phải trả', he_so: 1.05, gt: chia(VCSH.n, TL) }];
+      const z2 = tong(3.25, bZ2);
+      mh('altman_z2', 'Altman Z″-Score (thị trường mới nổi)', 'Altman (1995), EM Score, mọi loại hình doanh nghiệp', bZ2, z2,
+        z2 < 4.35 ? 'DO' : z2 <= 5.85 ? 'VANG' : 'XANH', z2 < 4.35 ? 'Vùng nguy hiểm' : z2 <= 5.85 ? 'Vùng xám' : 'Vùng an toàn',
+        '< 4,35 nguy hiểm; 4,35–5,85 xám; > 5,85 an toàn', ghiKy.slice());
+
+      // Z″ hiệu chỉnh cho Việt Nam: giữ hệ số và ngưỡng EM của Altman, chỉ sửa cách đo biến cho đặc thù BCTC Việt Nam.
+      //  X1: nợ ngắn hạn bỏ người mua trả tiền trước (trả bằng giao hàng, không bằng tiền – lớn ở bất động sản, xây dựng).
+      //  X2: cộng lại lợi nhuận giữ lại đã chuyển thành vốn góp trong kỳ (cổ tức/thưởng bằng cổ phiếu) – suy từ tăng vốn góp không thu tiền, trừ phần lấy từ thặng dư.
+      //  X3: EBIT bỏ lợi nhuận khác (khoản bất thường, không lặp lại).
+      //  X4: vốn chủ hữu hình = vốn chủ − lợi thế thương mại.
+      const vgTang = tru(c.von_gop_chu_so_huu.n, c.von_gop_chu_so_huu.t);
+      const tdGiam = isNum(c.thang_du_von_co_phan.n) && isNum(c.thang_du_von_co_phan.t) ? Math.max(0, c.thang_du_von_co_phan.t - c.thang_du_von_co_phan.n) : 0;
+      const reVon = lon(vgTang, 0) ? Math.max(0, vgTang - vz(l.tien_thu_phat_hanh_co_phieu.n) - tdGiam) : 0;
+      const CLvn = isNum(CL) ? CL - vz(c.nguoi_mua_tra_tien_truoc.n) : null;
+      const lnKhac = vz(k.thu_nhap_khac.n) - vz(cp('chi_phi_khac', 'n'));
+      const VCSHhh = isNum(VCSH.n) ? VCSH.n - vz(c.loi_the_thuong_mai.n) : null;
+      const bVn = [
+        { ma: 'X1', ten: 'Vốn lưu động (nợ ngắn hạn không gồm người mua trả trước) / Tổng tài sản', he_so: 6.56, gt: chia(tru(CA, CLvn), TA) },
+        { ma: 'X2', ten: 'Lợi nhuận giữ lại (cộng lại phần đã chia bằng cổ phiếu trong kỳ) / Tổng tài sản', he_so: 3.26, gt: isNum(RE) ? chia(RE + reVon, TA) : null },
+        { ma: 'X3', ten: 'EBIT không gồm lợi nhuận khác / Tổng tài sản', he_so: 6.72, gt: isNum(EBIT) ? chia(nam(EBIT - lnKhac), TA) : null },
+        { ma: 'X4', ten: 'Vốn chủ hữu hình (trừ lợi thế thương mại) / Nợ phải trả', he_so: 1.05, gt: chia(VCSHhh, TL) }
+      ];
+      const HC = ALTMAN_VN_HIEU_CHINH;
+      if (HC) bVn.forEach(b => {
+        b.he_so = HC.he_so[b.ma];
+        const gh = HC.gioi_han && HC.gioi_han[b.ma];
+        if (gh && isNum(b.gt)) b.gt = Math.min(gh[1], Math.max(gh[0], b.gt));
+      });
+      const zVn = tong(HC ? HC.chan : 3.25, bVn);
+      const HANG_EM = [[8.15, 'AAA'], [7.60, 'AA+'], [7.30, 'AA'], [7.00, 'AA−'], [6.85, 'A+'], [6.65, 'A'], [6.40, 'A−'], [6.25, 'BBB+'], [5.85, 'BBB'],
+        [5.65, 'BBB−'], [5.25, 'BB+'], [4.95, 'BB'], [4.75, 'BB−'], [4.50, 'B+'], [4.15, 'B'], [3.75, 'B−'], [3.20, 'CCC+'], [2.50, 'CCC'], [1.75, 'CCC−']];
+      const hang = v => (isNum(v) ? (HANG_EM.find(([n]) => v >= n) || [0, 'D'])[1] : null);
+      const ghiVn = [...ghiKy];
+      if (reVon > 0) ghiVn.push(`Đã cộng lại ${fmtTien(reVon)} lợi nhuận chuyển thành vốn góp trong kỳ; các đợt chia cổ phiếu của những năm trước chưa được cộng.`);
+      if (lon(c.nguoi_mua_tra_tien_truoc.n, 0)) ghiVn.push(`Đã bỏ ${fmtTien(c.nguoi_mua_tra_tien_truoc.n)} người mua trả tiền trước khỏi nợ ngắn hạn.`);
+      if (Math.abs(lnKhac) > 0 && isNum(LNTT.n) && Math.abs(lnKhac) > 0.05 * Math.abs(LNTT.n)) ghiVn.push(`Đã bỏ lợi nhuận khác ${fmtTien(lnKhac)} khỏi EBIT.`);
+      if (lon(c.loi_the_thuong_mai.n, 0)) ghiVn.push(`Đã trừ lợi thế thương mại ${fmtTien(c.loi_the_thuong_mai.n)} khỏi vốn chủ.`);
+      const ngVn = HC ? HC.nguong : { nguy_hiem: 4.35, an_toan: 5.85 };
+      const vungVn = v => (v < ngVn.nguy_hiem ? 'Vùng nguy hiểm' : v <= ngVn.an_toan ? 'Vùng xám' : 'Vùng an toàn');
+      if (HC) {
+        ghiVn.push(`Hệ số ước lượng trên dữ liệu Việt Nam (${HC.mau}; AUC kiểm định ${isNum(HC.auc_kiem_dinh) ? fmt(HC.auc_kiem_dinh, 'diem') : '–'}, cập nhật ${HC.ngay}); biến đã cắt đuôi theo mẫu.`);
+        if (isNum(z2)) ghiVn.push(`Altman EM gốc cho cùng doanh nghiệp: ${fmt(z2, 'diem')} (${hang(z2)}).`);
+      } else if (isNum(zVn) && isNum(z2)) ghiVn.push(`So với Z″ chuẩn: ${fmt(z2, 'diem')} → ${fmt(zVn, 'diem')} (hạng tương đương ${hang(z2)} → ${hang(zVn)}).`);
+      mh('altman_vn', HC ? 'Altman Z″ Việt Nam (hệ số ước lượng lại)' : 'Altman Z″ hiệu chỉnh cho Việt Nam',
+        HC ? 'Hồi quy logistic trên doanh nghiệp niêm yết Việt Nam; P(kiệt quệ) = 1/(1+e^Z)' : 'Hệ số và ngưỡng Altman EM (1995/2005); biến đo lại theo đặc thù BCTC Việt Nam', bVn, zVn,
+        zVn < ngVn.nguy_hiem ? 'DO' : zVn <= ngVn.an_toan ? 'VANG' : 'XANH',
+        isNum(zVn) ? (HC ? `${vungVn(zVn)} · xác suất kiệt quệ 12 tháng ${fmtPct(1 / (1 + Math.exp(zVn)), 1)}` : `${vungVn(zVn)} · hạng tương đương ${hang(zVn)}`) : KDL,
+        `< ${fmt(ngVn.nguy_hiem, 'diem')} nguy hiểm; ${fmt(ngVn.nguy_hiem, 'diem')}–${fmt(ngVn.an_toan, 'diem')} xám; > ${fmt(ngVn.an_toan, 'diem')} an toàn`, ghiVn);
+      const z2Mh = moHinh.find(x => x.id === 'altman_z2');
+      if (z2Mh && isNum(z2)) z2Mh.vung += ` · hạng tương đương ${hang(z2)}`;
+
+      // Springate S (1978).
+      const bS = [{ ma: 'A', ten: 'Vốn lưu động / Tổng tài sản', he_so: 1.03, gt: X1 }, { ma: 'B', ten: 'EBIT / Tổng tài sản', he_so: 3.07, gt: X3 },
+        { ma: 'C', ten: 'Lợi nhuận trước thuế / Nợ ngắn hạn', he_so: 0.66, gt: chia(nam(LNTT.n), CL) }, { ma: 'D', ten: 'Doanh thu / Tổng tài sản', he_so: 0.4, gt: X5 }];
+      const sS = tong(0, bS);
+      mh('springate', 'Springate S-Score', 'Springate (1978)', bS, sS, sS < 0.862 ? 'DO' : 'XANH', sS < 0.862 ? 'Vùng nguy hiểm' : 'Vùng an toàn', '< 0,862 nguy cơ phá sản', ghiKy.slice());
+
+      // Zmijewski X (1984) – xác suất kiệt quệ.
+      const bX = [{ ma: 'ROA', ten: 'Lợi nhuận sau thuế / Tổng tài sản', he_so: -4.513, gt: chia(nam(LNST.n), TA) }, { ma: 'FINL', ten: 'Nợ phải trả / Tổng tài sản', he_so: 5.679, gt: chia(TL, TA) },
+        { ma: 'LIQ', ten: 'Tài sản ngắn hạn / Nợ ngắn hạn', he_so: 0.004, gt: chia(CA, CL) }];
+      const xZ = tong(-4.336, bX), pZ = isNum(xZ) ? 1 / (1 + Math.exp(-xZ)) : null;
+      mh('zmijewski', 'Zmijewski X-Score', 'Zmijewski (1984), probit', bX, xZ, xZ > 0 ? 'DO' : pZ > 0.3 ? 'VANG' : 'XANH',
+        isNum(pZ) ? `Xác suất kiệt quệ ${fmtPct(pZ, 0)}` : KDL, 'X > 0 (xác suất > 50%) nguy hiểm; xác suất 30–50% cần chú ý', ghiKy.slice());
+
+      // Montier C-Score (2008): 6 dấu hiệu làm đẹp lợi nhuận, mỗi dấu hiệu 1 điểm.
+      const tsnhKhac = p => (isNum(c.tai_san_ngan_han[p]) ? c.tai_san_ngan_han[p] - vz(c.tien_va_tuong_duong_tien[p]) - vz(c.dau_tu_tai_chinh_ngan_han[p]) - vz(c.phai_thu_ngan_han[p]) - vz(c.hang_ton_kho[p]) : null);
+      const tyKH = p => chia(tri(l.khau_hao_tscd[p]), c.tscd_huu_hinh_nguyen_gia[p]);
+      const cTc = [
+        ['Khoảng cách lãi – tiền (LNST − OCF) nới rộng', tru(LNST.n, OCF.n), tru(LNST.t, OCF.t), (a, b) => a > b],
+        ['Số ngày thu tiền (DSO) tăng', chia(PTKH.n, DTT.n), chia(PTKH.t, DTT.t), (a, b) => a > b],
+        ['Số ngày tồn kho (DIO) tăng', chia(HTK.n, GV.n), chia(HTK.t, GV.t), (a, b) => a > b],
+        ['Tài sản ngắn hạn khác / doanh thu tăng', chia(tsnhKhac('n'), DTT.n), chia(tsnhKhac('t'), DTT.t), (a, b) => a > b],
+        ['Khấu hao / nguyên giá TSCĐ giảm', tyKH('n'), tyKH('t'), (a, b) => a < b],
+        ['Tổng tài sản tăng > 10%', tang(TTS.n, TTS.t), 0.1, (a, b) => a > b]
+      ].map(([ten, a, b, f]) => ({ ten, dat: isNum(a) && isNum(b) ? f(a, b) : null }));
+      const cDiem = cTc.filter(x => x.dat === true).length, cDu = cTc.filter(x => x.dat !== null).length;
+      moHinh.push({ id: 'montier_c', ten: 'Montier C-Score', nguon: 'Montier (2008), 6 dấu hiệu làm đẹp lợi nhuận', tieu_chi: cTc,
+        gt: cDu >= 4 ? cDiem : null, muc_do: cDu < 4 ? 'KHONG_DU_DU_LIEU' : cDiem >= 5 ? 'DO' : cDiem >= 4 ? 'VANG' : 'XANH',
+        vung: cDu < 4 ? KDL : `${cDiem}/${cDu} dấu hiệu`, nguong: '≥ 4 cần chú ý; ≥ 5 nghi làm đẹp lợi nhuận',
+        ghi_chu: laNam ? [] : ['Báo cáo quý: số dư so với đầu năm, kết quả so với cùng kỳ.'] });
+
+      // Cùng họ Altman EM chỉ tính một lần: ưu tiên bản hiệu chỉnh Việt Nam.
+      const coVn = isNum(zVn);
+      const nguy = moHinh.filter(x => ['altman_z', coVn ? 'altman_vn' : 'altman_z2', 'springate', 'zmijewski'].includes(x.id) && x.muc_do === 'DO');
+      if (nguy.length) moHinh.tom_tat = { so_nguy: nguy.length, ten: nguy.map(x => `${x.ten} ${fmt(x.gt, 'diem')}`) };
+    }
+
     // ===== 11 thủ thuật =====
     function the(id, ten, muc, giaTri, nguong, so, ghi) {
       const r = { id, ten, muc_do: muc, gia_tri: giaTri, nguong, so: so || {}, ghi_chu: ghi || [] };
@@ -1167,7 +1343,9 @@ footer p{margin:0 0 6px}
 
     tt('t1', () => {
       const keys = ['phai_thu_khac_ngan_han', 'phai_thu_khac_dai_han', 'tra_truoc_nguoi_ban_ngan_han', 'phai_thu_cho_vay_ngan_han'];
-      const nhomCD = p => congCo(...keys.map(x => c[x][p]));
+      // Theo TT99, cho vay có thể nằm ở "Đầu tư nắm giữ đến ngày đáo hạn": cộng số cho vay bên liên quan từ thuyết minh nếu dòng phải thu về cho vay trống.
+      const cvBlq = p => (lon(c.phai_thu_cho_vay_ngan_han[p], 0) ? null : tmv('cho_vay_ben_lien_quan', p === 'n' ? 'ky_nay' : 'ky_truoc'));
+      const nhomCD = p => congCo(...keys.map(x => c[x][p]), cvBlq(p));
       const bcc = tmv('hop_tac_kinh_doanh_bcc', 'so_du'), ut = tmv('uy_thac_dau_tu', 'so_du');
       const nhomN = congCo(nhomCD('n'), bcc, ut);
       const tyTrong = chia(nhomN, TTS.n), tyTrongT = chia(nhomCD('t'), TTS.t);
@@ -1180,6 +1358,7 @@ footer p{margin:0 0 6px}
       const muc = dongTienXau && ttDo ? 'DO' : (dongTienXau || tyTrong > NGUONG.t1_vang) ? 'VANG' : 'XANH';
       const ghi = [];
       if (isNum(bcc) || isNum(ut)) ghi.push('Có cộng số dư BCC/uỷ thác từ thuyết minh; có thể trùng với phải thu khác.');
+      if (isNum(cvBlq('n'))) ghi.push('Có cộng khoản cho bên liên quan vay từ thuyết minh (trình bày ở mục đầu tư nắm giữ đến ngày đáo hạn).');
       return the('t1', TEN_T.t1, muc,
         `Phải thu khác, trả trước, cho vay, tạm ứng chiếm ${fmtPct(tyTrong)} tổng tài sản (kỳ trước ${fmtPct(tyTrongT)}). Tiền thu từ kinh doanh: ${fmtTien(OCF.n)}. Tiền cho đầu tư: ${fmtTien(ICF.n)}.`,
         NG_T.t1, { tyTrong, tyTrongT, tangNhom, dongTienXau }, ghi);
@@ -1512,6 +1691,72 @@ footer p{margin:0 0 6px}
           + (lyLoLuyKe >= 1 || vcshAm ? ' Lỗ luỹ kế đã vượt vốn góp: thuộc diện huỷ niêm yết bắt buộc theo Nghị định 155/2020.' : lyLoLuyKe >= 0.5 ? ' Doanh nghiệp đã mất hơn một nửa vốn góp; khó chia cổ tức nhiều năm.' : ' Doanh nghiệp chưa thể chia cổ tức cho tới khi bù hết lỗ.') });
     }
 
+    // ===== Lưới soi bổ sung =====
+    suaDauOcf.forEach(x => dinhTinh.push({ id: 'sai_dau_lctt', ten: 'Báo cáo lưu chuyển tiền tệ in sai dấu', muc_do: 'DO',
+      mo_ta: `${x.ky}: dòng tiền kinh doanh in ${fmtTien(x.in)}, nhưng các dòng 20 + 30 + 40 chỉ khớp dòng 50 (và tiền cuối kỳ) khi dòng này là ${fmtTien(x.dung)}. Kiểm tra lại số in trên PDF: nếu đúng như in thì đây là lỗi số học của chính báo cáo ở chỉ tiêu quan trọng nhất. Các chỉ số đã dùng số đã sửa.` }));
+    if (moHinh.tom_tat) dinhTinh.push({ id: 'kiet_que', ten: 'Mô hình dự báo kiệt quệ tài chính ở vùng nguy hiểm', muc_do: moHinh.tom_tat.so_nguy >= 2 ? 'DO' : 'VANG',
+      mo_ta: `${moHinh.tom_tat.so_nguy}/4 mô hình (Altman Z, Altman Z″ Việt Nam, Springate, Zmijewski) ở vùng nguy hiểm: ${moHinh.tom_tat.ten.join('; ')}. Các mô hình này ước lượng nguy cơ mất khả năng trả nợ trong 1–2 năm từ cơ cấu vốn, khả năng sinh lời và thanh khoản.` });
+    const cS = moHinh.find(x => x.id === 'montier_c');
+    if (cS && cS.muc_do === 'DO') dinhTinh.push({ id: 'montier_c', ten: 'Montier C-Score cao', muc_do: 'VANG',
+      mo_ta: `${cS.vung}: ${cS.tieu_chi.filter(x => x.dat).map(x => x.ten.toLowerCase()).join('; ')}.` });
+    if (!nganhTC) {
+      if (isNum(VCSH.n) && VCSH.n > 0 && VCSH.n < 30e9) dinhTinh.push({ id: 'von_chu_duoi_30ty', ten: 'Vốn chủ sở hữu dưới 30 tỷ đồng', muc_do: 'VANG',
+        mo_ta: `Vốn chủ ${fmtTien(VCSH.n)}, bằng ${fmtPct(VCSH.n / 30e9, 1)} mức 30 tỷ đồng – mức vốn tối thiểu của công ty đại chúng. Có rủi ro bị Sở giao dịch cảnh báo, mất tư cách công ty đại chúng; đối chiếu công bố thông tin của Sở.` });
+
+      const dsMang = (Array.isArray(d.bo_phan) ? d.bo_phan : []).map(b => ({
+        ten: String(b.ten_mang || ''),
+        lnN: b.loi_nhuan && isNum(b.loi_nhuan.ky_nay) ? b.loi_nhuan.ky_nay * hs : null,
+        lnT: b.loi_nhuan && isNum(b.loi_nhuan.ky_truoc) ? b.loi_nhuan.ky_truoc * hs : null,
+        dtT: b.doanh_thu && isNum(b.doanh_thu.ky_truoc) ? b.doanh_thu.ky_truoc * hs : null
+      }));
+      const lnMangDuong = dsMang.reduce((s, x) => s + (isNum(x.lnN) && x.lnN > 0 ? x.lnN : 0), 0);
+      dsMang.filter(x => isNum(x.lnN) && x.lnN > 0 && lnMangDuong > 0 && x.lnN / lnMangDuong >= 0.5 && !lon(x.dtT, 0) && !lon(x.lnT, 0))
+        .forEach(x => dinhTinh.push({ id: 'mang_moi', ten: 'Mảng mới xuất hiện tạo phần lớn lợi nhuận', muc_do: 'VANG',
+          mo_ta: `Mảng “${x.ten}” kỳ trước không có doanh thu nhưng kỳ này tạo ${fmtPct(x.lnN / lnMangDuong, 0)} lợi nhuận các mảng (${fmtTien(x.lnN)}). Cần thuyết minh khách hàng, hợp đồng và khả năng lặp lại.` }));
+
+      const dGpmL = tru(gpmN, gpmT);
+      if (isNum(dGpmL) && dGpmL >= 0.2) dinhTinh.push({ id: 'bien_gop_nhay', ten: 'Biên lãi gộp nhảy vọt', muc_do: 'VANG',
+        mo_ta: `Biên lãi gộp ${fmtPct(gpmN, 1)}, kỳ trước ${fmtPct(gpmT, 1)} (${fmtPP(dGpmL)}). Thay đổi mô hình kinh doanh hoặc một khoản doanh thu đặc biệt; xem cơ cấu doanh thu, giá vốn trong thuyết minh.` });
+
+      const thuVay = l.tien_thu_di_vay.n, ttsTb = tb(TTS.n, TTS.t), vayCuoi = vz(vay('n'));
+      if (isNum(thuVay) && thuVay > 0 && isNum(ttsTb) && ttsTb > 0 && thuVay / ttsTb >= 0.5 && vayCuoi <= 0.2 * thuVay)
+        dinhTinh.push({ id: 'vay_tra_trong_ky', ten: 'Vay lớn rồi trả gần hết trong kỳ', muc_do: 'VANG',
+          mo_ta: `Trong kỳ vay ${fmtTien(thuVay)} (bằng ${fmtPct(thuVay / ttsTb, 0)} tổng tài sản bình quân), trả gốc ${fmtTien(tri(l.tien_tra_no_goc_vay.n))}, dư nợ cuối kỳ còn ${fmtTien(vayCuoi)}. Đối chiếu ngày vay/ngày trả trong thuyết minh vay với ngày chốt sổ: khoản vay ngắn ngày trùm qua ngày chốt sổ làm phình tiền và tổng tài sản trên báo cáo.` });
+
+      const thuTL = l.tien_thu_thanh_ly_tscd.n, chiMuaT = tri(l.tien_chi_mua_sam_tscd.t);
+      if (isNum(thuTL) && thuTL > 0 && isNum(chiMuaT) && chiMuaT > 0 && Math.abs(thuTL - chiMuaT) / chiMuaT <= 0.005 && lon(chia(chiMuaT, TTS.t), 0.05))
+        dinhTinh.push({ id: 'mua_ban_hoan_tien', ten: 'Tài sản mua kỳ trước, kỳ này thu về đúng bằng giá', muc_do: 'VANG',
+          mo_ta: `Kỳ trước chi ${fmtTien(chiMuaT)} mua sắm tài sản dài hạn, kỳ này thu thanh lý ${fmtTien(thuTL)}: trùng khớp, không lãi lỗ. Thường là hợp đồng đặt cọc/mua bán bị huỷ và hoàn tiền nhưng ghi vào mục tài sản cố định; cần thuyết minh đối tác và lý do.` });
+
+      const cvB = tmv('cho_vay_ben_lien_quan', 'ky_nay'), cvBt = tmv('cho_vay_ben_lien_quan', 'ky_truoc');
+      const choVayRong = isNum(l.tien_chi_cho_vay_mua_cong_cu_no.n) ? tri(l.tien_chi_cho_vay_mua_cong_cu_no.n) - vz(l.tien_thu_hoi_cho_vay.n) : null;
+      const vayRong = isNum(l.tien_thu_di_vay.n) ? l.tien_thu_di_vay.n - vz(tri(l.tien_tra_no_goc_vay.n)) : null;
+      const diVayChoVay = lon(choVayRong, 0) && lon(vayRong, 0) && nho(OCF.n, 0);
+      const tyCv = isNum(cvB) && lon(VCSH.n, 0) ? cvB / VCSH.n : null;
+      if (lon(tyCv, 0.2) || (diVayChoVay && lon(chia(choVayRong, TTS.n), 0.1)))
+        dinhTinh.push({ id: 'cho_vay_blq', ten: diVayChoVay ? 'Đi vay để cho vay ra ngoài' : 'Cho bên liên quan vay lớn',
+          muc_do: diVayChoVay && (lon(tyCv, 0.3) || lon(chia(choVayRong, TTS.n), 0.1)) ? 'DO' : 'VANG',
+          mo_ta: [isNum(cvB) ? `Cho bên liên quan vay ${fmtTien(cvB)}${isNum(cvBt) ? ` (đầu kỳ ${fmtTien(cvBt)})` : ''}, bằng ${fmtPct(tyCv, 0)} vốn chủ.` : '',
+            isNum(choVayRong) ? `Trong kỳ chi cho vay ròng ${fmtTien(choVayRong)} (${fmtPct(chia(choVayRong, TTS.n), 0)} tổng tài sản).` : '',
+            diVayChoVay ? `Cùng kỳ dòng tiền kinh doanh âm ${fmtTien(-OCF.n)} và vay ròng thêm ${fmtTien(vayRong)}: tiền cho vay đến từ nợ vay.` : '',
+            'Theo chế độ kế toán mới (TT99), cho vay có thể trình bày ở “Đầu tư nắm giữ đến ngày đáo hạn” thay vì “Phải thu về cho vay”; xem thuyết minh bên liên quan: ai vay, lãi suất, đã thu lãi bằng tiền chưa.'].filter(Boolean).join(' ') });
+
+      const dtB = tmv('doanh_thu_ben_lien_quan', 'ky_nay');
+      const tyDtB = lon(DTT.n, 0) ? chia(dtB, DTT.n) : null;
+      if (lon(tyDtB, 0.5)) dinhTinh.push({ id: 'doanh_thu_blq', ten: 'Doanh thu chủ yếu từ bên liên quan', muc_do: 'VANG',
+        mo_ta: `${fmtPct(tyDtB, 0)} doanh thu (${fmtTien(dtB)}) bán cho bên liên quan. Với báo cáo riêng công ty mẹ, phần này bị loại khi hợp nhất; biên lãi và giá bán do nội bộ tự định.` });
+
+      const tienNH = congCo(c.tien_va_tuong_duong_tien.n, c.tien_gui_ky_han_ngan_han.n), vayNH = c.vay_ngan_han.n;
+      if (lon(vayNH, 0) && lon(chia(vayNH, TTS.n), 0.15) && nho(chia(tienNH, vayNH), 0.1))
+        dinhTinh.push({ id: 'tien_mong', ten: 'Tiền mặt rất mỏng so với nợ vay ngắn hạn', muc_do: 'VANG',
+          mo_ta: `Tiền ${fmtTien(tienNH)} chỉ bằng ${fmtPct(chia(tienNH, vayNH), 1)} nợ vay ngắn hạn ${fmtTien(vayNH)}${isNum(c.tien_va_tuong_duong_tien.t) ? ` (đầu kỳ tiền ${fmtTien(c.tien_va_tuong_duong_tien.t)})` : ''}. Trả nợ đến hạn phụ thuộc vào việc ngân hàng cho đảo nợ hoặc thu hồi các khoản cho vay, đầu tư.` });
+
+      const dPTra = l.tang_giam_cac_khoan_phai_tra.n;
+      if (isNum(OCF.n) && OCF.n > 0 && isNum(dPTra) && dPTra > 0 && OCF.n - dPTra < 0)
+        dinhTinh.push({ id: 'ocf_nho_phai_tra', ten: 'Dòng tiền kinh doanh dương nhờ tăng khoản phải trả', muc_do: OCF.n - dPTra < -Math.abs(vz(LNST.n)) ? 'DO' : 'VANG',
+          mo_ta: `Dòng tiền kinh doanh ${fmtTien(OCF.n)}, trong đó các khoản phải trả tăng ${fmtTien(dPTra)}. Bỏ phần này ra, dòng tiền kinh doanh là ${fmtTien(OCF.n - dPTra)}: tiền đến từ việc giữ tiền của người bán, người đặt cọc, đối tác, không phải từ bán hàng thu tiền.` });
+    }
+
     // Lịch sử xử lý của Sở giao dịch (chỉ có khi tra theo mã): sự kiện trong 3 năm gần nhất tính vào đèn, cũ hơn chỉ để tham khảo.
     const lsGd = thiTruong && thiTruong.lich_su_gd;
     if (lsGd && Array.isArray(lsGd.su_kien) && lsGd.su_kien.length) {
@@ -1561,6 +1806,7 @@ footer p{margin:0 0 6px}
       chi_so: chiSo,
       f_score: fScore,
       m_score: mScore,
+      mo_hinh: moHinh,
       bieu_do: (() => {
         const dong = (ten, x) => ({ ten, n: x ? x.n : null, t: x ? x.t : null });
         const duong = v => (isNum(v) && v > 0 ? v : 0);
@@ -2544,6 +2790,7 @@ footer p{margin:0 0 6px}
       kiem_tra_gian_lan: kq.thu_thuat.map(t => ({ ten: t.ten, ket_qua: CHU[t.muc_do], chi_tiet: t.gia_tri, ghi_chu: t.ghi_chu.join(' ') || undefined })),
       f_score: kq.f_score.ap_dung ? `${kq.f_score.diem}/${kq.f_score.so_du_lieu} (${kq.f_score.xep_loai})` : 'không áp dụng',
       m_score: kq.m_score.ap_dung && E.isNum(kq.m_score.m) ? { diem: E.fmt(kq.m_score.m, 'diem'), vung: ({ DO: 'vùng nghi ngờ', VANG: 'vùng cảnh giác', XANH: 'vùng an toàn' })[kq.m_score.muc_do], ly_do: kq.m_score.ly_do || undefined, chi_de_tham_khao: kq.m_score.tham_khao ? 'có (báo cáo giữa niên độ)' : 'không' } : 'không áp dụng',
+      mo_hinh_kiet_que_va_chat_luong_loi_nhuan: (kq.mo_hinh || []).filter(x => E.isNum(x.gt)).map(x => ({ mo_hinh: x.ten, diem: E.fmt(x.gt, 'diem'), vung: x.vung, nguong: x.nguong })),
       dinh_tinh: kq.dinh_tinh.map(x => ({ ten: x.ten, muc: CHU[x.muc_do], mo_ta: x.mo_ta })),
       so_lieu_khong_khop: kq.kiem_tra_du_lieu.map(x => `${x.ten} (${x.ky}) lệch ${E.fmtPct(x.lech, 1)}`),
       thong_tin_doi_chieu: kq.thong_tin_doi_chieu,
@@ -2660,7 +2907,7 @@ footer p{margin:0 0 6px}
     const mau = k.khong_dat >= 2 ? 'DO' : k.khong_dat || k.canh_bao.length ? 'VANG' : 'XANH';
     const NH = v => (v === true ? '<span class="nhan XANH">Đạt</span>' : v === false ? '<span class="nhan DO">Không đạt</span>' : '<span class="nhan KHONG_DU_DU_LIEU">Chưa kết luận</span>');
     return `<div class="the the-cs ${mau}" style="margin-top:12px"><div class="ten"><b>Tiêu chí danh mục ký quỹ (tham khảo)</b> <span class="nhan ${mau}">${esc(k.ket_luan)}</span></div>
-      <div class="bang-cuon"><table><thead><tr><th>Tiêu chí</th><th>Số liệu</th><th>Kết quả</th></tr></thead><tbody>${k.tieu_chi.map(x =>
+      <div class="bang-cuon"><table class="the-hoa"><thead><tr><th>Tiêu chí</th><th>Số liệu</th><th>Kết quả</th></tr></thead><tbody>${k.tieu_chi.map(x =>
         `<tr><td>${esc(x.ten)}${x.ghi_chu ? `<div class="phu">${esc(x.ghi_chu)}</div>` : ''}</td><td>${esc(x.gia_tri)}</td><td>${NH(x.dat)}</td></tr>`).join('')}</tbody></table></div>
       ${k.canh_bao.length ? `<div class="hop-tb" style="margin-top:8px"><b>Dấu hiệu cần soi thêm</b><ul>${k.canh_bao.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>` : ''}
       <p class="phu">Theo các tiêu chí định lượng thường dùng để xét cổ phiếu được giao dịch ký quỹ (Quy chế giao dịch ký quỹ của UBCKNN và quy định của các CTCK). Ngưỡng nội bộ từng công ty có thể khác.</p></div>`;
@@ -2702,7 +2949,7 @@ footer p{margin:0 0 6px}
     if (!rg) return '';
     const mau = MAU_RR[rg.muc] || 'VANG';
     return `<div class="the the-cs ${mau}" style="margin-top:12px"><div class="ten"><b>Rủi ro giá cổ phiếu</b> <span class="nhan ${mau}">${esc(rg.muc)}</span></div>
-      <div class="bang-cuon"><table><thead><tr><th>Chỉ tiêu</th><th>Giá trị</th><th>Mức</th></tr></thead><tbody>${rg.chi_so.map(x =>
+      <div class="bang-cuon"><table class="the-hoa"><thead><tr><th>Chỉ tiêu</th><th>Giá trị</th><th>Mức</th></tr></thead><tbody>${rg.chi_so.map(x =>
         `<tr><td title="${esc(x.y_nghia || '')}">${esc(x.ten)}</td><td>${esc(x.gia_tri)}</td><td><span class="nhan ${x.muc}">${x.muc === 'DO' ? 'Cao' : x.muc === 'VANG' ? 'Chú ý' : 'Ổn'}</span></td></tr>`).join('')}</tbody></table></div>
       <p class="phu">${esc(rg.so_phien)} phiên từ ${esc(rg.tu_ngay)} đến ${esc(rg.den_ngay)}, giá đã điều chỉnh cổ tức tiền/cổ phiếu và chia tách (ngày chia cổ phiếu không tính là giảm giá)${(rg.dieu_chinh || []).length ? '. Sự kiện đã điều chỉnh: ' + rg.dieu_chinh.map(esc).join('; ') : ''}. Mức chung: "Cao" khi có từ 2 chỉ tiêu mức cao; "Trung bình" khi có 1 chỉ tiêu cao hoặc từ 2 chỉ tiêu cần chú ý.</p></div>`;
   }
@@ -2733,7 +2980,15 @@ footer p{margin:0 0 6px}
   function baoCaoThamDinhHtml(td) {
     const kq = st.kq, mt = kq.meta, tt = st.thiTruong || {}, d = st.duLieu || {}, sl = d.suy_luan || {};
     const r = E.danhGia(kq, d, tt, dieuChinhDinhGia());
-    const ul = a => (a && a.length ? `<ul>${a.map(s => `<li>${/^RED FLAG/i.test(s) ? `<b style="color:var(--do)">${esc(s)}</b>` : esc(s)}</li>`).join('')}</ul>` : '<p class="phu">Chưa có nhận xét.</p>');
+    const CAU_KC = 'Dấu hiệu này đang kể cho chúng ta câu chuyện gì? Và cần đối chiếu thêm tài liệu/thông tin ngoài nào để kiểm chứng?';
+    const yHtml = s => {
+      const i = s.indexOf(CAU_KC);
+      const chinh = (i >= 0 ? s.slice(0, i) : s).trim(), kc = i >= 0 ? s.slice(i + CAU_KC.length).trim() : '';
+      const m = chinh.match(/^(RED FLAG|NGHI VẤN)\s*:\s*/i);
+      const nhan = m ? (/^RED/i.test(m[1]) ? `<b style="color:var(--do)">RED FLAG:</b> ` : `<b>Nghi vấn:</b> `) : '';
+      return `${nhan}${esc(m ? chinh.slice(m[0].length) : chinh)}${i >= 0 ? `<div class="phu" style="margin-top:3px;padding-left:10px;border-left:2px solid var(--vien,#ccc)"><i>${esc(CAU_KC)}</i>${kc ? ' ' + esc(kc) : ''}</div>` : ''}`;
+    };
+    const ul = (a, rong = 'Không có điểm bất thường cần nêu.') => (a && a.length ? `<ul>${a.map(s => `<li>${yHtml(s)}</li>`).join('')}</ul>` : `<p class="phu">${rong}</p>`);
     const hs = tt.ho_so || {}, ls = tt.lich_su_gd || {};
     const TT_KT = { da_kiem_toan: 'Đã kiểm toán', soat_xet: 'Đã soát xét', tu_lap_chua_kiem_toan: 'Tự lập, chưa kiểm toán/soát xét' };
     const k = tieuChiKyQuy(), rg = tt.rui_ro_gia, nq = st.nghiQuyet && st.nghiQuyet.nq;
@@ -2753,11 +3008,11 @@ footer p{margin:0 0 6px}
         ['Mã số doanh nghiệp', hs.mst || sl.ma_so_doanh_nghiep], ['Ngày thành lập', hs.ngay_thanh_lap ? String(hs.ngay_thanh_lap).split('-').reverse().join('/') : ''], ['Trụ sở', hs.dia_chi], ['Website', hs.website],
         ['Số lượng cổ phiếu', E.isNum(tt.so_cp) ? E.fmtSo(tt.so_cp) : ''], ['Giá / Vốn hoá', E.isNum(tt.gia) ? `${E.fmtSo(tt.gia)} đồng · ${E.fmtTien(tt.von_hoa)}` : ''], ['Ngành', mt.nhom_nganh], ['Nhân sự', hs.nhan_vien ? E.fmtSo(hs.nhan_vien) + ' người' : '']]
         .filter(([, v]) => v).map(([a, b]) => `<tr><td style="width:32%"><b>${esc(a)}</b></td><td>${esc(b)}</td></tr>`).join('')}</tbody></table></div>`;
-    if ((tt.co_dong || []).length) h += `<p><b>Cổ đông lớn</b></p><div class="bang-cuon"><table><thead><tr><th>Cổ đông</th><th>Vai trò</th><th class="so">Số CP</th><th class="so">Tỷ lệ</th><th>Cập nhật</th></tr></thead><tbody>${tt.co_dong.map(x => `<tr><td>${esc(x.ten)}</td><td>${esc(x.vai_tro)}</td><td class="so">${x.so_cp ? esc(E.fmtSo(x.so_cp)) : '–'}</td><td class="so">${esc(E.fmtPct(x.ty_le, 2))}</td><td>${esc(x.ngay)}</td></tr>`).join('')}</tbody></table></div><p class="phu">Nguồn: dữ liệu cổ đông công bố (có thể chưa cập nhật giao dịch gần nhất).</p>`;
+    if ((tt.co_dong || []).length) h += `<p><b>Cổ đông lớn</b></p><div class="bang-cuon"><table class="the-hoa"><thead><tr><th>Cổ đông</th><th>Vai trò</th><th class="so">Số CP</th><th class="so">Tỷ lệ</th><th>Cập nhật</th></tr></thead><tbody>${tt.co_dong.map(x => `<tr><td>${esc(x.ten)}</td><td>${esc(x.vai_tro)}</td><td class="so">${x.so_cp ? esc(E.fmtSo(x.so_cp)) : '–'}</td><td class="so">${esc(E.fmtPct(x.ty_le, 2))}</td><td>${esc(x.ngay)}</td></tr>`).join('')}</tbody></table></div><p class="phu">Nguồn: dữ liệu cổ đông công bố (có thể chưa cập nhật giao dịch gần nhất).</p>`;
     h += `<p>${esc(td.tong_quan_dn)}</p>${td.trien_vong_nganh ? `<p><b>Triển vọng ngành:</b> ${esc(td.trien_vong_nganh)}</p>` : ''}`;
     // Phần 2
     h += `<h3>PHẦN 2: ĐÁNH GIÁ TIÊU CHÍ DANH MỤC KÝ QUỸ</h3>`;
-    if (k) h += `<div class="bang-cuon"><table><thead><tr><th>Tiêu chí</th><th>Số liệu</th><th>Kết quả</th></tr></thead><tbody>${k.tieu_chi.map(x => `<tr><td>${esc(x.ten)}</td><td>${esc(x.gia_tri)}</td><td><span class="nhan ${x.dat === true ? 'XANH' : x.dat === false ? 'DO' : 'KHONG_DU_DU_LIEU'}">${x.dat === true ? 'Đạt' : x.dat === false ? 'Không đạt' : 'Chưa kết luận'}</span></td></tr>`).join('')}</tbody></table></div>`;
+    if (k) h += `<div class="bang-cuon"><table class="the-hoa"><thead><tr><th>Tiêu chí</th><th>Số liệu</th><th>Kết quả</th></tr></thead><tbody>${k.tieu_chi.map(x => `<tr><td>${esc(x.ten)}</td><td>${esc(x.gia_tri)}</td><td><span class="nhan ${x.dat === true ? 'XANH' : x.dat === false ? 'DO' : 'KHONG_DU_DU_LIEU'}">${x.dat === true ? 'Đạt' : x.dat === false ? 'Không đạt' : 'Chưa kết luận'}</span></td></tr>`).join('')}</tbody></table></div>`;
     h += ul(td.nhan_xet_tieu_chi);
     if (k && k.canh_bao.length) h += `<div class="hop-tb"><b>Dấu hiệu cần soi thêm</b>${ul(k.canh_bao)}</div>`;
     // Phần 3
@@ -2772,24 +3027,47 @@ footer p{margin:0 0 6px}
     h += ul(td.nhan_xet_tai_san);
     // Phần 5
     h += `<h3>PHẦN 5: DÒNG TIỀN</h3>${bangNhieuKyHtml(tt.bang_nhieu_ky, 'lctt')}${ul(td.nhan_xet_dong_tien)}`;
-    // Phần 6
-    h += `<h3>PHẦN 6: GIAO DỊCH CỔ PHIẾU</h3>`;
+    // Phần 6: báo cáo đang che giấu điều gì
+    const NHAN_M = { DO: ['DO', 'Đáng ngờ'], VANG: ['VANG', 'Cần soi'] };
+    const dauHieu = [...(kq.thu_thuat || []).filter(x => NHAN_M[x.muc_do]).map(x => ({ ten: x.ten, so: x.gia_tri, muc: x.muc_do })),
+      ...(kq.dinh_tinh || []).filter(x => NHAN_M[x.muc_do]).map(x => ({ ten: x.ten, so: x.mo_ta, muc: x.muc_do }))]
+      .sort((a, b) => (a.muc === 'DO' ? 0 : 1) - (b.muc === 'DO' ? 0 : 1));
+    const soPhep = (kq.thu_thuat || []).filter(x => x.muc_do !== 'KHONG_DU_DU_LIEU').length;
+    h += `<h3>PHẦN 6: BÁO CÁO TÀI CHÍNH ĐANG CHE GIẤU ĐIỀU GÌ?</h3>`;
+    const qt = td.quy_tac;
+    if (qt && qt.ds) {
+      const kh = qt.ds.filter(x => x.kich_hoat);
+      const MUC_QT = { manh: ['DO', 'Đáng ngờ cao'], vua: ['VANG', 'Nghi vấn'], yeu: ['KHONG_DU_DU_LIEU', 'Tham khảo'], chua_backtest: ['KHONG_DU_DU_LIEU', 'Tham khảo'] };
+      const tram = v => (E.isNum(v) ? Math.round(v * 100) : '–');
+      const cauLs = b => (!b || !b.n ? 'Chưa đủ dữ liệu lịch sử.' : `Cứ 100 trường hợp có dấu hiệu này thì khoảng ${tram(b.ty_le)} sau đó gặp sự cố, so với ${tram(b.nen)} ở nhóm chung${E.isNum(b.lift) ? (b.lift >= 1.05 ? ` (cao gấp ${b.lift.toFixed(1).replace('.', ',')} lần)` : ' (không cao hơn nhóm chung)') : ''}.`);
+      h += kh.length
+        ? `<div class="bang-cuon"><table class="the-hoa"><thead><tr><th>Dấu hiệu (BCTC năm ${esc(qt.nam)})</th><th>Số liệu</th><th>Lịch sử cho thấy</th><th>Mức</th></tr></thead><tbody>${kh.map(x => { const m = MUC_QT[x.muc] || MUC_QT.yeu; return `<tr><td><b>${esc(x.ten)}</b><div>${esc(x.dien_giai || '')}</div></td><td>${x.bang_chung.map(esc).join('<br>')}</td><td>${esc(cauLs(x.backtest))}</td><td><span class="nhan ${m[0]}">${m[1]}</span></td></tr>`; }).join('')}</tbody></table></div>`
+        : `<p class="phu">BCTC năm ${esc(qt.nam)}: không xuất hiện dấu hiệu nào trong ${qt.ds.length} dấu hiệu được kiểm tra.</p>`;
+      if (qt.mau) h += `<p class="phu">"Lịch sử cho thấy" được đo trên ${esc(E.fmtSo(qt.mau.n))} trường hợp ${esc(qt.mau.don_vi || 'doanh nghiệp–năm')} (${esc(qt.mau.tu_nam)}–${esc(qt.mau.den_nam)}); "gặp sự cố" nghĩa là ${esc(qt.nhan)}. Chỉ dấu hiệu mức "Nghi vấn" trở lên được bình luận bên dưới; dấu hiệu "Tham khảo" trong quá khứ không báo trước rủi ro tốt hơn nhóm chung.${qt.canh_bao ? ' Lưu ý: số trường hợp lịch sử ít, kết quả chỉ để tham khảo.' : ''}</p>`;
+    } else h += qt && qt.ly_do ? `<p class="phu">Bộ quy tắc: ${esc(qt.ly_do)}.</p>` : '';
+    if (!(qt && qt.ds)) h += dauHieu.length
+      ? `<div class="bang-cuon"><table class="the-hoa"><thead><tr><th>Dấu hiệu</th><th>Số liệu</th><th>Mức</th></tr></thead><tbody>${dauHieu.map(x => `<tr><td>${esc(x.ten)}</td><td>${esc(x.so || '')}</td><td><span class="nhan ${NHAN_M[x.muc][0]}">${NHAN_M[x.muc][1]}</span></td></tr>`).join('')}</tbody></table></div>`
+      : `<p class="phu">${soPhep} phép kiểm tra tự động (dòng tiền chạy vòng, tiền mặt ảo, thổi phồng doanh thu, tồn kho, đảo nợ, Beneish M-Score…) không bắt được dấu hiệu đỏ/vàng.</p>`;
+    h += ul(td.nghi_van_bctc, 'Không có quy tắc đã kiểm chứng nào kích hoạt. Các khoản chỉ có trong thuyết minh (bên liên quan, cho vay cá nhân, tài sản đảm bảo) vẫn cần đọc BCTC gốc.');
+    // Phần 7
+    h += `<h3>PHẦN 7: GIAO DỊCH CỔ PHIẾU</h3>`;
     if (rg) h += `<div class="bang-cuon"><table><tbody>${rg.chi_so.map(x => `<tr><td>${esc(x.ten)}</td><td>${esc(x.gia_tri)}</td><td><span class="nhan ${x.muc}">${x.muc === 'DO' ? 'Cao' : x.muc === 'VANG' ? 'Chú ý' : 'Ổn'}</span></td></tr>`).join('')}</tbody></table></div>`;
     if ((ls.su_kien || []).length) h += `<p class="phu">Lịch sử xử lý giao dịch: ${ls.su_kien.slice(0, 6).map(x => `${x.ngay}: ${x.ten}`).map(esc).join(' · ')}</p>`;
     h += ul(td.nhan_xet_giao_dich);
-    // Phần 7
-    h += `<h3>PHẦN 7: SỰ KIỆN DOANH NGHIỆP ĐÁNG CHÚ Ý</h3>${ul(td.su_kien)}`;
     // Phần 8
-    h += `<h3>PHẦN 8: ĐỊNH GIÁ</h3>${bangDinhGia(r.dinh_gia)}${nq ? khoiKichBan(nq) : ''}${td.nhan_xet_dinh_gia ? `<p>${esc(td.nhan_xet_dinh_gia)}</p>` : ''}`;
+    h += `<h3>PHẦN 8: SỰ KIỆN DOANH NGHIỆP ĐÁNG CHÚ Ý</h3>${ul(td.su_kien)}`;
     // Phần 9
-    const RR = [['thi_truong', 'Rủi ro thị trường'], ['thanh_khoan', 'Rủi ro thanh toán và thanh khoản'], ['pha_loang', 'Rủi ro pha loãng'], ['noi_tai', 'Rủi ro nội tại tổ chức phát hành'], ['nganh', 'Rủi ro đặc thù ngành'], ['quan_tri_co_dong', 'Rủi ro quản trị, cổ đông, bên liên quan']];
-    h += `<h3>PHẦN 9: ĐÁNH GIÁ RỦI RO</h3>${RR.map(([id, ten]) => `<p><b>${esc(ten)}</b></p>${ul((td.rui_ro || {})[id])}`).join('')}`;
+    h += `<h3>PHẦN 9: ĐỊNH GIÁ</h3>${bangDinhGia(r.dinh_gia)}${nq ? khoiKichBan(nq) : ''}${td.nhan_xet_dinh_gia ? `<p>${esc(td.nhan_xet_dinh_gia)}</p>` : ''}`;
     // Phần 10
-    h += `<h3>PHẦN 10: KẾT LUẬN</h3>`;
-    if ((td.bang_tong_hop || []).length) h += `<div class="bang-cuon"><table><thead><tr><th>Tiêu chí</th><th>Đánh giá</th><th>Mức rủi ro</th></tr></thead><tbody>${td.bang_tong_hop.map(x => `<tr><td><b>${esc(x.tieu_chi)}</b></td><td>${esc(x.danh_gia)}</td><td><span class="nhan ${MAU_M[x.muc] || 'VANG'}">${esc(x.muc)}</span></td></tr>`).join('')}</tbody></table></div>`;
+    const RR = [['thi_truong', 'Rủi ro thị trường'], ['thanh_khoan', 'Rủi ro thanh toán và thanh khoản'], ['pha_loang', 'Rủi ro pha loãng'], ['noi_tai', 'Rủi ro nội tại tổ chức phát hành'], ['nganh', 'Rủi ro đặc thù ngành'], ['quan_tri_co_dong', 'Rủi ro quản trị, cổ đông, bên liên quan']];
+    const rrCo = RR.filter(([id]) => ((td.rui_ro || {})[id] || []).length);
+    h += `<h3>PHẦN 10: ĐÁNH GIÁ RỦI RO</h3>${rrCo.length ? rrCo.map(([id, ten]) => `<p><b>${esc(ten)}</b></p>${ul(td.rui_ro[id])}`).join('') : '<p class="phu">Không có rủi ro đặc thù vượt mức thông thường.</p>'}`;
+    // Phần 11
+    h += `<h3>PHẦN 11: KẾT LUẬN</h3>`;
+    if ((td.bang_tong_hop || []).length) h += `<div class="bang-cuon"><table class="the-hoa"><thead><tr><th>Tiêu chí</th><th>Đánh giá</th><th>Mức rủi ro</th></tr></thead><tbody>${td.bang_tong_hop.map(x => `<tr><td><b>${esc(x.tieu_chi)}</b></td><td>${esc(x.danh_gia)}</td><td><span class="nhan ${MAU_M[x.muc] || 'VANG'}">${esc(x.muc)}</span></td></tr>`).join('')}</tbody></table></div>`;
     h += `<div class="hai-cot"><div><p><b>Ưu điểm</b></p>${ul(td.uu_diem)}</div><div><p><b>Nhược điểm & rủi ro</b></p>${ul(td.nhuoc_diem)}</div></div>`;
     h += `<p><b>Kết luận:</b> ${esc(td.ket_luan)}</p><p><b>Mức độ phù hợp làm tài sản ký quỹ:</b> <span class="nhan ${ph[0]}">${esc(ph[1])}</span></p>`;
-    h += `<div class="chan">Bảng số liệu tính tự động từ dữ liệu công bố theo mã; phần nhận xét do AI viết dựa trên các số liệu đó. Thông tin chỉ có trong thuyết minh BCTC (cho vay cá nhân, vay ngoài ngân hàng, chi tiết bên liên quan, tài sản đảm bảo) cần bổ sung từ BCTC gốc. Đây là phân tích tham khảo, không phải khuyến nghị đầu tư; hãy đối chiếu số liệu trước khi sử dụng.</div>`;
+    h += `<div class="chan">Bảng số liệu tính tự động từ dữ liệu công bố theo mã; phần nhận xét do AI viết dựa trên các số liệu đó. Mọi con số trong nhận xét đã được đối chiếu tự động với dữ liệu nguồn${td.so_cau_loai ? `; đã loại ${esc(td.so_cau_loai)} câu có số liệu không truy được về nguồn` : ''}. Nghi vấn chỉ nêu theo bộ quy tắc cố định đã kiểm chứng ngược. Thông tin chỉ có trong thuyết minh BCTC (cho vay cá nhân, vay ngoài ngân hàng, chi tiết bên liên quan, tài sản đảm bảo) cần bổ sung từ BCTC gốc. Đây là phân tích tham khảo, không phải khuyến nghị đầu tư; hãy đối chiếu số liệu trước khi sử dụng.</div>`;
     return h;
   }
   async function lapThamDinh() {
@@ -3137,6 +3415,21 @@ footer p{margin:0 0 6px}
     </div>`;
   }
 
+  function khoiMoHinh(kq) {
+    const ds = kq.mo_hinh || [];
+    if (!ds.length) return '';
+    const so2 = v => (E.isNum(v) ? new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(v) : '–');
+    return `<h3 class="nhom-tieu-de">Mô hình dự báo kiệt quệ tài chính & chất lượng lợi nhuận</h3><div class="luoi c2">${ds.map(m => `<div class="the the-cs ${m.muc_do}">
+      <div class="ten"><span><b>${esc(m.ten)}</b></span></div>
+      <div class="so${E.isNum(m.gt) ? '' : ' nho'}">${E.isNum(m.gt) ? `${esc(m.id === 'montier_c' ? String(m.gt) : so2(m.gt))} ${nhanMuc(m.muc_do)}` : esc(E.KDL)}</div>
+      <div class="phu">${esc(m.vung)} · Ngưỡng: ${esc(m.nguong)}</div>
+      ${m.bien ? `<div class="bang-cuon" style="margin-top:6px"><table><thead><tr><th>Biến</th><th class="so">Giá trị</th><th class="so">Hệ số</th></tr></thead><tbody>${m.bien.map(b =>
+        `<tr><td><b>${esc(b.ma)}</b> <span class="ma">${esc(b.ten)}</span></td><td class="so">${esc(so2(b.gt))}</td><td class="so">${esc(so2(b.he_so))}</td></tr>`).join('')}</tbody></table></div>` : ''}
+      ${m.tieu_chi ? `<ul class="ds-tieu-chi">${m.tieu_chi.map(t => `<li><span>${esc(t.ten)}</span>${t.dat === null ? nhanMuc('KHONG_DU_DU_LIEU') : t.dat ? '<span class="nhan DO">Có</span>' : '<span class="nhan XANH">Không</span>'}</li>`).join('')}</ul>` : ''}
+      <div class="phu">Nguồn: ${esc(m.nguon)}</div>${(m.ghi_chu || []).map(g => `<div class="phu">• ${esc(g)}</div>`).join('')}
+    </div>`).join('')}</div>
+    <p class="ghi-chu">Các mô hình được xây dựng trên dữ liệu doanh nghiệp Mỹ; với Việt Nam chỉ dùng để xếp hạng tương đối và kết hợp với các kiểm tra khác, không dùng riêng lẻ để kết luận.</p>`;
+  }
   function veDieuTra() {
     const kq = st.kq;
     const mt = kq.meta;
@@ -3153,7 +3446,7 @@ footer p{margin:0 0 6px}
       ${t.ghi_chu.map(g => `<div class="phu">• ${esc(g)}</div>`).join('')}
       ${khoiGiaiThich(t.giai_thich_binh_dan)}
     </div>`).join('');
-    h += '</div>' + hopLech(kq) + khoiLichSuGd(false) + '<h3 class="nhom-tieu-de">Kiểm tra định tính</h3>';
+    h += '</div>' + khoiMoHinh(kq) + hopLech(kq) + khoiLichSuGd(false) + '<h3 class="nhom-tieu-de">Kiểm tra định tính</h3>';
     if (kq.dinh_tinh.length) {
       h += `<div class="the"><ul class="ds-dt">${kq.dinh_tinh.map(x => `<li>${nhanMuc(x.muc_do)}<div class="nd"><b>${esc(x.ten)}</b><p>${esc(x.mo_ta)}${x.trang ? ` (trang ${esc(x.trang)})` : ''}</p></div></li>`).join('')}</ul></div>`;
     } else h += '<div class="the trong">Không phát hiện vấn đề định tính từ báo cáo kiểm toán và thuyết minh.</div>';
@@ -3333,6 +3626,15 @@ footer p{margin:0 0 6px}
   }
 
   // ===== Sự kiện =====
+  // Điện thoại: bảng nhiều chữ hiển thị dạng thẻ; gắn tên cột vào từng ô để CSS hiện nhãn.
+  const ganNhanCot = root => root.querySelectorAll('table.the-hoa').forEach(t => {
+    if (t.dataset.daGan) return;
+    const ten = [...t.querySelectorAll('thead th')].map(th => th.textContent.trim());
+    t.querySelectorAll('tbody tr').forEach(tr => [...tr.children].forEach((td, i) => { if (ten[i]) td.setAttribute('data-nhan', ten[i]); }));
+    t.dataset.daGan = '1';
+  });
+  new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType === 1) ganNhanCot(n.matches && n.matches('table') ? n.parentNode || n : n); }))).observe(document.body, { childList: true, subtree: true });
+  ganNhanCot(document);
   $('.tabs').addEventListener('click', e => {
     const b = e.target.closest('[role="tab"]');
     if (b) chonTab(Object.keys(TABS).find(k => TABS[k] === b.id));

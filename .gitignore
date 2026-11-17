@@ -8,3 +8,10 @@
 !api/
 api/*
 !api/analyze.js
+!calib/
+calib/*
+!calib/*.js
+!lib/
+lib/*
+!lib/*.js
+!lib/*_backtest.json

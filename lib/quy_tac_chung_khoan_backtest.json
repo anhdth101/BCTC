@@ -1,0 +1,185 @@
+{
+  "ngay": "2026-11-17",
+  "nhan": "năm sau lợi nhuận sau thuế giảm từ 30% trở lên hoặc chuyển sang lỗ",
+  "don_vi": "công ty chứng khoán–năm",
+  "mau": {
+    "n": 223,
+    "xau": 57,
+    "nen": 0.2556,
+    "so_ma": 45,
+    "tu_nam": 2019,
+    "den_nam": 2024,
+    "nam_chia": 2021
+  },
+  "canh_bao": "Mẫu nhỏ (một ngân hàng đóng góp nhiều năm, các năm cùng chịu chu kỳ chung). Chỉ dùng làm tham khảo.",
+  "quy_tac": {
+    "C01": {
+      "ten": "Cho vay ký quỹ lớn so với vốn chủ",
+      "dieu_kien": "dư nợ cho vay ký quỹ / vốn chủ sở hữu > 150%",
+      "n_du_lieu": 223,
+      "n": 24,
+      "xau": 11,
+      "ty_le": 0.4583,
+      "nen": 0.2556,
+      "lift": 1.7931,
+      "p": 0.0251,
+      "bat_npl": 0,
+      "bat_lnst": 11,
+      "huan_luyen": {
+        "n": 19,
+        "xau": 8,
+        "lift": 1.4613
+      },
+      "kiem_dinh": {
+        "n": 5,
+        "xau": 3,
+        "lift": 2.7391
+      },
+      "muc": "vua"
+    },
+    "C02": {
+      "ten": "Cho vay ký quỹ tăng nóng",
+      "dieu_kien": "dư nợ cho vay ký quỹ tăng > 60% trong năm",
+      "n_du_lieu": 213,
+      "n": 76,
+      "xau": 29,
+      "ty_le": 0.3816,
+      "nen": 0.2488,
+      "lift": 1.5335,
+      "p": 0.0071,
+      "bat_npl": 0,
+      "bat_lnst": 29,
+      "huan_luyen": {
+        "n": 55,
+        "xau": 27,
+        "lift": 1.7335
+      },
+      "kiem_dinh": {
+        "n": 21,
+        "xau": 2,
+        "lift": 0.4535
+      },
+      "muc": "yeu"
+    },
+    "C03": {
+      "ten": "Lợi nhuận dựa vào tự doanh",
+      "dieu_kien": "lãi từ tài sản tài chính ghi nhận qua lãi/lỗ (FVTPL) / doanh thu hoạt động > 50%",
+      "n_du_lieu": 223,
+      "n": 57,
+      "xau": 19,
+      "ty_le": 0.3333,
+      "nen": 0.2556,
+      "lift": 1.3041,
+      "p": 0.1179,
+      "bat_npl": 0,
+      "bat_lnst": 19,
+      "huan_luyen": {
+        "n": 30,
+        "xau": 9,
+        "lift": 1.0412
+      },
+      "kiem_dinh": {
+        "n": 27,
+        "xau": 10,
+        "lift": 1.6908
+      },
+      "muc": "yeu"
+    },
+    "C04": {
+      "ten": "Lãi đánh giá lại chiếm phần lớn lợi nhuận",
+      "dieu_kien": "chênh lệch đánh giá lại tài sản FVTPL (tăng − giảm) / lợi nhuận trước thuế > 30%",
+      "n_du_lieu": 223,
+      "n": 34,
+      "xau": 12,
+      "ty_le": 0.3529,
+      "nen": 0.2556,
+      "lift": 1.3808,
+      "p": 0.1356,
+      "bat_npl": 0,
+      "bat_lnst": 12,
+      "huan_luyen": {
+        "n": 22,
+        "xau": 6,
+        "lift": 0.9465
+      },
+      "kiem_dinh": {
+        "n": 12,
+        "xau": 6,
+        "lift": 2.2826
+      },
+      "muc": "yeu"
+    },
+    "C05": {
+      "ten": "Danh mục tự doanh lớn so với vốn chủ",
+      "dieu_kien": "tài sản FVTPL / vốn chủ sở hữu > 150%",
+      "n_du_lieu": 223,
+      "n": 2,
+      "xau": 0,
+      "ty_le": 0,
+      "nen": 0.2556,
+      "lift": 0,
+      "p": 1,
+      "bat_npl": 0,
+      "bat_lnst": 0,
+      "huan_luyen": {
+        "n": 0,
+        "xau": 0,
+        "lift": null
+      },
+      "kiem_dinh": {
+        "n": 2,
+        "xau": 0,
+        "lift": 0
+      },
+      "muc": "yeu"
+    },
+    "C06": {
+      "ten": "Vay ngắn hạn lớn so với vốn chủ",
+      "dieu_kien": "vay ngắn hạn / vốn chủ sở hữu > 150%",
+      "n_du_lieu": 223,
+      "n": 30,
+      "xau": 4,
+      "ty_le": 0.1333,
+      "nen": 0.2556,
+      "lift": 0.5216,
+      "p": 0.9676,
+      "bat_npl": 0,
+      "bat_lnst": 4,
+      "huan_luyen": {
+        "n": 15,
+        "xau": 4,
+        "lift": 0.9255
+      },
+      "kiem_dinh": {
+        "n": 15,
+        "xau": 0,
+        "lift": 0
+      },
+      "muc": "yeu"
+    },
+    "C07": {
+      "ten": "Lãi dự thu tăng nhanh hơn dư nợ",
+      "dieu_kien": "tăng trưởng phải thu dự thu − tăng trưởng dư nợ ký quỹ > 30 điểm %",
+      "n_du_lieu": 192,
+      "n": 67,
+      "xau": 15,
+      "ty_le": 0.2239,
+      "nen": 0.2448,
+      "lift": 0.9146,
+      "p": 0.6992,
+      "bat_npl": 0,
+      "bat_lnst": 15,
+      "huan_luyen": {
+        "n": 25,
+        "xau": 4,
+        "lift": 0.5926
+      },
+      "kiem_dinh": {
+        "n": 42,
+        "xau": 11,
+        "lift": 1.2048
+      },
+      "muc": "yeu"
+    }
+  }
+}
