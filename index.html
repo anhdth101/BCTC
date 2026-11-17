@@ -2963,7 +2963,7 @@ footer p{margin:0 0 6px}
     const yoy = (a, b) => (E.isNum(a) && E.isNum(b) && b !== 0 ? (a - b) / Math.abs(b) : null);
     return `<div class="bang-cuon"><table><thead><tr><th>Chỉ tiêu (tỷ đồng)</th>${nk.cot.map(c => `<th class="so">${esc(c)}</th>`).join('')}${coLk ? '<th class="so">+/- cùng kỳ</th>' : ''}</tr></thead><tbody>${loc.map(x => {
       const o = x.gt.map(v => (x.loai === 'pct' ? (E.isNum(v) ? E.fmtPct(v, 1) : '–') : tyDong(v)));
-      const n = x.gt.length, bd = coLk ? (x.loai === 'pct' ? (E.isNum(x.gt[n - 1]) && E.isNum(x.gt[n - 2]) ? `${((x.gt[n - 1] - x.gt[n - 2]) * 100).toFixed(1).replace('.', ',')} đpt` : '–') : (E.isNum(yoy(x.gt[n - 1], x.gt[n - 2])) ? E.fmtPct(yoy(x.gt[n - 1], x.gt[n - 2]), 1) : '–')) : '';
+      const n = x.gt.length, bd = coLk ? (x.loai === 'pct' ? (E.isNum(x.gt[n - 1]) && E.isNum(x.gt[n - 2]) ? `${((x.gt[n - 1] - x.gt[n - 2]) * 100).toFixed(1).replace('.', ',')} điểm %` : '–') : (E.isNum(yoy(x.gt[n - 1], x.gt[n - 2])) ? E.fmtPct(yoy(x.gt[n - 1], x.gt[n - 2]), 1) : '–')) : '';
       return `<tr><td>${esc(x.ten)}</td>${o.map(v => `<td class="so">${esc(v)}</td>`).join('')}${coLk ? `<td class="so">${esc(bd)}</td>` : ''}</tr>`;
     }).join('')}</tbody></table></div>`;
   }
