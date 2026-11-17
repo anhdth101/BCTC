@@ -188,8 +188,14 @@ footer p{margin:0 0 6px}
 @media (min-width:700px){.a4 .hai-cot{grid-template-columns:1fr 1fr}}
 .a4 .chan{margin-top:14px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:var(--muted)}
 .a4 .dang-viet{color:var(--muted);font-style:italic}
+/* Nhãn dài trong báo cáo (vd mức phù hợp ký quỹ) luôn được xuống dòng, không đẩy trang rộng ra */
+.a4{overflow-wrap:break-word}
+.a4 .nhan{white-space:normal;max-width:100%;line-height:1.4}
+.a4 img,.a4 svg,.a4 canvas{max-width:100%;height:auto}
 /* ===== Điện thoại ===== */
 @media (max-width:640px){
+  /* Không cho trang trượt ngang: phần rộng (bảng số) đã có thanh cuộn riêng */
+  html,body{max-width:100%;overflow-x:hidden}
   body{font-size:15px}
   header.top .wrap{flex-wrap:wrap;gap:8px}
   .logo{font-size:16px}
