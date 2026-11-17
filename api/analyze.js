@@ -1806,12 +1806,23 @@ async function cheDoMaCk(body) {
   try {
     const [jp, jc] = await Promise.all([
       layJson(`${VND_BASE}/company_profiles?q=code:${body.ma}`, VND_H, 6000).catch(() => null),
-      layJson(`${VND_BASE}/shareholders?q=code:${body.ma}&size=15&sort=ownershipPct:desc`, VND_H, 6000).catch(() => null)
+      layJson(`${VND_BASE}/shareholders?q=code:${body.ma}&size=40&sort=ownershipPct:desc`, VND_H, 6000).catch(() => null)
     ]);
     const p = jp && jp.data && jp.data[0];
     if (p) kq.thi_truong.ho_so = { ten: p.vnName || '', ten_en: p.enName || '', ngay_thanh_lap: p.foundDate || '', mst: p.taxCode || '', dia_chi: p.vnAddress || '', website: p.website || '', nhan_vien: p.employees || null, dien_thoai: p.phone || '' };
-    kq.thi_truong.co_dong = ((jc && jc.data) || []).filter(x => typeof x.ownershipPct === 'number' && x.ownershipPct > 0)
-      .slice(0, 10).map(x => ({ ten: x.shareholderName || '', vai_tro: x.roleType || '', loai: x.shareholderType || '', so_cp: x.numberOfShares || null, ty_le: x.ownershipPct / 100, ngay: String(x.effectiveDate || '').slice(0, 10) }));
+    // Nguồn trả một dòng cho mỗi quan hệ của cùng một người (vd "Con của Chủ tịch" và "Em gái của Phó chủ tịch"):
+    // gộp theo tên, nối các vai trò, giữ số liệu của lần cập nhật mới nhất.
+    const gop = new Map();
+    ((jc && jc.data) || []).filter(x => typeof x.ownershipPct === 'number' && x.ownershipPct > 0 && x.shareholderName).forEach(x => {
+      const k = String(x.shareholderName).normalize('NFC').toLowerCase().replace(/\s+/g, ' ').trim();
+      const ngay = String(x.effectiveDate || '').slice(0, 10), vt = String(x.roleType || '').trim();
+      const cu = gop.get(k);
+      if (!cu) { gop.set(k, { ten: String(x.shareholderName).trim(), vai: vt ? [vt] : [], loai: x.shareholderType || '', so_cp: x.numberOfShares || null, ty_le: x.ownershipPct / 100, ngay }); return; }
+      if (vt && !cu.vai.includes(vt)) cu.vai.push(vt);
+      if (ngay > cu.ngay) Object.assign(cu, { so_cp: x.numberOfShares || cu.so_cp, ty_le: x.ownershipPct / 100, ngay });
+    });
+    kq.thi_truong.co_dong = [...gop.values()].sort((a, b) => b.ty_le - a.ty_le).slice(0, 10)
+      .map(x => ({ ten: x.ten, vai_tro: x.vai.join('; '), loai: x.loai, so_cp: x.so_cp, ty_le: x.ty_le, ngay: x.ngay }));
   } catch (e) { /* bổ sung, không bắt buộc */ }
   // Lịch sử xử lý của Sở giao dịch: cảnh báo, kiểm soát, hạn chế/tạm ngừng giao dịch, huỷ niêm yết, cắt margin, nhắc nhở.
   try {
